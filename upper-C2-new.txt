@@ -10411,6 +10411,11 @@ C2/DF96:	CD5E0A00
 C2/DF9A:	578D2000
 
 ; 64-bit data used at C1/470B.
+; These are instructions for transferring data
+; Bytes 0-1: Source RAM address
+; Bytes 2-3: Destination RAM address
+; Bytes 4-5: Block length
+; Bytes 6-7: How many blocks to move
 C2/DF9E:	D55A595818000800
 C2/DFA6:	955B71580E000800
 C2/DFAE:	055C7F5808000800
