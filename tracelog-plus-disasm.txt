@@ -263,14 +263,14 @@ C1/0229:	6B         	RTL
 C1/022A:	DA         	PHX
 C1/022B:	5A         	PHY
 C1/022C:	20 24 1A   	JSR $1A24       ; wait for NMI routine ($47)
-C1/022F:	20 04 45   	JSR $4504       ; handle any menu changes?
-C1/0232:	20 CA 02   	JSR $02CA       ; update battle menus?
-C1/0235:	20 BE 44   	JSR $44BE       ; redraw ATB/Morph/Condemned?
+C1/022F:	20 04 45   	JSR $4504       ; handle any menu changes [?]
+C1/0232:	20 CA 02   	JSR $02CA       ; update battle menus [?]
+C1/0235:	20 BE 44   	JSR $44BE       ; ATB/morph gauge, condemned counter [?]
 C1/0238:	22 53 BF C2	JSL $C2BF53
 C1/023C:	22 1A B4 C2	JSL $C2B41A
-C1/0240:	AD EF E9   	LDA $E9EF       ; battle stopped/paused?
-C1/0243:	D0 04      	BNE $0249       ; branch if so
-C1/0245:	22 03 00 C2	JSL $C20003     ; update ATB, battle timers, etc
+C1/0240:	AD EF E9   	LDA $E9EF       ; is battle stopped/paused [?]
+C1/0243:	D0 04      	BNE $0249       ; if yes, branch to exit
+C1/0245:	22 03 00 C2	JSL $C20003     ; else, update battle timers
 
 C1/0249:	7A         	PLY
 C1/024A:	FA         	PLX
@@ -300,74 +300,79 @@ C1/0271:	C9 FF      	CMP #$FF
 C1/0273:	D0 10      	BNE $0285
 C1/0275:	8A         	TXA
 C1/0276:	8D 00 40   	STA $4000
-C1/0279:	20 86 02   	JSR $0286
+C1/0279:	20 86 02   	JSR $0286      ; shift battle menu order up
 C1/027C:	AD 00 40   	LDA $4000
 C1/027F:	AA         	TAX
 C1/0280:	A9 03      	LDA #$03
 C1/0282:	9D 01 40   	STA $4001,X
 C1/0285:	6B         	RTL
 
-; Update battle menu states [?]
+; Shift battle menu order up
+; (0: active, 1-4: queued in order, FF: no character)
 C1/0286:	7B         	TDC            ; A = 0000
 C1/0287:	AA         	TAX            ; X = 0000
-C1/0288:	64 10      	STZ $10        ; check for menu state 0
-C1/028A:	64 12      	STZ $12        ; replace with menu state 0
-C1/028C:	20 B2 02   	JSR $02B2      ; shift menu states downward, preserving order
-C1/028F:	90 02      	BCC $0293      ; branch if no match found
-C1/0291:	E6 12      	INC $12        ; new replacement state
-C1/0293:	E6 10      	INC $10        ; next state
-C1/0295:	A5 10      	LDA $10
-C1/0297:	C9 05      	CMP #$05
-C1/0299:	D0 F1      	BNE $028C      ; if $10 state < 5, loop
+C1/0288:	64 10      	STZ $10        ; find menu in position 0 (active)
+C1/028A:	64 12      	STZ $12        ; change to position 0
+C1/028C:	20 B2 02   	JSR $02B2      ; update one battle menu position
+C1/028F:	90 02      	BCC $0293      ; branch if no match was found
+C1/0291:	E6 12      	INC $12        ; position $12 is filled, get next
+
+C1/0293:	E6 10      	INC $10        ; match next position
+C1/0295:	A5 10      	LDA $10        ; > if no match, next loop shifts
+C1/0297:	C9 05      	CMP #$05       ; > down to fill $12
+C1/0299:	D0 F1      	BNE $028C      ; loop through positions 0-4
 C1/029B:	A5 12      	LDA $12
-C1/029D:	85 10      	STA $10        ; set $10 to last replacement state
+C1/029D:	85 10      	STA $10        ; set $10 to last unfilled position
 C1/029F:	A5 10      	LDA $10
-C1/02A1:	C9 05      	CMP #$05       ; fill remaining states with #FF
-C1/02A3:	F0 0C      	BEQ $02B1
+C1/02A1:	C9 05      	CMP #$05
+C1/02A3:	F0 0C      	BEQ $02B1      ; exit if states 0-4 are all filled
 C1/02A5:	A9 FF      	LDA #$FF
-C1/02A7:	85 12      	STA $12        ; set to replace with #FF
-C1/02A9:	20 B2 02   	JSR $02B2
+C1/02A7:	85 12      	STA $12        ; fill remaining states with #FF
+C1/02A9:	20 B2 02   	JSR $02B2      ; why is this necessary [?]
 C1/02AC:	E6 10      	INC $10
-C1/02AE:	4C 9F 02   	JMP $029F
+C1/02AE:	4C 9F 02   	JMP $029F      ; loop (should be BRA)
 C1/02B1:	60         	RTS
 
-; Check battle menu states? Carry flag set if one matches $10 state
+; Check battle menu positions
+; ($10 = state to look for, $12 = state to change to)
+; (return with Carry set if position $10 was found)
 C1/02B2:	7B         	TDC            ; A = 0000
 C1/02B3:	AA         	TAX            ; A = 0000
-C1/02B4:	BD 01 40   	LDA $4001,X    ; character battle menu state?
+C1/02B4:	BD 01 40   	LDA $4001,X    ; character X's battle menu position
 C1/02B7:	C5 10      	CMP $10
-C1/02B9:	F0 08      	BEQ $02C3      ; branch if matches state set in $10
+C1/02B9:	F0 08      	BEQ $02C3      ; branch if position matches $10
 C1/02BB:	E8         	INX
-C1/02BC:	E0 04 00   	CPX #$0004     ; do for all 4 character menus
-C1/02BF:	D0 F3      	BNE $02B4
-C1/02C1:	18         	CLC
+C1/02BC:	E0 04 00   	CPX #$0004
+C1/02BF:	D0 F3      	BNE $02B4      ; loop through all 4 character menus
+C1/02C1:	18         	CLC            ; if no match, return with carry clear
 C1/02C2:	60         	RTS
 
-C1/02C3:	A5 12      	LDA $12        ; A = target index?
-C1/02C5:	9D 01 40   	STA $4001,X    ; store as battle menu state
-C1/02C8:	38         	SEC
+C1/02C3:	A5 12      	LDA $12        ; new position to assign
+C1/02C5:	9D 01 40   	STA $4001,X    ; set matched battle menu position
+C1/02C8:	38         	SEC            ; match found, return with carry set
 C1/02C9:	60         	RTS
 
-; Update Battle Menus?
-C1/02CA:	20 86 02   	JSR $0286      ; update battle menu states?
+; Update Battle Menus (runs every frame)
+C1/02CA:	20 86 02   	JSR $0286      ; shift battle menu order up
 C1/02CD:	7B         	TDC            ; A = 0000
 C1/02CE:	AA         	TAX            ; X = 0000
-C1/02CF:	BD 01 40   	LDA $4001,X    ; A = battle menu state
-C1/02D2:	F0 08      	BEQ $02DC      ; branch if currently open
+C1/02CF:	BD 01 40   	LDA $4001,X    ; battle menu position of character 0
+C1/02D2:	F0 08      	BEQ $02DC      ; branch if currently active
 C1/02D4:	E8         	INX
-C1/02D5:	E0 04 00   	CPX #$0004     ; check all 4 characters
-C1/02D8:	D0 F5      	BNE $02CF
+C1/02D5:	E0 04 00   	CPX #$0004
+C1/02D8:	D0 F5      	BNE $02CF      ; loop through all 4 battle menus
 C1/02DA:	80 1D      	BRA $02F9      ; exit if none open
+
 C1/02DC:	AD F1 E9   	LDA $E9F1
-C1/02DF:	0D F0 7B   	ORA $7BF0      ; current menu state?
-C1/02E2:	0D 8B 62   	ORA $628B      ; disable battle menu?
-C1/02E5:	0D CA 7B   	ORA $7BCA      ; menu open or opening?
-C1/02E8:	0D BB 7B   	ORA $7BBB      ; battle menu update pending?
-C1/02EB:	0D CC 7B   	ORA $7BCC      ; swapping battle menus enabled?
+C1/02DF:	0D F0 7B   	ORA $7BF0      ; current menu state [?]
+C1/02E2:	0D 8B 62   	ORA $628B      ; disable battle menu [?]
+C1/02E5:	0D CA 7B   	ORA $7BCA      ; menu open or opening [?]
+C1/02E8:	0D BB 7B   	ORA $7BBB      ; battle menu update pending [?]
+C1/02EB:	0D CC 7B   	ORA $7BCC      ; swapping battle menus [?]
 C1/02EE:	D0 09      	BNE $02F9      ; exit if any of the above
-C1/02F0:	9C CB 7B   	STZ $7BCB      ; close menu = #00?
+C1/02F0:	9C CB 7B   	STZ $7BCB      ; reset battle menu open flag [?]
 C1/02F3:	8E CA 62   	STX $62CA      ; set active character pointer
-C1/02F6:	20 A2 44   	JSR $44A2      ; handle active battle menu (close it?)
+C1/02F6:	20 A2 44   	JSR $44A2      ; draw active battle menu
 C1/02F9:	60         	RTS
 
 ; Update HDMA channel 3 or 5 based on $7B95-$7B96
@@ -8706,17 +8711,17 @@ C1/449B:	EE DB 64   	INC $64DB      ; "how many items added to inventory" counte
 C1/449E:	4C 45 44   	JMP $4445      ; loop through all obtained items
 C1/44A1:	60         	RTS
 
-; Handle active character battle menu (close it [?])
+; Draw active battle menu
 C1/44A2:	A9 01      	LDA #$01
-C1/44A4:	8D 98 7B   	STA $7B98
+C1/44A4:	8D 98 7B   	STA $7B98      ; pending battle menu draw [?]
 C1/44A7:	20 45 44   	JSR $4445      ; add obtained items to battle inventory
-C1/44AA:	20 59 47   	JSR $4759      ; move a bunch of data (what?)
+C1/44AA:	20 59 47   	JSR $4759      ; transfer battle menu tiles [?]
 C1/44AD:	A9 04      	LDA #$04
-C1/44AF:	8D C3 7B   	STA $7BC3      ; set next menu cursor state?
+C1/44AF:	8D C3 7B   	STA $7BC3      ; set queued menu cursor state to 4
 C1/44B2:	A9 01      	LDA #$01
-C1/44B4:	8D C2 7B   	STA $7BC2      ; set current menu cursor state?
-C1/44B7:	EE BB 7B   	INC $7BBB      ; mark battle menu update pending?
-C1/44BA:	EE CA 7B   	INC $7BCA      ; mark menu open/opening?
+C1/44B4:	8D C2 7B   	STA $7BC2      ; set menu cursor state to 1
+C1/44B7:	EE BB 7B   	INC $7BBB      ; battle menu update pending
+C1/44BA:	EE CA 7B   	INC $7BCA      ; flag menu open or opening
 C1/44BD:	60         	RTS
 
 C1/44BE:	AD 98 7B   	LDA $7B98
@@ -9073,6 +9078,7 @@ C1/4753:	007A
 C1/4755:	8002
 C1/4757:	007C
 
+; Transfer battle menu tiles [?]
 C1/4759:	7B         	TDC
 C1/475A:	20 04 47   	JSR $4704
 C1/475D:	1A         	INC A
