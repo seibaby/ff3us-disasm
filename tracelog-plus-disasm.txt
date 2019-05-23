@@ -13117,13 +13117,13 @@ C1/6703:	AA         	TAX
 C1/6704:	7C 07 67   	JMP ($6707,X)  ; Jump table
 
 ; Battle text functions
-C1/6707:	4767    	; (00) - RTS
+C1/6707:	4767      ; (00) - RTS
 C1/6709:	4867      ; (01) - line break [?]
 C1/670B:	5F67      ; (02) - display 2 digit number X
 C1/670D:	9467      ; (03)
 C1/670F:	9C67      ; (04)
 C1/6711:	A467      ; (05)
-C1/6713:	4767    	; (06) - RTS
+C1/6713:	4767      ; (06) - RTS
 C1/6715:	B567      ; (07) - display party member 1's info
 C1/6717:	B867      ; (08) - display party member 2's info
 C1/6719:	BC67      ; (09) - display party member 3's info
@@ -13136,19 +13136,19 @@ C1/6725:	C26A      ; (0F)
 C1/6727:	0B6A      ; (10) - display the status texts
 C1/6729:	AF6A      ; (11)
 C1/672B:	386A      ; (12) - display the item names
-C1/672D:	4767    	; (13) - RTS
-C1/672F:	4767    	; (14) - RTS
-C1/6731:	4767    	; (15) - RTS
-C1/6733:	4767    	; (16) - RTS
-C1/6735:	4767    	; (17) - RTS
-C1/6737:	4767    	; (18) - RTS
-C1/6739:	4767    	; (19) - RTS
-C1/673B:	4767    	; (1A) - RTS
-C1/673D:	4767    	; (1B) - RTS
-C1/673F:	4767    	; (1C) - RTS
-C1/6741:	4767    	; (1D) - RTS
-C1/6743:	4767    	; (1E) - RTS
-C1/6745:	4767    	; (1F) - RTS
+C1/672D:	4767      ; (13) - RTS
+C1/672F:	4767      ; (14) - RTS
+C1/6731:	4767      ; (15) - RTS
+C1/6733:	4767      ; (16) - RTS
+C1/6735:	4767      ; (17) - RTS
+C1/6737:	4767      ; (18) - RTS
+C1/6739:	4767      ; (19) - RTS
+C1/673B:	4767      ; (1A) - RTS
+C1/673D:	4767      ; (1B) - RTS
+C1/673F:	4767      ; (1C) - RTS
+C1/6741:	4767      ; (1D) - RTS
+C1/6743:	4767      ; (1E) - RTS
+C1/6745:	4767      ; (1F) - RTS
 
 C1/6747:	60         	RTS
 
