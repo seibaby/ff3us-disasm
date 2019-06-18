@@ -1851,7 +1851,7 @@ C1/0F6F:	AD 4A 2F   	LDA $2F4A
 C1/0F72:	85 22      	STA $22
 C1/0F74:	A9 18      	LDA #$18
 C1/0F76:	85 24      	STA $24
-C1/0F78:	20 D9 18   	JSR $18D9
+C1/0F78:	20 D9 18   	JSR $18D9       ; Multiplication ($26 = $22 * $24)
 C1/0F7B:	A6 26      	LDX $26
 C1/0F7D:	BF 00 FD D0	LDA $D0FD00,X
 C1/0F81:	29 01      	AND #$01
@@ -1861,27 +1861,27 @@ C1/0F88:	8E D6 64   	STX $64D6
 C1/0F8B:	8E D8 64   	STX $64D8
 C1/0F8E:	60         	RTS
 
-C1/0F8F:	7B         	TDC
-C1/0F90:	A8         	TAY
+C1/0F8F:	7B         	TDC             ; A = 0000
+C1/0F90:	A8         	TAY             ; Y = 0000 (character index)
 C1/0F91:	98         	TYA
 C1/0F92:	0A         	ASL A
 C1/0F93:	0A         	ASL A
 C1/0F94:	0A         	ASL A
 C1/0F95:	0A         	ASL A
 C1/0F96:	0A         	ASL A
-C1/0F97:	AA         	TAX
-C1/0F98:	BD C6 2E   	LDA $2EC6,X
+C1/0F97:	AA         	TAX             ; X = Y * 32
+C1/0F98:	BD C6 2E   	LDA $2EC6,X     ; character id
 C1/0F9B:	85 22      	STA $22
-C1/0F9D:	A9 16      	LDA #$16
+C1/0F9D:	A9 16      	LDA #$16        ; 22 byte data block
 C1/0F9F:	85 24      	STA $24
-C1/0FA1:	20 D9 18   	JSR $18D9
-C1/0FA4:	A6 26      	LDX $26
-C1/0FA6:	BF B5 7C ED	LDA $ED7CB5,X
-C1/0FAA:	29 10      	AND #$10
-C1/0FAC:	99 86 62   	STA $6286,Y
-C1/0FAF:	C8         	INY
-C1/0FB0:	C0 04 00   	CPY #$0004
-C1/0FB3:	D0 DC      	BNE $0F91
+C1/0FA1:	20 D9 18   	JSR $18D9       ; Multiplication ($26 = $22 * $24)
+C1/0FA4:	A6 26      	LDX $26         ; index to character data
+C1/0FA6:	BF B5 7C ED	LDA $ED7CB5,X   ; some character flags
+C1/0FAA:	29 10      	AND #$10        ; block weapon swap
+C1/0FAC:	99 86 62   	STA $6286,Y     ; store 
+C1/0FAF:	C8         	INY             ; increment character index
+C1/0FB0:	C0 04 00   	CPY #$0004      ; 4 characters in battle
+C1/0FB3:	D0 DC      	BNE $0F91       ; loop through all 4
 C1/0FB5:	60         	RTS
 
 C1/0FB6:	A2 07 00   	LDX #$0007
@@ -2886,21 +2886,25 @@ C1/17B9:	E2 20      	SEP #$20
 C1/17BB:	AB         	PLB
 C1/17BC:	60         	RTS
 
+; Play "buzzer" sound effect
 C1/17BD:	A9 22      	LDA #$22
 C1/17BF:	8F 40 21 00	STA $002140
-C1/17C3:	64 95      	STZ $95
+C1/17C3:	64 95      	STZ $95        ; reset flag
 C1/17C5:	60         	RTS
 
+; Play "cursor" sound effect
 C1/17C6:	A9 21      	LDA #$21
 C1/17C8:	8F 40 21 00	STA $002140
-C1/17CC:	64 94      	STZ $94
+C1/17CC:	64 94      	STZ $94        ; reset flag
 C1/17CE:	60         	RTS
 
+; Play "select" sound effect
 C1/17CF:	A9 20      	LDA #$20
 C1/17D1:	8F 40 21 00	STA $002140
-C1/17D5:	64 96      	STZ $96
+C1/17D5:	64 96      	STZ $96        ; reset flag
 C1/17D7:	60         	RTS
 
+; Play "character ready" sound effect
 C1/17D8:	AD CA 62   	LDA $62CA
 C1/17DB:	29 03      	AND #$03
 C1/17DD:	AA         	TAX
@@ -2908,7 +2912,7 @@ C1/17DE:	BD 98 61   	LDA $6198,X
 C1/17E1:	18         	CLC
 C1/17E2:	69 28      	ADC #$28
 C1/17E4:	8F 40 21 00	STA $002140
-C1/17E8:	64 93      	STZ $93
+C1/17E8:	64 93      	STZ $93        ; reset flag
 C1/17EA:	60         	RTS
 
 C1/17EB:	20 EF 17   	JSR $17EF
@@ -2922,47 +2926,50 @@ C1/17F9:	8D E8 E9   	STA $E9E8
 C1/17FC:	EE EC E9   	INC $E9EC
 C1/17FF:	60         	RTS
 
-C1/1800:	AD ED E9   	LDA $E9ED
-C1/1803:	D0 55      	BNE $185A
-C1/1805:	AD EC E9   	LDA $E9EC
-C1/1808:	F0 19      	BEQ $1823
-C1/180A:	AD EA E9   	LDA $E9EA
-C1/180D:	8F 42 21 00	STA $002142
-C1/1811:	AD E9 E9   	LDA $E9E9
-C1/1814:	8F 41 21 00	STA $002141
-C1/1818:	AD E8 E9   	LDA $E9E8
-C1/181B:	8F 40 21 00	STA $002140
-C1/181F:	9C EC E9   	STZ $E9EC
+C1/1800:	AD ED E9   	LDA $E9ED      ; sound effects disabled
+C1/1803:	D0 55      	BNE $185A      ; exit if ^
+C1/1805:	AD EC E9   	LDA $E9EC      ; animation sound effects on
+C1/1808:	F0 19      	BEQ $1823      ; if not ^, continue to regular sounds
+
+; Process animation sound effects
+C1/180A:	AD EA E9   	LDA $E9EA      ; animation sound pan value
+C1/180D:	8F 42 21 00	STA $002142    ; set it
+C1/1811:	AD E9 E9   	LDA $E9E9      ; sound index [?]
+C1/1814:	8F 41 21 00	STA $002141    ; set it
+C1/1818:	AD E8 E9   	LDA $E9E8      ; sound command [?]
+C1/181B:	8F 40 21 00	STA $002140    ; play sound [?]
+C1/181F:	9C EC E9   	STZ $E9EC      ; reset animation sound effects flag
 C1/1822:	60         	RTS
 
-C1/1823:	AD 81 62   	LDA $6281
-C1/1826:	F0 0A      	BEQ $1832
+; Process regular sound effects
+C1/1823:	AD 81 62   	LDA $6281      ; sound: ching [?]
+C1/1826:	F0 0A      	BEQ $1832      ; check next if not set
 C1/1828:	A9 2C      	LDA #$2C
-C1/182A:	8F 40 21 00	STA $002140
-C1/182E:	9C 81 62   	STZ $6281
+C1/182A:	8F 40 21 00	STA $002140    ; play sound
+C1/182E:	9C 81 62   	STZ $6281      ; reset flag
 C1/1831:	60         	RTS
 
-C1/1832:	A5 93      	LDA $93
-C1/1834:	F0 03      	BEQ $1839
-C1/1836:	4C D8 17   	JMP $17D8
+C1/1832:	A5 93      	LDA $93        ; sound: character ready
+C1/1834:	F0 03      	BEQ $1839      ; check next if not set
+C1/1836:	4C D8 17   	JMP $17D8      ; play sound and reset flag
 
-C1/1839:	A5 94      	LDA $94
-C1/183B:	F0 03      	BEQ $1840
-C1/183D:	4C C6 17   	JMP $17C6
+C1/1839:	A5 94      	LDA $94        ; sound: cursor
+C1/183B:	F0 03      	BEQ $1840      ; check next if not set
+C1/183D:	4C C6 17   	JMP $17C6      ; play sound and reset flag
 
-C1/1840:	A5 95      	LDA $95
-C1/1842:	F0 03      	BEQ $1847
-C1/1844:	4C BD 17   	JMP $17BD
+C1/1840:	A5 95      	LDA $95        ; sound: buzzer
+C1/1842:	F0 03      	BEQ $1847      ; check next if not set
+C1/1844:	4C BD 17   	JMP $17BD      ; play sound and reset flag
 
-C1/1847:	A5 96      	LDA $96
-C1/1849:	F0 03      	BEQ $184E
-C1/184B:	4C CF 17   	JMP $17CF
+C1/1847:	A5 96      	LDA $96        ; sound: select
+C1/1849:	F0 03      	BEQ $184E      ; check next if not set
+C1/184B:	4C CF 17   	JMP $17CF      ; play sound and reset flag
 
-C1/184E:	A5 97      	LDA $97
-C1/1850:	F0 08      	BEQ $185A
+C1/184E:	A5 97      	LDA $97        ; SFX: song change [?]
+C1/1850:	F0 08      	BEQ $185A      ; exit if not set
 C1/1852:	A9 89      	LDA #$89
-C1/1854:	8F 40 21 00	STA $002140
-C1/1858:	64 97      	STZ $97
+C1/1854:	8F 40 21 00	STA $002140    ; play song change [?]
+C1/1858:	64 97      	STZ $97        ; reset song change flag
 C1/185A:	60         	RTS
 
 C1/185B:	DA         	PHX
@@ -3036,9 +3043,10 @@ C1/18CF:	8F 03 42 00	STA $004203
 C1/18D3:	7B         	TDC
 C1/18D4:	60         	RTS
 
-C1/18D5:	20 D9 18   	JSR $18D9
+C1/18D5:	20 D9 18   	JSR $18D9     ; Multiplication ($26 = $22 * $24)
 C1/18D8:	6B         	RTL
 
+; Multiply $22 * $24, Result in $26
 C1/18D9:	A5 22      	LDA $22
 C1/18DB:	8F 02 42 00	STA $004202
 C1/18DF:	A5 24      	LDA $24
@@ -3491,7 +3499,7 @@ C1/1BEF:	4C 77 1C   	JMP $1C77
 C1/1BF2:	85 22      	STA $22
 C1/1BF4:	A9 06      	LDA #$06
 C1/1BF6:	85 24      	STA $24
-C1/1BF8:	20 D9 18   	JSR $18D9
+C1/1BF8:	20 D9 18   	JSR $18D9     ; Multiplication ($26 = $22 * $24)
 C1/1BFB:	A6 26      	LDX $26
 C1/1BFD:	A0 00 10   	LDY #$1000
 C1/1C00:	20 F5 1C   	JSR $1CF5
@@ -3712,7 +3720,7 @@ C1/1DB8:	AD B8 EC   	LDA $ECB8
 C1/1DBB:	85 22      	STA $22
 C1/1DBD:	A9 06      	LDA #$06
 C1/1DBF:	85 24      	STA $24
-C1/1DC1:	20 D9 18   	JSR $18D9
+C1/1DC1:	20 D9 18   	JSR $18D9     ; Multiplication ($26 = $22 * $24)
 C1/1DC4:	A6 26      	LDX $26
 C1/1DC6:	A0 00 10   	LDY #$1000
 C1/1DC9:	20 F5 1C   	JSR $1CF5
@@ -7939,7 +7947,7 @@ C1/3E88:	AD 00 20   	LDA $2000
 C1/3E8B:	85 22      	STA $22
 C1/3E8D:	A9 0C      	LDA #$0C
 C1/3E8F:	85 24      	STA $24
-C1/3E91:	20 D9 18   	JSR $18D9
+C1/3E91:	20 D9 18   	JSR $18D9     ; Multiplication ($26 = $22 * $24)
 C1/3E94:	A5 26      	LDA $26
 C1/3E96:	AA         	TAX
 C1/3E97:	BF A4 C4 C2	LDA $C2C4A4,X
@@ -8938,7 +8946,7 @@ C1/465C:	8D F0 7B   	STA $7BF0
 C1/465F:	8D 85 7B   	STA $7B85
 C1/4662:	EE DD 7B   	INC $7BDD
 C1/4665:	EE D1 7B   	INC $7BD1
-C1/4668:	E6 93      	INC $93
+C1/4668:	E6 93      	INC $93       ; sound: character ready
 C1/466A:	60         	RTS
 
 C1/466B:	E6 10      	INC $10
@@ -9633,35 +9641,39 @@ C1/4B70:	4A         	LSR A
 C1/4B71:	4A         	LSR A          ; move into bit 2 ($04)
 C1/4B72:	60         	RTS
 
+; Determine palette color for item
+; In equipment swap mode
 C1/4B73:	25 40      	AND $40        ; active char bit in blocked equippers
 C1/4B75:	F0 03      	BEQ $4B7A      ; continue if equip not blocked
+
 C1/4B77:	A9 04      	LDA #$04       ; load gray color
 C1/4B79:	60         	RTS
 
 C1/4B7A:	AD 0D 89   	LDA $890D      ; equipped item index
 C1/4B7D:	C9 FF      	CMP #$FF       ; is it null
-C1/4B7F:	F0 28      	BEQ $4BA9      ; exit if no swap item selected
+C1/4B7F:	F0 28      	BEQ $4BA9      ; exit w/ yellow if no equipped item
 C1/4B81:	A5 2C      	LDA $2C        ; item index
 C1/4B83:	C9 FF      	CMP #$FF       ; is it null
 C1/4B85:	F0 22      	BEQ $4BA9      ; exit if so
-C1/4B87:	AE CA 62   	LDX $62CA      ; character index
+C1/4B87:	AE CA 62   	LDX $62CA      ; active character index
 C1/4B8A:	BD 6E 2E   	LDA $2E6E,X    ; has genji glove
 C1/4B8D:	F0 0F      	BEQ $4B9E      ; branch if no dual-wield
 C1/4B8F:	AD 0E 89   	LDA $890E      ; equipped item flags
-C1/4B92:	29 08      	AND #$08       ; non-weapon
-C1/4B94:	F0 13      	BEQ $4BA9      ; exit w/ yellow if is a weapon
+C1/4B92:	29 08      	AND #$08       ; is a shield
+C1/4B94:	F0 13      	BEQ $4BA9      ; exit w/ yellow if not a shield
 C1/4B96:	A5 2D      	LDA $2D        ; item flags
-C1/4B98:	29 08      	AND #$08       ; non-weapon
-C1/4B9A:	D0 DB      	BNE $4B77      ; exit w/ gray if non-weapon [?]
-C1/4B9C:	80 0B      	BRA $4BA9      ; else exit w/ yellow [?]
+C1/4B98:	29 08      	AND #$08       ; is a shield
+C1/4B9A:	D0 DB      	BNE $4B77      ; exit w/ gray if shield (no dual-shields)
+C1/4B9C:	80 0B      	BRA $4BA9      ; else exit w/ yellow
 
 ; Character cannot dual wield
 C1/4B9E:	A5 2D      	LDA $2D        ; item flags
-C1/4BA0:	0D 0E 89   	ORA $890E      ; equipped item flags
-C1/4BA3:	29 18      	AND #$18       ; get `is weapon` and `jumpable` flags [?]
-C1/4BA5:	C9 18      	CMP #$18       ; check both flags
-C1/4BA7:	D0 CE      	BNE $4B77      ; exit if not a weapon-for-weapon swap
-C1/4BA9:	A9 08      	LDA #$08       ; yellow palette color [?]
+C1/4BA0:	0D 0E 89   	ORA $890E      ; combine with equipped item flags
+C1/4BA3:	29 18      	AND #$18       ; isolate "is shield" and "is weapon"
+C1/4BA5:	C9 18      	CMP #$18       ; if one a weapon and one a shield?
+C1/4BA7:	D0 CE      	BNE $4B77      ; exit if not (no dual-anything)
+
+C1/4BA9:	A9 08      	LDA #$08       ; yellow palette color
 C1/4BAB:	60         	RTS
 
 C1/4BAC:	05
@@ -9679,24 +9691,25 @@ C1/4BB7:	00
 C1/4BB8:	FF
 C1/4BB9:	00
 
-C1/4BBA:	7B         	TDC
-C1/4BBB:	AA         	TAX
-C1/4BBC:	BF AC 4B C1	LDA $C14BAC,X
-C1/4BC0:	9D 55 57   	STA $5755,X
-C1/4BC3:	E8         	INX
-C1/4BC4:	E0 13 00   	CPX #$0013
-C1/4BC7:	D0 F3      	BNE $4BBC
-C1/4BC9:	AE CA 62   	LDX $62CA
-C1/4BCC:	BF 67 4B C1	LDA $C14B67,X
-C1/4BD0:	A8         	TAY
-C1/4BD1:	BF 01 1A C1	LDA $C11A01,X
-C1/4BD5:	85 40      	STA $40
-C1/4BD7:	B9 86 2B   	LDA $2B86,Y
-C1/4BDA:	8D 5A 57   	STA $575A
-C1/4BDD:	B9 9A 2B   	LDA $2B9A,Y
-C1/4BE0:	8D 60 57   	STA $5760
-C1/4BE3:	20 07 4E   	JSR $4E07
-C1/4BE6:	4C AB 63   	JMP $63AB
+; Draw equipped items
+C1/4BBA:	7B         	TDC             ; A = 0000
+C1/4BBB:	AA         	TAX             ; X = 0000
+C1/4BBC:	BF AC 4B C1	LDA $C14BAC,X   ; hardcoded data above
+C1/4BC0:	9D 55 57   	STA $5755,X     ; copy to tile buffer [?]
+C1/4BC3:	E8         	INX             ; advance index
+C1/4BC4:	E0 13 00   	CPX #$0013      ; copy 19 bytes (BUG? Should be $0D?)
+C1/4BC7:	D0 F3      	BNE $4BBC       ; loop until all bytes copied
+C1/4BC9:	AE CA 62   	LDX $62CA       ; active character index
+C1/4BCC:	BF 67 4B C1	LDA $C14B67,X   ; character equipped item index
+C1/4BD0:	A8         	TAY             ; set in Y
+C1/4BD1:	BF 01 1A C1	LDA $C11A01,X   ; active character bitmask
+C1/4BD5:	85 40      	STA $40         ; save for later
+C1/4BD7:	B9 86 2B   	LDA $2B86,Y     ; righthand item index
+C1/4BDA:	8D 5A 57   	STA $575A       ; store in buffer
+C1/4BDD:	B9 9A 2B   	LDA $2B9A,Y     ; lefthand item index
+C1/4BE0:	8D 60 57   	STA $5760       ; store in buffer
+C1/4BE3:	20 07 4E   	JSR $4E07       ; prepare tile move [?]
+C1/4BE6:	4C AB 63   	JMP $63AB       ; execute tile move [?]
 
 C1/4BE9:	05
 C1/4BEA:	02
@@ -9814,7 +9827,7 @@ C1/4CB9:	85 2C      	STA $2C          ; save for later
 C1/4CBB:	B9 87 26   	LDA $2687,Y      ; slot's item flags
 C1/4CBE:	85 2D      	STA $2D          ; save for later
 C1/4CC0:	B9 8A 26   	LDA $268A,Y      ; slot's item equipability blacklist
-C1/4CC3:	20 73 4B   	JSR $4B73        ; genji check
+C1/4CC3:	20 73 4B   	JSR $4B73        ; get item palette color
 C1/4CC6:	0D 58 57   	ORA $5758        ; combine with slot color palette
 C1/4CC9:	8D 58 57   	STA $5758        ; save updated palette (gray if $04)
 C1/4CCC:	80 0C      	BRA $4CDA
@@ -10872,7 +10885,7 @@ C1/553C:	087F
 C1/553E:	6957
 C1/5540:	7D88
 C1/5542:	4556
-C1/5544:	988D
+C1/5544:	988D ; $8D98
 C1/5546:	A057
 C1/5548:	4581
 C1/554A:	8556
@@ -10927,6 +10940,7 @@ C1/55AA:	B055
 C1/55AC:	BA55
 C1/55AE:	1C91
 
+; Target allies
 C1/55B0:	A9 2B       LDA #$2B
 C1/55B2:	8D F0 7B    STA $7BF0
 C1/55B5:	A9 12       LDA #$12
@@ -10994,7 +11008,7 @@ C1/563D:	8D F0 7B   	STA $7BF0
 C1/5640:	A9 0C      	LDA #$0C
 C1/5642:	4C 2C 5A   	JMP $5A2C
 
-C1/5645:	20 BA 4B   	JSR $4BBA
+C1/5645:	20 BA 4B   	JSR $4BBA     ; draw equipped items (menu)
 C1/5648:	A2 40 7E   	LDX #$7E40
 C1/564B:	8E AA 7B   	STX $7BAA
 C1/564E:	EE A9 7B   	INC $7BA9
@@ -11138,15 +11152,15 @@ C1/5761:	8D F0 7B   	STA $7BF0
 C1/5764:	A9 11      	LDA #$11
 C1/5766:	4C 2C 5A   	JMP $5A2C
 
-C1/5769:	9C 02 7B   	STZ $7B02
-C1/576C:	9C 0C 89   	STZ $890C
+C1/5769:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
+C1/576C:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
 C1/576F:	A9 09      	LDA #$09
 C1/5771:	8D C2 7B   	STA $7BC2
 C1/5774:	AD A5 7B   	LDA $7BA5
 C1/5777:	30 11      	BMI $578A
 C1/5779:	20 17 5A   	JSR $5A17
 C1/577C:	AE CA 62   	LDX $62CA
-C1/577F:	BD 47 89   	LDA $8947,X
+C1/577F:	BD 47 89   	LDA $8947,X    ; character's top visible item slot offset
 C1/5782:	8D A6 7B   	STA $7BA6
 C1/5785:	A9 80      	LDA #$80
 C1/5787:	8D A5 7B   	STA $7BA5
@@ -11218,7 +11232,7 @@ C1/57FD:	AC A1 7B   	LDY $7BA1       ; index to item (starts at 0?)
 
 C1/5800:	B9 87 26   	LDA $2687,Y     ; item flags
 C1/5803:	25 38      	AND $38
-C1/5805:	F0 15      	BEQ $581C       ; branch if can't be thrown/isn't tool
+C1/5805:	F0 15      	BEQ $581C       ; branch if not throwable/weapon/shield[?]
 C1/5807:	B9 86 26   	LDA $2686,Y     ; item index#
 C1/580A:	9D 05 40   	STA $4005,X
 C1/580D:	B9 89 26   	LDA $2689,Y     ; item quantity
@@ -12362,7 +12376,7 @@ C1/6118:	DA         	PHX
 C1/6119:	85 22      	STA $22
 C1/611B:	A9 16      	LDA #$16
 C1/611D:	85 24      	STA $24
-C1/611F:	20 D9 18   	JSR $18D9
+C1/611F:	20 D9 18   	JSR $18D9     ; Multiplication ($26 = $22 * $24)
 C1/6122:	A5 4B      	LDA $4B
 C1/6124:	F0 03      	BEQ $6129
 C1/6126:	4C 56 62   	JMP $6256
@@ -14069,7 +14083,7 @@ C1/6DF3:	4C 69 6F    JMP $6F69
 C1/6DF6:	A5 0E       LDA $0E
 C1/6DF8:	29 03       AND #$03
 C1/6DFA:	D0 41       BNE $6E3D
-C1/6DFC:	E6 94       INC $94
+C1/6DFC:	E6 94       INC $94        ; sound: cursor
 C1/6DFE:	EE B3 62    INC $62B3
 C1/6E01:	AD B3 62    LDA $62B3
 C1/6E04:	29 08       AND #$08
@@ -14103,7 +14117,7 @@ C1/6E46:	D0 3A      	BNE $6E82
 C1/6E48:	A5 05       LDA $05
 C1/6E4A:	29 03       AND #$03
 C1/6E4C:	F0 34       BEQ $6E82
-C1/6E4E:	E6 94       INC $94
+C1/6E4E:	E6 94       INC $94        ; sound: cursor
 C1/6E50:	A5 05       LDA $05
 C1/6E52:	29 02       AND #$02
 C1/6E54:	D0 16       BNE $6E6C
@@ -14135,7 +14149,7 @@ C1/6E8A:	29 30      	AND #$30
 C1/6E8C:	F0 45      	BEQ $6ED3
 C1/6E8E:	C9 30      	CMP #$30
 C1/6E90:	F0 41      	BEQ $6ED3
-C1/6E92:	E6 94      	INC $94
+C1/6E92:	E6 94      	INC $94        ; sound: cursor
 C1/6E94:	A5 36      	LDA $36
 C1/6E96:	29 20      	AND #$20
 C1/6E98:	F0 39      	BEQ $6ED3
@@ -14166,7 +14180,7 @@ C1/6ED0:	4C 05 6F   	JMP $6F05
 C1/6ED3:	A5 05      	LDA $05
 C1/6ED5:	29 0F      	AND #$0F
 C1/6ED7:	F0 02      	BEQ $6EDB
-C1/6ED9:	E6 94      	INC $94
+C1/6ED9:	E6 94      	INC $94        ; sound: cursor
 C1/6EDB:	A5 05      	LDA $05
 C1/6EDD:	C9 08      	CMP #$08
 C1/6EDF:	D0 06      	BNE $6EE7
@@ -14190,7 +14204,7 @@ C1/6F02:	4C 05 6F   	JMP $6F05
 
 C1/6F05:	A5 04      	LDA $04
 C1/6F07:	10 43      	BPL $6F4C
-C1/6F09:	E6 96      	INC $96
+C1/6F09:	E6 96      	INC $96       ; sound: select
 C1/6F0B:	AD 84 7A   	LDA $7A84
 C1/6F0E:	10 15      	BPL $6F25
 C1/6F10:	AD B1 62    LDA $62B1
@@ -14223,7 +14237,7 @@ C1/6F4C:	A5 09      	LDA $09
 C1/6F4E:	10 19      	BPL $6F69
 C1/6F50:	AD B1 62   	LDA $62B1
 C1/6F53:	D0 14      	BNE $6F69
-C1/6F55:	E6 96      	INC $96
+C1/6F55:	E6 96      	INC $96       ; sound: select
 C1/6F57:	9C 7D 7B   	STZ $7B7D
 C1/6F5A:	9C 7E 7B   	STZ $7B7E
 C1/6F5D:	9C 7F 7B   	STZ $7B7F
@@ -14347,7 +14361,7 @@ C1/703A:	AA         	TAX
 C1/703B:	8E FE E9   	STX $E9FE
 C1/703E:	AD 68 62   	LDA $6268
 C1/7041:	10 39      	BPL $707C
-C1/7043:	E6 96      	INC $96
+C1/7043:	E6 96      	INC $96       ; sound: select
 C1/7045:	20 90 6F   	JSR $6F90
 C1/7048:	8D 68 61   	STA $6168
 C1/704B:	20 56 6D   	JSR $6D56
@@ -14370,7 +14384,7 @@ C1/707B:	60         	RTS
 
 C1/707C:	AD 69 62   	LDA $6269
 C1/707F:	10 14      	BPL $7095
-C1/7081:	E6 96      	INC $96
+C1/7081:	E6 96      	INC $96       ; sound: select
 C1/7083:	9C 7D 7B   	STZ $7B7D
 C1/7086:	9C 7E 7B   	STZ $7B7E
 C1/7089:	9C 7F 7B   	STZ $7B7F
@@ -14433,7 +14447,7 @@ C1/7117:	AD 1E 7A   	LDA $7A1E
 C1/711A:	F0 4B      	BEQ $7167
 C1/711C:	20 48 8E   	JSR $8E48
 C1/711F:	AC CA 62   	LDY $62CA
-C1/7122:	B9 4B 89   	LDA $894B,Y
+C1/7122:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
 C1/7125:	29 01      	AND #$01
 C1/7127:	F0 1F      	BEQ $7148
 C1/7129:	BD 9D 2B   	LDA $2B9D,X
@@ -14443,12 +14457,12 @@ C1/7130:	DE 9D 2B   	DEC $2B9D,X
 C1/7133:	60         	RTS
 
 C1/7134:	A9 FF      	LDA #$FF
-C1/7136:	9D 9A 2B   	STA $2B9A,X
+C1/7136:	9D 9A 2B   	STA $2B9A,X     ; clear item slot
 C1/7139:	A9 80      	LDA #$80
-C1/713B:	9D 9B 2B   	STA $2B9B,X
-C1/713E:	9E 9C 2B   	STZ $2B9C,X
-C1/7141:	9E 9D 2B   	STZ $2B9D,X
-C1/7144:	9E 9E 2B   	STZ $2B9E,X
+C1/713B:	9D 9B 2B   	STA $2B9B,X     ; set unusable in battle
+C1/713E:	9E 9C 2B   	STZ $2B9C,X     ; zero quantity
+C1/7141:	9E 9D 2B   	STZ $2B9D,X     ; zero targeting
+C1/7144:	9E 9E 2B   	STZ $2B9E,X     ; zero equip blacklist
 C1/7147:	60         	RTS
 
 C1/7148:	BD 89 2B   	LDA $2B89,X
@@ -14458,41 +14472,41 @@ C1/714F:	DE 89 2B   	DEC $2B89,X
 C1/7152:	60         	RTS
 
 C1/7153:	A9 FF      	LDA #$FF
-C1/7155:	9D 86 2B   	STA $2B86,X
+C1/7155:	9D 86 2B   	STA $2B86,X     ; clear item slot
 C1/7158:	A9 80      	LDA #$80
-C1/715A:	9D 87 2B   	STA $2B87,X
-C1/715D:	9E 88 2B   	STZ $2B88,X
-C1/7160:	9E 89 2B   	STZ $2B89,X
-C1/7163:	9E 8A 2B   	STZ $2B8A,X
+C1/715A:	9D 87 2B   	STA $2B87,X     ; set unusable in battle
+C1/715D:	9E 88 2B   	STZ $2B88,X     ; zero quantity
+C1/7160:	9E 89 2B   	STZ $2B89,X     ; zero targeting
+C1/7163:	9E 8A 2B   	STZ $2B8A,X     ; zero equip blacklist
 C1/7166:	60         	RTS
 
 C1/7167:	7B          TDC
 C1/7168:	AA          TAX
-C1/7169:	B9 B0 2B    LDA $2BB0,Y
-C1/716C:	DD 86 26    CMP $2686,X
-C1/716F:	F0 0B       BEQ $717C
+C1/7169:	B9 B0 2B    LDA $2BB0,Y     ; using item
+C1/716C:	DD 86 26    CMP $2686,X     ; check battle inventory slot
+C1/716F:	F0 0B       BEQ $717C       ; branch if match
 C1/7171:	E8          INX
 C1/7172:	E8          INX
 C1/7173:	E8          INX
 C1/7174:	E8          INX
-C1/7175:	E8          INX
-C1/7176:	E0 00 05    CPX #$0500
-C1/7179:	D0 F1       BNE $716C
+C1/7175:	E8          INX             ; increment to next 5-byte block
+C1/7176:	E0 00 05    CPX #$0500      ; 255 slots
+C1/7179:	D0 F1       BNE $716C       ; loop through all slots
 C1/717B:	60          RTS
 
-C1/717C:	BD 89 26    LDA $2689,X
+C1/717C:	BD 89 26    LDA $2689,X     ; quantity in slot
 C1/717F:	C9 02       CMP #$02
-C1/7181:	90 04       BCC $7187
-C1/7183:	DE 89 26    DEC $2689,X
+C1/7181:	90 04       BCC $7187       ; branch if only 1 left
+C1/7183:	DE 89 26    DEC $2689,X     ; else decrement quantity
 C1/7186:	60          RTS
 
 C1/7187:	A9 FF      	LDA #$FF
-C1/7189:	9D 86 26   	STA $2686,X
+C1/7189:	9D 86 26   	STA $2686,X     ; clear item slot
 C1/718C:	A9 80      	LDA #$80
-C1/718E:	9D 87 26   	STA $2687,X
-C1/7191:	9E 88 26   	STZ $2688,X
-C1/7194:	9E 89 26   	STZ $2689,X
-C1/7197:	9E 8A 26   	STZ $268A,X
+C1/718E:	9D 87 26   	STA $2687,X     ; set "not usable in battle"
+C1/7191:	9E 88 26   	STZ $2688,X     ; zero targeting flags
+C1/7194:	9E 89 26   	STZ $2689,X     ; zero quantity
+C1/7197:	9E 8A 26   	STZ $268A,X     ; zero equip blacklist
 C1/719A:	60         	RTS
 
 C1/719B:	A9 FF      	LDA #$FF
@@ -15253,6 +15267,8 @@ C1/778B:	8D 84 7A    STA $7A84
 C1/778E:	A9 3D       LDA #$3D
 C1/7790:	80 05       BRA $7797
 C1/7792:	9C 41 2F   	STZ $2F41
+
+; Target enemies
 C1/7795:	A9 38      	LDA #$38
 C1/7797:	48         	PHA
 C1/7798:	EE 6B 7B   	INC $7B6B
@@ -15654,7 +15670,7 @@ C1/7AA6:	9C E9 7A   	STZ $7AE9
 C1/7AA9:	A5 04      	LDA $04
 C1/7AAB:	C9 40      	CMP #$40
 C1/7AAD:	D0 0B      	BNE $7ABA
-C1/7AAF:	E6 94      	INC $94
+C1/7AAF:	E6 94      	INC $94        ; sound: cursor
 C1/7AB1:	EE CB 7B   	INC $7BCB
 C1/7AB4:	A9 01      	LDA #$01
 C1/7AB6:	8D CC 7B   	STA $7BCC
@@ -15663,7 +15679,7 @@ C1/7AB9:	60         	RTS
 C1/7ABA:	A5 05      	LDA $05
 C1/7ABC:	C9 40      	CMP #$40
 C1/7ABE:	D0 0B      	BNE $7ACB
-C1/7AC0:	E6 94      	INC $94
+C1/7AC0:	E6 94      	INC $94        ; sound: cursor
 C1/7AC2:	EE CB 7B   	INC $7BCB
 C1/7AC5:	A9 02      	LDA #$02
 C1/7AC7:	8D CC 7B   	STA $7BCC
@@ -15704,7 +15720,7 @@ C1/7B10:	80 09      	BRA $7B1B
 C1/7B12:	BD 0F 89   	LDA $890F,X
 C1/7B15:	C5 36      	CMP $36
 C1/7B17:	F0 02      	BEQ $7B1B
-C1/7B19:	E6 94      	INC $94
+C1/7B19:	E6 94      	INC $94        ; sound: cursor
 C1/7B1B:	A5 05      	LDA $05
 C1/7B1D:	29 04      	AND #$04
 C1/7B1F:	F0 1F      	BEQ $7B40
@@ -15720,7 +15736,7 @@ C1/7B35:	80 09      	BRA $7B40
 C1/7B37:	BD 0F 89   	LDA $890F,X
 C1/7B3A:	C5 36      	CMP $36
 C1/7B3C:	F0 02      	BEQ $7B40
-C1/7B3E:	E6 94      	INC $94
+C1/7B3E:	E6 94      	INC $94        ; sound: cursor
 C1/7B40:	A5 05      	LDA $05
 C1/7B42:	29 02      	AND #$02
 C1/7B44:	F0 1F      	BEQ $7B65
@@ -15736,7 +15752,7 @@ C1/7B5A:	80 09      	BRA $7B65
 C1/7B5C:	BD 0F 89   	LDA $890F,X
 C1/7B5F:	C5 36      	CMP $36
 C1/7B61:	F0 02      	BEQ $7B65
-C1/7B63:	E6 94      	INC $94
+C1/7B63:	E6 94      	INC $94        ; sound: cursor
 C1/7B65:	A5 05      	LDA $05
 C1/7B67:	29 01      	AND #$01
 C1/7B69:	F0 1F      	BEQ $7B8A
@@ -15752,24 +15768,24 @@ C1/7B7F:	80 09      	BRA $7B8A
 C1/7B81:	BD 0F 89   	LDA $890F,X
 C1/7B84:	C5 36      	CMP $36
 C1/7B86:	F0 02      	BEQ $7B8A
-C1/7B88:	E6 94      	INC $94
+C1/7B88:	E6 94      	INC $94        ; sound: cursor
 C1/7B8A:	A5 04      	LDA $04
 C1/7B8C:	29 30      	AND #$30
 C1/7B8E:	C9 20      	CMP #$20
 C1/7B90:	D0 08      	BNE $7B9A
-C1/7B92:	E6 94      	INC $94
+C1/7B92:	E6 94      	INC $94        ; sound: cursor
 C1/7B94:	20 A9 7C   	JSR $7CA9
 C1/7B97:	4C 31 56   	JMP $5631
 
 C1/7B9A:	C9 10      	CMP #$10
 C1/7B9C:	D0 08      	BNE $7BA6
-C1/7B9E:	E6 94      	INC $94
+C1/7B9E:	E6 94      	INC $94        ; sound: cursor
 C1/7BA0:	20 A9 7C   	JSR $7CA9
 C1/7BA3:	4C 3B 56   	JMP $563B
 
 C1/7BA6:	A5 04      	LDA $04
 C1/7BA8:	10 08      	BPL $7BB2
-C1/7BAA:	E6 96      	INC $96
+C1/7BAA:	E6 96      	INC $96       ; sound: select
 C1/7BAC:	EE 41 2F   	INC $2F41
 C1/7BAF:	4C C8 7C   	JMP $7CC8
 
@@ -15778,7 +15794,7 @@ C1/7BB5:	BD 0F 89   	LDA $890F,X
 C1/7BB8:	0A         	ASL A
 C1/7BB9:	AA         	TAX
 C1/7BBA:	BF 46 7A C1	LDA $C17A46,X
-C1/7BBE:	8D E4 88   	STA $88E4
+C1/7BBE:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/7BC1:	BF 47 7A C1	LDA $C17A47,X
 C1/7BC5:	8D E5 88   	STA $88E5
 C1/7BC8:	A9 01      	LDA #$01
@@ -15793,7 +15809,7 @@ C1/7BD9:	B0 18      	BCS $7BF3
 C1/7BDB:	A5 05      	LDA $05
 C1/7BDD:	29 0C      	AND #$0C
 C1/7BDF:	F0 1A      	BEQ $7BFB
-C1/7BE1:	E6 94      	INC $94
+C1/7BE1:	E6 94      	INC $94        ; sound: cursor
 C1/7BE3:	A5 05      	LDA $05
 C1/7BE5:	29 08      	AND #$08
 C1/7BE7:	F0 0A      	BEQ $7BF3
@@ -15806,7 +15822,7 @@ C1/7BF6:	20 4E 7A   	JSR $7A4E
 C1/7BF9:	B0 F8      	BCS $7BF3
 C1/7BFB:	A5 04      	LDA $04
 C1/7BFD:	10 08      	BPL $7C07
-C1/7BFF:	E6 96      	INC $96
+C1/7BFF:	E6 96      	INC $96       ; sound: select
 C1/7C01:	EE 41 2F   	INC $2F41
 C1/7C04:	4C C8 7C   	JMP $7CC8
 
@@ -15814,13 +15830,13 @@ C1/7C07:	A5 05      	LDA $05
 C1/7C09:	29 0F      	AND #$0F
 C1/7C0B:	C9 02      	CMP #$02
 C1/7C0D:	D0 08      	BNE $7C17
-C1/7C0F:	E6 94      	INC $94
+C1/7C0F:	E6 94      	INC $94        ; sound: cursor
 C1/7C11:	20 A9 7C   	JSR $7CA9
 C1/7C14:	4C 31 56   	JMP $5631
 
 C1/7C17:	C9 01      	CMP #$01
 C1/7C19:	D0 08      	BNE $7C23
-C1/7C1B:	E6 94      	INC $94
+C1/7C1B:	E6 94      	INC $94        ; sound: cursor
 C1/7C1D:	20 A9 7C   	JSR $7CA9
 C1/7C20:	4C 3B 56   	JMP $563B
 
@@ -15829,7 +15845,7 @@ C1/7C26:	BD 0F 89   	LDA $890F,X
 C1/7C29:	0A         	ASL A
 C1/7C2A:	AA         	TAX
 C1/7C2B:	BF 3E 7A C1	LDA $C17A3E,X    ; Data
-C1/7C2F:	8D E4 88   	STA $88E4
+C1/7C2F:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/7C32:	BF 3F 7A C1	LDA $C17A3F,X    ; Data
 C1/7C36:	8D E5 88   	STA $88E5
 C1/7C39:	A9 01      	LDA #$01
@@ -15844,7 +15860,7 @@ C1/7C4A:	B0 18      	BCS $7C64
 C1/7C4C:	A5 05      	LDA $05
 C1/7C4E:	29 0C      	AND #$0C
 C1/7C50:	F0 1A      	BEQ $7C6C
-C1/7C52:	E6 94      	INC $94
+C1/7C52:	E6 94      	INC $94        ; sound: cursor
 C1/7C54:	A5 05      	LDA $05
 C1/7C56:	29 08      	AND #$08
 C1/7C58:	F0 0A      	BEQ $7C64
@@ -15857,7 +15873,7 @@ C1/7C67:	20 70 7A   	JSR $7A70
 C1/7C6A:	B0 F8      	BCS $7C64
 C1/7C6C:	A5 04      	LDA $04
 C1/7C6E:	10 1C      	BPL $7C8C
-C1/7C70:	E6 96      	INC $96
+C1/7C70:	E6 96      	INC $96       ; sound: select
 C1/7C72:	20 AB 84   	JSR $84AB
 C1/7C75:	20 A9 7C   	JSR $7CA9
 C1/7C78:	BD 60 20   	LDA $2060,X
@@ -15873,7 +15889,7 @@ C1/7C8F:	BD 0F 89   	LDA $890F,X
 C1/7C92:	0A         	ASL A
 C1/7C93:	AA         	TAX
 C1/7C94:	BF 36 7A C1	LDA $C17A36,X
-C1/7C98:	8D E4 88   	STA $88E4
+C1/7C98:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/7C9B:	BF 37 7A C1	LDA $C17A37,X
 C1/7C9F:	8D E5 88   	STA $88E5
 C1/7CA2:	A9 01      	LDA #$01
@@ -15949,7 +15965,7 @@ C1/7D30:	A9 36      	LDA #$36
 C1/7D32:	8D C2 7B   	STA $7BC2
 C1/7D35:	A5 04      	LDA $04
 C1/7D37:	10 1D      	BPL $7D56
-C1/7D39:	E6 96      	INC $96
+C1/7D39:	E6 96      	INC $96       ; sound: select
 C1/7D3B:	20 56 6D   	JSR $6D56
 C1/7D3E:	AD 82 7B   	LDA $7B82
 C1/7D41:	4A         	LSR A
@@ -15966,7 +15982,7 @@ C1/7D55:	60         	RTS
 
 C1/7D56:	A5 09      	LDA $09
 C1/7D58:	10 05      	BPL $7D5F
-C1/7D5A:	E6 96      	INC $96
+C1/7D5A:	E6 96      	INC $96       ; sound: select
 C1/7D5C:	4C 28 56   	JMP $5628
 
 C1/7D5F:	AE CA 62    LDX $62CA
@@ -16070,7 +16086,7 @@ C1/7E12:	60         	RTS
 
 C1/7E13:	A5 04      	LDA $04
 C1/7E15:	10 17      	BPL $7E2E
-C1/7E17:	E6 94      	INC $94
+C1/7E17:	E6 94      	INC $94        ; sound: cursor
 C1/7E19:	20 56 6D   	JSR $6D56
 C1/7E1C:	A9 15      	LDA #$15
 C1/7E1E:	99 AF 2B   	STA $2BAF,Y
@@ -16089,7 +16105,7 @@ C1/7E39:	D0 06      	BNE $7E41
 C1/7E3B:	80 0D      	BRA $7E4A
 C1/7E3D:	A5 09      	LDA $09
 C1/7E3F:	10 05      	BPL $7E46
-C1/7E41:	E6 94      	INC $94
+C1/7E41:	E6 94      	INC $94        ; sound: cursor
 C1/7E43:	4C 73 56   	JMP $5673
 
 C1/7E46:	C9 02      	CMP #$02
@@ -16101,12 +16117,12 @@ C1/7E51:	AA         	TAX
 C1/7E52:	AD 2E 2F   	LDA $2F2E
 C1/7E55:	F0 0C      	BEQ $7E63
 C1/7E57:	A9 70      	LDA #$70
-C1/7E59:	8D E4 88   	STA $88E4
+C1/7E59:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/7E5C:	A9 A0      	LDA #$A0
 C1/7E5E:	8D E5 88   	STA $88E5
 C1/7E61:	80 0C      	BRA $7E6F
 C1/7E63:	A9 38      	LDA #$38
-C1/7E65:	8D E4 88   	STA $88E4
+C1/7E65:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/7E68:	BF 3F 7A C1	LDA $C17A3F,X    ; Data
 C1/7E6C:	8D E5 88   	STA $88E5
 C1/7E6F:	EE E3 88   	INC $88E3
@@ -16121,7 +16137,7 @@ C1/7E80:	60         	RTS
 
 C1/7E81:	A5 04      	LDA $04
 C1/7E83:	10 17      	BPL $7E9C
-C1/7E85:	E6 94      	INC $94
+C1/7E85:	E6 94      	INC $94        ; sound: cursor
 C1/7E87:	20 56 6D   	JSR $6D56
 C1/7E8A:	A9 14      	LDA #$14
 C1/7E8C:	99 AF 2B   	STA $2BAF,Y
@@ -16140,7 +16156,7 @@ C1/7EA7:	D0 06      	BNE $7EAF
 C1/7EA9:	80 0D      	BRA $7EB8
 C1/7EAB:	A5 09      	LDA $09
 C1/7EAD:	10 05      	BPL $7EB4
-C1/7EAF:	E6 94      	INC $94
+C1/7EAF:	E6 94      	INC $94        ; sound: cursor
 C1/7EB1:	4C 7C 56   	JMP $567C
 
 C1/7EB4:	C9 01      	CMP #$01
@@ -16152,12 +16168,12 @@ C1/7EBF:	AA         	TAX
 C1/7EC0:	AD 2E 2F   	LDA $2F2E
 C1/7EC3:	F0 0C      	BEQ $7ED1
 C1/7EC5:	A9 10      	LDA #$10
-C1/7EC7:	8D E4 88   	STA $88E4
+C1/7EC7:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/7ECA:	A9 A0      	LDA #$A0
 C1/7ECC:	8D E5 88   	STA $88E5
 C1/7ECF:	80 0C      	BRA $7EDD
 C1/7ED1:	A9 08      	LDA #$08
-C1/7ED3:	8D E4 88   	STA $88E4
+C1/7ED3:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/7ED6:	BF 3F 7A C1	LDA $C17A3F,X
 C1/7EDA:	8D E5 88   	STA $88E5
 C1/7EDD:	EE E3 88   	INC $88E3
@@ -16206,7 +16222,7 @@ C1/7F15:	60         	RTS
 
 C1/7F16:	A5 04      	LDA $04
 C1/7F18:	10 53      	BPL $7F6D
-C1/7F1A:	E6 96      	INC $96
+C1/7F1A:	E6 96      	INC $96       ; sound: select
 C1/7F1C:	AD 92 7B   	LDA $7B92
 C1/7F1F:	D0 19      	BNE $7F3A
 C1/7F21:	AD 49 2F   	LDA $2F49
@@ -16299,7 +16315,7 @@ C1/7FF0:	AD 92 7B   	LDA $7B92
 C1/7FF3:	0D 93 7B   	ORA $7B93
 C1/7FF6:	0D 94 7B   	ORA $7B94
 C1/7FF9:	D0 05      	BNE $8000
-C1/7FFB:	E6 96      	INC $96
+C1/7FFB:	E6 96      	INC $96       ; sound: select
 C1/7FFD:	4C A0 56   	JMP $56A0
 
 C1/8000:	AD 8C 7B   	LDA $7B8C
@@ -16402,7 +16418,7 @@ C1/80E7:	C9 08      	CMP #$08
 C1/80E9:	D0 09      	BNE $80F4
 C1/80EB:	A5 37      	LDA $37
 C1/80ED:	F0 4F      	BEQ $813E
-C1/80EF:	E6 94      	INC $94
+C1/80EF:	E6 94      	INC $94        ; sound: cursor
 C1/80F1:	C6 37      	DEC $37
 C1/80F3:	60         	RTS
 
@@ -16411,7 +16427,7 @@ C1/80F6:	D0 0B      	BNE $8103
 C1/80F8:	A5 37      	LDA $37
 C1/80FA:	C9 03      	CMP #$03
 C1/80FC:	F0 43      	BEQ $8141
-C1/80FE:	E6 94      	INC $94
+C1/80FE:	E6 94      	INC $94        ; sound: cursor
 C1/8100:	E6 37      	INC $37
 C1/8102:	60         	RTS
 
@@ -16423,11 +16439,11 @@ C1/810B:	A5 39      	LDA $39
 C1/810D:	85 36      	STA $36
 C1/810F:	A5 37      	LDA $37
 C1/8111:	F0 26      	BEQ $8139
-C1/8113:	E6 94      	INC $94
+C1/8113:	E6 94      	INC $94        ; sound: cursor
 C1/8115:	C6 37      	DEC $37
 C1/8117:	60         	RTS
 
-C1/8118:	E6 94      	INC $94
+C1/8118:	E6 94      	INC $94        ; sound: cursor
 C1/811A:	C6 36      	DEC $36
 C1/811C:	60         	RTS
 
@@ -16440,11 +16456,11 @@ C1/8127:	64 36      	STZ $36
 C1/8129:	A5 37      	LDA $37
 C1/812B:	C9 03      	CMP #$03
 C1/812D:	F0 12      	BEQ $8141
-C1/812F:	E6 94      	INC $94
+C1/812F:	E6 94      	INC $94        ; sound: cursor
 C1/8131:	E6 37      	INC $37
 C1/8133:	60         	RTS
 
-C1/8134:	E6 94      	INC $94
+C1/8134:	E6 94      	INC $94        ; sound: cursor
 C1/8136:	E6 36      	INC $36
 C1/8138:	60         	RTS
 
@@ -16486,12 +16502,12 @@ C1/8178:	C9 17      	CMP #$17
 C1/817A:	F0 32      	BEQ $81AE
 C1/817C:	1A         	INC A
 C1/817D:	99 13 89   	STA $8913,Y
-C1/8180:	E6 94      	INC $94
+C1/8180:	E6 94      	INC $94        ; sound: cursor
 C1/8182:	20 28 82   	JSR $8228
 C1/8185:	80 1D      	BRA $81A4
 C1/8187:	B9 13 89   	LDA $8913,Y
 C1/818A:	D0 0F      	BNE $819B
-C1/818C:	E6 94      	INC $94
+C1/818C:	E6 94      	INC $94        ; sound: cursor
 C1/818E:	AD E8 7A   	LDA $7AE8
 C1/8191:	D0 11      	BNE $81A4
 C1/8193:	20 9B 82   	JSR $829B
@@ -16500,7 +16516,7 @@ C1/8198:	4C 01 5A   	JMP $5A01
 
 C1/819B:	3A         	DEC A
 C1/819C:	99 13 89   	STA $8913,Y
-C1/819F:	E6 94      	INC $94
+C1/819F:	E6 94      	INC $94        ; sound: cursor
 C1/81A1:	20 46 82   	JSR $8246
 C1/81A4:	A5 36      	LDA $36
 C1/81A6:	99 17 89   	STA $8917,Y
@@ -16511,7 +16527,7 @@ C1/81B0:	10 3B      	BPL $81ED
 C1/81B2:	20 14 84   	JSR $8414
 C1/81B5:	BD 93 20   	LDA $2093,X
 C1/81B8:	30 31      	BMI $81EB
-C1/81BA:	E6 96      	INC $96
+C1/81BA:	E6 96      	INC $96       ; sound: select
 C1/81BC:	20 56 6D   	JSR $6D56
 C1/81BF:	AD E8 7A   	LDA $7AE8
 C1/81C2:	F0 04      	BEQ $81C8
@@ -16532,11 +16548,11 @@ C1/81E5:	4C B0 55   	JMP $55B0
 
 C1/81E8:	4C 95 77   	JMP $7795
 
-C1/81EB:	E6 95      	INC $95
+C1/81EB:	E6 95      	INC $95       ; sound: buzzer
 
 C1/81ED:	A5 09      	LDA $09
 C1/81EF:	10 05      	BPL $81F6
-C1/81F1:	E6 96      	INC $96
+C1/81F1:	E6 96      	INC $96       ; sound: select
 C1/81F3:	4C E9 56   	JMP $56E9
 
 C1/81F6:	20 14 84   	JSR $8414
@@ -16551,7 +16567,7 @@ C1/820B:	20 8F 89   	JSR $898F
 C1/820E:	B9 17 89   	LDA $8917,Y
 C1/8211:	AA         	TAX
 C1/8212:	BF 80 82 C1	LDA $C18280,X    ; Data
-C1/8216:	8D E4 88   	STA $88E4
+C1/8216:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/8219:	B9 1B 89   	LDA $891B,Y
 C1/821C:	AA         	TAX
 C1/821D:	BF 8D 82 C1	LDA $C1828D,X    ; Data
@@ -16606,6 +16622,7 @@ C1/8283:	00
 C1/8284:	78
 C1/8285:	00
 C1/8286:	78
+
 C1/8287:	10
 C1/8288:	80
 
@@ -16651,7 +16668,7 @@ C1/82C0:	60         	RTS
 C1/82C1:	A5 05      	LDA $05
 C1/82C3:	29 05      	AND #$05
 C1/82C5:	F0 0F      	BEQ $82D6
-C1/82C7:	E6 94      	INC $94
+C1/82C7:	E6 94      	INC $94        ; sound: cursor
 C1/82C9:	29 01      	AND #$01
 C1/82CB:	F0 06      	BEQ $82D3
 C1/82CD:	AE CA 62   	LDX $62CA
@@ -16662,7 +16679,7 @@ C1/82D6:	A5 04      	LDA $04
 C1/82D8:	10 20      	BPL $82FA
 C1/82DA:	20 9B 82   	JSR $829B
 C1/82DD:	B0 19      	BCS $82F8
-C1/82DF:	E6 96      	INC $96
+C1/82DF:	E6 96      	INC $96       ; sound: select
 C1/82E1:	20 56 6D   	JSR $6D56
 C1/82E4:	A9 19      	LDA #$19
 C1/82E6:	99 AF 2B   	STA $2BAF,Y
@@ -16672,9 +16689,9 @@ C1/82EF:	BD 90 20   	LDA $2090,X
 C1/82F2:	8D 84 7A   	STA $7A84
 C1/82F5:	4C 95 77   	JMP $7795
 
-C1/82F8:	E6 95      	INC $95
+C1/82F8:	E6 95      	INC $95       ; sound: buzzer
 C1/82FA:	A9 38      	LDA #$38
-C1/82FC:	8D E4 88   	STA $88E4
+C1/82FC:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/82FF:	A9 A8      	LDA #$A8
 C1/8301:	8D E5 88   	STA $88E5
 C1/8304:	EE E3 88   	INC $88E3
@@ -16704,14 +16721,14 @@ C1/8336:	C9 14      	CMP #$14
 C1/8338:	F0 23      	BEQ $835D
 C1/833A:	1A         	INC A
 C1/833B:	99 1F 89   	STA $891F,Y
-C1/833E:	E6 94      	INC $94
+C1/833E:	E6 94      	INC $94        ; sound: cursor
 C1/8340:	20 B6 83   	JSR $83B6
 C1/8343:	80 0E      	BRA $8353
 C1/8345:	B9 1F 89   	LDA $891F,Y
 C1/8348:	F0 13      	BEQ $835D
 C1/834A:	3A         	DEC A
 C1/834B:	99 1F 89   	STA $891F,Y
-C1/834E:	E6 94      	INC $94
+C1/834E:	E6 94      	INC $94        ; sound: cursor
 C1/8350:	20 D4 83   	JSR $83D4
 C1/8353:	A5 36      	LDA $36
 C1/8355:	99 23 89   	STA $8923,Y
@@ -16722,17 +16739,17 @@ C1/835F:	10 1B      	BPL $837C
 C1/8361:	20 F7 83   	JSR $83F7
 C1/8364:	BD 6B 21   	LDA $216B,X
 C1/8367:	30 11      	BMI $837A
-C1/8369:	E6 94      	INC $94
+C1/8369:	E6 94      	INC $94        ; sound: cursor
 C1/836B:	BD 6A 21   	LDA $216A,X
 C1/836E:	8D 85 7A   	STA $7A85
 C1/8371:	BD 6C 21   	LDA $216C,X
 C1/8374:	8D 84 7A   	STA $7A84
 C1/8377:	4C 95 77   	JMP $7795
 
-C1/837A:	E6 95      	INC $95
+C1/837A:	E6 95      	INC $95       ; sound: buzzer
 C1/837C:	A5 09      	LDA $09
 C1/837E:	10 06      	BPL $8386
-C1/8380:	E6 96      	INC $96
+C1/8380:	E6 96      	INC $96       ; sound: select
 C1/8382:	20 FB 56   	JSR $56FB
 C1/8385:	60         	RTS
 
@@ -16748,7 +16765,7 @@ C1/839B:	20 8F 89    JSR $898F
 C1/839E:	7B          TDC
 C1/839F:	AA          TAX
 C1/83A0:	BF 8B 82 C1 LDA $C1828B,X
-C1/83A4:	8D E4 88    STA $88E4
+C1/83A4:	8D E4 88    STA $88E4      ; main cursor X position
 C1/83A7:	B9 27 89    LDA $8927,Y
 C1/83AA:	AA          TAX
 C1/83AB:	BF 8D 82 C1 LDA $C1828D,X
@@ -16940,14 +16957,14 @@ C1/84F9:	C9 7C      	CMP #$7C
 C1/84FB:	F0 23      	BEQ $8520
 C1/84FD:	1A         	INC A
 C1/84FE:	99 2B 89   	STA $892B,Y
-C1/8501:	E6 94      	INC $94
+C1/8501:	E6 94      	INC $94        ; sound: cursor
 C1/8503:	20 73 85   	JSR $8573
 C1/8506:	80 0E      	BRA $8516
 C1/8508:	B9 2B 89   	LDA $892B,Y
 C1/850B:	F0 13      	BEQ $8520
 C1/850D:	3A         	DEC A
 C1/850E:	99 2B 89   	STA $892B,Y
-C1/8511:	E6 94      	INC $94
+C1/8511:	E6 94      	INC $94        ; sound: cursor
 C1/8513:	20 91 85   	JSR $8591
 C1/8516:	A5 36      	LDA $36
 C1/8518:	99 2F 89   	STA $892F,Y
@@ -16955,7 +16972,7 @@ C1/851B:	A5 37      	LDA $37
 C1/851D:	99 33 89   	STA $8933,Y
 C1/8520:	A5 09      	LDA $09
 C1/8522:	10 06      	BPL $852A
-C1/8524:	E6 96      	INC $96
+C1/8524:	E6 96      	INC $96       ; sound: select
 C1/8526:	20 04 57   	JSR $5704
 C1/8529:	60         	RTS
 
@@ -16965,14 +16982,14 @@ C1/852E:	20 38 84   	JSR $8438
 C1/8531:	BD 7E 25   	LDA $257E,X
 C1/8534:	C9 FF      	CMP #$FF
 C1/8536:	F0 10      	BEQ $8548
-C1/8538:	E6 96      	INC $96
+C1/8538:	E6 96      	INC $96       ; sound: select
 C1/853A:	BD 7E 25   	LDA $257E,X
 C1/853D:	8D 85 7A   	STA $7A85
 C1/8540:	A9 02      	LDA #$02
 C1/8542:	8D 84 7A   	STA $7A84
 C1/8545:	4C 95 77   	JMP $7795
 
-C1/8548:	E6 95      	INC $95
+C1/8548:	E6 95      	INC $95       ; sound: buzzer
 C1/854A:	A9 7C      	LDA #$7C
 C1/854C:	85 36      	STA $36
 C1/854E:	A2 4B 00   	LDX #$004B
@@ -16982,7 +16999,7 @@ C1/8556:	20 8F 89   	JSR $898F
 C1/8559:	B9 2F 89   	LDA $892F,Y
 C1/855C:	AA         	TAX
 C1/855D:	BF 89 82 C1	LDA $C18289,X    ; Data
-C1/8561:	8D E4 88   	STA $88E4
+C1/8561:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/8564:	B9 33 89   	LDA $8933,Y
 C1/8567:	AA         	TAX
 C1/8568:	BF 8D 82 C1	LDA $C1828D,X    ; Data
@@ -17044,7 +17061,7 @@ C1/85E1:	A5 37      	LDA $37
 C1/85E3:	99 3B 89   	STA $893B,Y
 C1/85E6:	A5 09      	LDA $09
 C1/85E8:	10 06      	BPL $85F0
-C1/85EA:	E6 96      	INC $96
+C1/85EA:	E6 96      	INC $96       ; sound: select
 C1/85EC:	20 0D 57   	JSR $570D
 C1/85EF:	60         	RTS
 
@@ -17053,17 +17070,17 @@ C1/85F2:	10 17      	BPL $860B
 C1/85F4:	20 9E 84   	JSR $849E
 C1/85F7:	BD 7E 26   	LDA $267E,X
 C1/85FA:	30 0D      	BMI $8609
-C1/85FC:	E6 96      	INC $96
+C1/85FC:	E6 96      	INC $96       ; sound: select
 C1/85FE:	8D 85 7A   	STA $7A85
 C1/8601:	A9 02      	LDA #$02
 C1/8603:	8D 84 7A   	STA $7A84
 C1/8606:	4C 95 77   	JMP $7795
 
-C1/8609:	E6 95      	INC $95
+C1/8609:	E6 95      	INC $95       ; sound: buzzer
 C1/860B:	B9 37 89   	LDA $8937,Y
 C1/860E:	AA         	TAX
 C1/860F:	BF 87 82 C1	LDA $C18287,X
-C1/8613:	8D E4 88   	STA $88E4
+C1/8613:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/8616:	B9 3B 89   	LDA $893B,Y
 C1/8619:	AA         	TAX
 C1/861A:	BF 8D 82 C1	LDA $C1828D,X
@@ -17095,7 +17112,7 @@ C1/8652:	A5 37      	LDA $37
 C1/8654:	99 43 89   	STA $8943,Y
 C1/8657:	A5 09      	LDA $09
 C1/8659:	10 06      	BPL $8661
-C1/865B:	E6 96      	INC $96
+C1/865B:	E6 96      	INC $96       ; sound: select
 C1/865D:	20 16 57   	JSR $5716
 C1/8660:	60         	RTS
 
@@ -17117,19 +17134,19 @@ C1/867C:	30 19      	BMI $8697
 C1/867E:	80 06      	BRA $8686
 C1/8680:	BF 14 91 C1	LDA $C19114,X    ; Data
 C1/8684:	30 11      	BMI $8697
-C1/8686:	E6 96      	INC $96
+C1/8686:	E6 96      	INC $96       ; sound: select
 C1/8688:	8D 85 7A   	STA $7A85
 C1/868B:	A4 36      	LDY $36
 C1/868D:	BF 04 91 C1	LDA $C19104,X    ; Data
 C1/8691:	8D 84 7A   	STA $7A84
 C1/8694:	4C 95 77   	JMP $7795
 
-C1/8697:	E6 95      	INC $95
+C1/8697:	E6 95      	INC $95       ; sound: buzzer
 C1/8699:	A4 36      	LDY $36
 C1/869B:	B9 3F 89   	LDA $893F,Y
 C1/869E:	AA         	TAX
 C1/869F:	BF 89 82 C1	LDA $C18289,X    ; Data
-C1/86A3:	8D E4 88   	STA $88E4
+C1/86A3:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/86A6:	B9 43 89   	LDA $8943,Y
 C1/86A9:	AA         	TAX
 C1/86AA:	BF 8D 82 C1	LDA $C1828D,X    ; Data
@@ -17162,14 +17179,14 @@ C1/86E4:	C9 FB      	CMP #$FB
 C1/86E6:	F0 23      	BEQ $870B
 C1/86E8:	1A         	INC A
 C1/86E9:	99 53 89   	STA $8953,Y
-C1/86EC:	E6 94      	INC $94
+C1/86EC:	E6 94      	INC $94        ; sound: cursor
 C1/86EE:	20 5C 87   	JSR $875C
 C1/86F1:	80 0E      	BRA $8701
 C1/86F3:	B9 53 89   	LDA $8953,Y
 C1/86F6:	F0 13      	BEQ $870B
 C1/86F8:	3A         	DEC A
 C1/86F9:	99 53 89   	STA $8953,Y
-C1/86FC:	E6 94      	INC $94
+C1/86FC:	E6 94      	INC $94        ; sound: cursor
 C1/86FE:	20 7A 87   	JSR $877A
 C1/8701:	A5 36      	LDA $36
 C1/8703:	99 57 89   	STA $8957,Y
@@ -17177,12 +17194,12 @@ C1/8706:	A5 37      	LDA $37
 C1/8708:	99 5B 89   	STA $895B,Y
 C1/870B:	A5 04      	LDA $04
 C1/870D:	10 1C      	BPL $872B
-C1/870F:	E6 96      	INC $96
+C1/870F:	E6 96      	INC $96       ; sound: select
 C1/8711:	20 54 84   	JSR $8454
 C1/8714:	BD 05 40   	LDA $4005,X
 C1/8717:	C9 FF      	CMP #$FF
 C1/8719:	D0 04      	BNE $871F
-C1/871B:	E6 95      	INC $95
+C1/871B:	E6 95      	INC $95       ; sound: buzzer
 C1/871D:	80 0C      	BRA $872B
 C1/871F:	8D 85 7A   	STA $7A85
 C1/8722:	BD 07 40   	LDA $4007,X
@@ -17191,7 +17208,7 @@ C1/8728:	4C 95 77   	JMP $7795
 
 C1/872B:	A5 09      	LDA $09
 C1/872D:	10 06      	BPL $8735
-C1/872F:	E6 96      	INC $96
+C1/872F:	E6 96      	INC $96       ; sound: select
 C1/8731:	20 E0 56   	JSR $56E0
 C1/8734:	60         	RTS
 
@@ -17204,7 +17221,7 @@ C1/8741:	20 8F 89    JSR $898F
 C1/8744:	7B          TDC
 C1/8745:	AA          TAX
 C1/8746:	BF 87 82 C1 LDA $C18287,X    ; Data
-C1/874A:	8D E4 88    STA $88E4
+C1/874A:	8D E4 88    STA $88E4      ; main cursor X position
 C1/874D:	B9 5B 89    LDA $895B,Y
 C1/8750:	AA          TAX
 C1/8751:	BF 8D 82 C1 LDA $C1828D,X    ; Data
@@ -17267,14 +17284,14 @@ C1/87CD:	B9 5F 89   	LDA $895F,Y
 C1/87D0:	F0 23      	BEQ $87F5
 C1/87D2:	1A         	INC A
 C1/87D3:	99 5F 89   	STA $895F,Y
-C1/87D6:	E6 94      	INC $94
+C1/87D6:	E6 94      	INC $94        ; sound: cursor
 C1/87D8:	20 3C 88   	JSR $883C
 C1/87DB:	80 0E      	BRA $87EB
 C1/87DD:	B9 5F 89   	LDA $895F,Y
 C1/87E0:	F0 13      	BEQ $87F5
 C1/87E2:	3A         	DEC A
 C1/87E3:	99 5F 89   	STA $895F,Y
-C1/87E6:	E6 94      	INC $94
+C1/87E6:	E6 94      	INC $94        ; sound: cursor
 C1/87E8:	20 5A 88   	JSR $885A
 C1/87EB:	A5 36      	LDA $36
 C1/87ED:	99 63 89   	STA $8963,Y
@@ -17282,12 +17299,12 @@ C1/87F0:	A5 37      	LDA $37
 C1/87F2:	99 67 89   	STA $8967,Y
 C1/87F5:	A5 04      	LDA $04
 C1/87F7:	10 1F      	BPL $8818
-C1/87F9:	E6 96      	INC $96
+C1/87F9:	E6 96      	INC $96       ; sound: select
 C1/87FB:	20 70 84   	JSR $8470
 C1/87FE:	BD 05 40   	LDA $4005,X
 C1/8801:	C9 FF      	CMP #$FF
 C1/8803:	D0 04      	BNE $8809
-C1/8805:	E6 95      	INC $95
+C1/8805:	E6 95      	INC $95       ; sound: buzzer
 C1/8807:	80 0F      	BRA $8818
 C1/8809:	BD 05 40   	LDA $4005,X
 C1/880C:	8D 85 7A   	STA $7A85
@@ -17297,14 +17314,14 @@ C1/8815:	4C 95 77   	JMP $7795
 
 C1/8818:	A5 09      	LDA $09
 C1/881A:	10 06      	BPL $8822
-C1/881C:	E6 96      	INC $96
+C1/881C:	E6 96      	INC $96       ; sound: select
 C1/881E:	20 97 56   	JSR $5697
 C1/8821:	60         	RTS
 
 C1/8822:	B9 63 89   	LDA $8963,Y
 C1/8825:	AA         	TAX
 C1/8826:	BF 85 82 C1	LDA $C18285,X
-C1/882A:	8D E4 88   	STA $88E4
+C1/882A:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/882D:	B9 67 89   	LDA $8967,Y
 C1/8830:	AA         	TAX
 C1/8831:	BF 8D 82 C1	LDA $C1828D,X
@@ -17347,8 +17364,8 @@ C1/8880:	9C EF 88   	STZ $88EF
 C1/8883:	AD CB 7B   	LDA $7BCB
 C1/8886:	F0 0F      	BEQ $8897
 C1/8888:	9C AF 7B   	STZ $7BAF
-C1/888B:	9C B5 7B   	STZ $7BB5
-C1/888E:	9C 02 7B   	STZ $7B02
+C1/888B:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/888E:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
 C1/8891:	A9 12      	LDA #$12
 C1/8893:	8D C2 7B   	STA $7BC2
 C1/8896:	60         	RTS
@@ -17356,101 +17373,107 @@ C1/8896:	60         	RTS
 C1/8897:	A2 A4 00    LDX #$00A4
 C1/889A:	8E B3 7B    STX $7BB3
 C1/889D:	AC CA 62    LDY $62CA
-C1/88A0:	7B          TDC
-C1/88A1:	99 4B 89    STA $894B,Y
+C1/88A0:	7B          TDC            ; A = 0000
+C1/88A1:	99 4B 89    STA $894B,Y    ; right column cursor flag
 C1/88A4:	85 36       STA $36
-C1/88A6:	B9 4F 89    LDA $894F,Y
+C1/88A6:	B9 4F 89    LDA $894F,Y    ; which visible item slot is selected
 C1/88A9:	85 37       STA $37
-C1/88AB:	B9 47 89    LDA $8947,Y
+C1/88AB:	B9 47 89    LDA $8947,Y    ; character's top visible item slot offset
 C1/88AE:	85 38       STA $38
 C1/88B0:	64 39       STZ $39
 C1/88B2:	20 DB 80    JSR $80DB
 C1/88B5:	A5 3C       LDA $3C
 C1/88B7:	F0 42       BEQ $88FB
 C1/88B9:	30 12       BMI $88CD
-C1/88BB:	B9 47 89    LDA $8947,Y
+C1/88BB:	B9 47 89    LDA $8947,Y    ; character's top visible item slot offset
 C1/88BE:	C9 FB       CMP #$FB
 C1/88C0:	F0 43       BEQ $8905
 C1/88C2:	1A          INC A
-C1/88C3:	99 47 89    STA $8947,Y
-C1/88C6:	E6 94       INC $94
+C1/88C3:	99 47 89    STA $8947,Y    ; character's top visible item slot offset
+C1/88C6:	E6 94       INC $94        ; sound: cursor
 C1/88C8:	20 E9 8C    JSR $8CE9
 C1/88CB:	80 2E       BRA $88FB
-C1/88CD:	B9 47 89    LDA $8947,Y
+C1/88CD:	B9 47 89    LDA $8947,Y    ; character's top visible item slot offset
 C1/88D0:	D0 20       BNE $88F2
 C1/88D2:	A5 3C       LDA $3C
 C1/88D4:	29 40       AND #$40
 C1/88D6:	D0 04       BNE $88DC
 C1/88D8:	7B          TDC
-C1/88D9:	99 4B 89    STA $894B,Y
-C1/88DC:	AD 02 7B    LDA $7B02
-C1/88DF:	F0 05       BEQ $88E6
-C1/88E1:	AD 00 7B    LDA $7B00
-C1/88E4:	F0 1F       BEQ $8905
+C1/88D9:	99 4B 89    STA $894B,Y    ; right column cursor flag
+C1/88DC:	AD 02 7B    LDA $7B02      ; item swapping flag
+C1/88DF:	F0 05       BEQ $88E6      ; branch if not item swapping
+C1/88E1:	AD 00 7B    LDA $7B00      ; selected item location type
+C1/88E4:	F0 1F       BEQ $8905      ; branch if regular inventory item
 C1/88E6:	A2 C8 00    LDX #$00C8
 C1/88E9:	8E B3 7B    STX $7BB3
-C1/88EC:	E6 94       INC $94
+C1/88EC:	E6 94       INC $94        ; sound: cursor
 C1/88EE:	20 45 56    JSR $5645
 C1/88F1:	60          RTS
 
 C1/88F2:	3A         	DEC A
-C1/88F3:	99 47 89   	STA $8947,Y
-C1/88F6:	E6 94      	INC $94
+C1/88F3:	99 47 89   	STA $8947,Y    ; character's top visible item slot offset
+C1/88F6:	E6 94      	INC $94        ; sound: cursor
 C1/88F8:	20 11 8D   	JSR $8D11
 C1/88FB:	A5 36      	LDA $36
-C1/88FD:	99 4B 89   	STA $894B,Y
+C1/88FD:	99 4B 89   	STA $894B,Y    ; right column cursor flag
 C1/8900:	A5 37      	LDA $37
-C1/8902:	99 4F 89   	STA $894F,Y
+C1/8902:	99 4F 89   	STA $894F,Y    ; which visible item slot is selected
 C1/8905:	AD A8 7B   	LDA $7BA8
 C1/8908:	D0 59      	BNE $8963
-C1/890A:	A5 04      	LDA $04
-C1/890C:	10 2D      	BPL $893B
-C1/890E:	20 24 8A   	JSR $8A24
-C1/8911:	90 50      	BCC $8963
+
+; Handle A
+C1/890A:	A5 04      	LDA $04        ; button pressed byte
+C1/890C:	10 2D      	BPL $893B      ; branch if not pressing A
+C1/890E:	20 24 8A   	JSR $8A24      ; handle swap or initial selection
+C1/8911:	90 50      	BCC $8963      ; branch if not using item
+
+; Use selected item
 C1/8913:	9C AF 7B   	STZ $7BAF
-C1/8916:	9C B5 7B   	STZ $7BB5
-C1/8919:	9C 02 7B   	STZ $7B02
-C1/891C:	20 BE 89   	JSR $89BE
-C1/891F:	BD 86 26   	LDA $2686,X
-C1/8922:	8D 85 7A   	STA $7A85
-C1/8925:	BD 88 26   	LDA $2688,X
-C1/8928:	8D 84 7A   	STA $7A84
+C1/8916:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8919:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
+C1/891C:	20 BE 89   	JSR $89BE      ; X = selected item data index
+C1/891F:	BD 86 26   	LDA $2686,X    ; item id
+C1/8922:	8D 85 7A   	STA $7A85      ; save
+C1/8925:	BD 88 26   	LDA $2688,X    ; item targeting
+C1/8928:	8D 84 7A   	STA $7A84      ; save
 C1/892B:	9C 1E 7A   	STZ $7A1E
 C1/892E:	9C BA EC   	STZ $ECBA
-C1/8931:	29 40      	AND #$40
-C1/8933:	D0 03      	BNE $8938
-C1/8935:	4C B0 55   	JMP $55B0
+C1/8931:	29 40      	AND #$40       ; enemy selected by default
+C1/8933:	D0 03      	BNE $8938      ; branch if targets enemies
+C1/8935:	4C B0 55   	JMP $55B0      ; target allies
+C1/8938:	4C 95 77   	JMP $7795      ; target enemies
 
-C1/8938:	4C 95 77   	JMP $7795
-
-C1/893B:	A5 09      	LDA $09
-C1/893D:	10 24      	BPL $8963
-C1/893F:	E6 96      	INC $96
+; Handle B [?]
+C1/893B:	A5 09      	LDA $09        ; button pressed byte
+C1/893D:	10 24      	BPL $8963      ; branch if not pressing B [?]
+C1/893F:	E6 96      	INC $96        ; sound: select
 C1/8941:	9C AF 7B   	STZ $7BAF
-C1/8944:	9C B5 7B   	STZ $7BB5
-C1/8947:	AD 02 7B   	LDA $7B02
+C1/8944:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8947:	AD 02 7B   	LDA $7B02      ; item swapping flag
 C1/894A:	D0 09      	BNE $8955
 C1/894C:	9C AF 7B   	STZ $7BAF
-C1/894F:	9C B5 7B   	STZ $7BB5
+C1/894F:	9C B5 7B   	STZ $7BB5      ; source item cursor position
 C1/8952:	4C F2 56   	JMP $56F2
 
-C1/8955:	9C 02 7B    STZ $7B02
-C1/8958:	9C 0C 89    STZ $890C
+C1/8955:	9C 02 7B    STZ $7B02      ; unset item swapping flag
+C1/8958:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/895B:	A9 0A       LDA #$0A
 C1/895D:	8D C3 7B    STA $7BC3
 C1/8960:	20 76 8D    JSR $8D76
+
+; Finish up [?]
 C1/8963:	AC CA 62    LDY $62CA
 C1/8966:	A9 FB       LDA #$FB
 C1/8968:	85 36       STA $36
 C1/896A:	A2 25 00    LDX #$0025
 C1/896D:	86 2E       STX $2E
-C1/896F:	B9 47 89    LDA $8947,Y
+C1/896F:	B9 47 89    LDA $8947,Y    ; character's top visible item slot offset
 C1/8972:	20 8F 89    JSR $898F
-C1/8975:	B9 4B 89    LDA $894B,Y
+C1/8975:	B9 4B 89    LDA $894B,Y    ; right column cursor flag
 C1/8978:	AA          TAX
 C1/8979:	BF 87 82 C1 LDA $C18287,X
-C1/897D:	8D E4 88    STA $88E4
-C1/8980:	B9 4F 89    LDA $894F,Y
+C1/897D:	8D E4 88    STA $88E4      ; main cursor X position
+C1/8980:	B9 4F 89    LDA $894F,Y    ; which visible item slot is selected
 C1/8983:	AA          TAX
 C1/8984:	BF 8D 82 C1 LDA $C1828D,X
 C1/8988:	8D E5 88    STA $88E5
@@ -17482,137 +17505,160 @@ C1/89B7:	8D F0 88   	STA $88F0
 C1/89BA:	EE EF 88   	INC $88EF
 C1/89BD:	60         	RTS
 
-C1/89BE:	5A         	PHY
-C1/89BF:	B9 47 89   	LDA $8947,Y
+; Set active slot's item index in X
+C1/89BE:	5A         	PHY           ; store active character index (why?)
+C1/89BF:	B9 47 89   	LDA $8947,Y   ; offset to topmost visible item slot
 C1/89C2:	18         	CLC
-C1/89C3:	79 4F 89   	ADC $894F,Y
-C1/89C6:	C2 20      	REP #$20
-C1/89C8:	85 40      	STA $40
+C1/89C3:	79 4F 89   	ADC $894F,Y   ; currently visible items slot number
+C1/89C6:	C2 20      	REP #$20      ; 16-bit A
+C1/89C8:	85 40      	STA $40       ; store full item slot number
 C1/89CA:	0A         	ASL A
 C1/89CB:	0A         	ASL A
 C1/89CC:	18         	CLC
-C1/89CD:	65 40      	ADC $40
-C1/89CF:	AA         	TAX
-C1/89D0:	7B         	TDC
-C1/89D1:	E2 20      	SEP #$20
-C1/89D3:	7A         	PLY
+C1/89CD:	65 40      	ADC $40       ; A * 5
+C1/89CF:	AA         	TAX           ; X = inventory data index [?]
+C1/89D0:	7B         	TDC           ; A = 0000
+C1/89D1:	E2 20      	SEP #$20      ; 8-bit A
+C1/89D3:	7A         	PLY           ; restore active character index
 C1/89D4:	60         	RTS
 
-C1/89D5:	AD 39 7B   	LDA $7B39
-C1/89D8:	C9 FF      	CMP #$FF
-C1/89DA:	F0 30      	BEQ $8A0C
-C1/89DC:	AD 3B 7B   	LDA $7B3B
-C1/89DF:	C9 FF      	CMP #$FF
-C1/89E1:	F0 29      	BEQ $8A0C
-C1/89E3:	DA         	PHX
-C1/89E4:	AE CA 62   	LDX $62CA
-C1/89E7:	BD 6E 2E   	LDA $2E6E,X
-C1/89EA:	F0 11      	BEQ $89FD
-C1/89EC:	FA         	PLX
-C1/89ED:	AD 3A 7B   	LDA $7B3A
-C1/89F0:	29 08      	AND #$08
-C1/89F2:	F0 18      	BEQ $8A0C
-C1/89F4:	AD 3C 7B   	LDA $7B3C
-C1/89F7:	29 08      	AND #$08
-C1/89F9:	F0 11      	BEQ $8A0C
+; Validate equip<->inventory swap
+; If valid, flag equip stat update
+C1/89D5:	AD 39 7B   	LDA $7B39     ; swap-in item index
+C1/89D8:	C9 FF      	CMP #$FF      ; empty?
+C1/89DA:	F0 30      	BEQ $8A0C     ; branch if removing equipment (valid)
+C1/89DC:	AD 3B 7B   	LDA $7B3B     ; still equipped item index
+C1/89DF:	C9 FF      	CMP #$FF      ; empty?
+C1/89E1:	F0 29      	BEQ $8A0C     ; branch if other hand is empty (valid)
+C1/89E3:	DA         	PHX           ; store selected item index
+C1/89E4:	AE CA 62   	LDX $62CA     ; character index
+C1/89E7:	BD 6E 2E   	LDA $2E6E,X   ; has dual wield
+C1/89EA:	F0 11      	BEQ $89FD     ; branch if cannot dual wield
+
+; Can dual wield
+C1/89EC:	FA         	PLX           ; restore selected item index
+C1/89ED:	AD 3A 7B   	LDA $7B3A     ; swap-in item flags
+C1/89F0:	29 08      	AND #$08      ; is shield
+C1/89F2:	F0 18      	BEQ $8A0C     ; branch if not a shield (valid)
+C1/89F4:	AD 3C 7B   	LDA $7B3C     ; still-equipped item flags
+C1/89F7:	29 08      	AND #$08      ; is shield
+C1/89F9:	F0 11      	BEQ $8A0C     ; branch if not a shield (valid)
 C1/89FB:	80 0D      	BRA $8A0A
+
+; Cannot dual wield
 C1/89FD:	FA         	PLX
-C1/89FE:	AD 3A 7B   	LDA $7B3A
-C1/8A01:	0D 3C 7B   	ORA $7B3C
+C1/89FE:	AD 3A 7B   	LDA $7B3A     ; swap-in item flags
+C1/8A01:	0D 3C 7B   	ORA $7B3C     ; still-equipped item flags
 C1/8A04:	29 18      	AND #$18
-C1/8A06:	C9 18      	CMP #$18
-C1/8A08:	F0 02      	BEQ $8A0C
-C1/8A0A:	38         	SEC
+C1/8A06:	C9 18      	CMP #$18      ; one weapon, one shield
+C1/8A08:	F0 02      	BEQ $8A0C     ; branch if valid setup
+
+; Invalid equipment setup
+C1/8A0A:	38         	SEC           ; set carry to indicate invalid equipment
 C1/8A0B:	60         	RTS
 
-C1/8A0C:	DA         	PHX
-C1/8A0D:	AE CA 62   	LDX $62CA
+; Valid equipment setup
+C1/8A0C:	DA         	PHX           ; store selected item index
+C1/8A0D:	AE CA 62   	LDX $62CA     ; X = character index
 C1/8A10:	A9 01      	LDA #$01
-C1/8A12:	9D 30 2F   	STA $2F30,X
-C1/8A15:	FA         	PLX
-C1/8A16:	18         	CLC
+C1/8A12:	9D 30 2F   	STA $2F30,X   ; flag equipment changed (re-calc stats)
+C1/8A15:	FA         	PLX           ; restore selected item index
+C1/8A16:	18         	CLC           ; clear carry to indicate valid equipment
 C1/8A17:	60         	RTS
 
-C1/8A18:	DA         	PHX
-C1/8A19:	AE CA 62   	LDX $62CA
-C1/8A1C:	BF 01 1A C1	LDA $C11A01,X
-C1/8A20:	85 2C      	STA $2C
-C1/8A22:	FA         	PLX
+; Store character bitmask in $2C
+C1/8A18:	DA         	PHX            ; store X
+C1/8A19:	AE CA 62   	LDX $62CA      ; character index
+C1/8A1C:	BF 01 1A C1	LDA $C11A01,X  ; character bitmask
+C1/8A20:	85 2C      	STA $2C        ; save it
+C1/8A22:	FA         	PLX            ; restore X
 C1/8A23:	60         	RTS
 
-C1/8A24:	E6 96      	INC $96
-C1/8A26:	20 BE 89   	JSR $89BE
-C1/8A29:	AD 02 7B   	LDA $7B02
-C1/8A2C:	D0 03      	BNE $8A31
+; Select item slot
+C1/8A24:	E6 96      	INC $96        ; sound: select
+C1/8A26:	20 BE 89   	JSR $89BE      ; X = item data index for selected item
+C1/8A29:	AD 02 7B   	LDA $7B02      ; item swapping flag
+C1/8A2C:	D0 03      	BNE $8A31      ; branch if mid-swap
 C1/8A2E:	4C 23 8B   	JMP $8B23
 
-C1/8A31:	8E 05 7B   	STX $7B05
-C1/8A34:	AD 00 7B   	LDA $7B00
-C1/8A37:	F0 64      	BEQ $8A9D
-C1/8A39:	BD 86 26   	LDA $2686,X
-C1/8A3C:	C9 FF      	CMP #$FF
-C1/8A3E:	F0 11      	BEQ $8A51
-C1/8A40:	20 18 8A   	JSR $8A18
-C1/8A43:	BD 87 26   	LDA $2687,X
-C1/8A46:	29 18      	AND #$18
-C1/8A48:	F0 3F      	BEQ $8A89
-C1/8A4A:	BD 8A 26   	LDA $268A,X
-C1/8A4D:	25 2C      	AND $2C
-C1/8A4F:	D0 38      	BNE $8A89
-C1/8A51:	AD 00 7B   	LDA $7B00
-C1/8A54:	C9 01      	CMP #$01
-C1/8A56:	F0 11      	BEQ $8A69
-C1/8A58:	AC 03 7B   	LDY $7B03
-C1/8A5B:	B9 86 2B   	LDA $2B86,Y
-C1/8A5E:	8D 3B 7B   	STA $7B3B
-C1/8A61:	B9 87 2B   	LDA $2B87,Y
-C1/8A64:	8D 3C 7B   	STA $7B3C
-C1/8A67:	80 0F      	BRA $8A78
-C1/8A69:	AC 03 7B   	LDY $7B03
-C1/8A6C:	B9 9A 2B   	LDA $2B9A,Y
-C1/8A6F:	8D 3B 7B   	STA $7B3B
-C1/8A72:	B9 9B 2B   	LDA $2B9B,Y
-C1/8A75:	8D 3C 7B   	STA $7B3C
-C1/8A78:	BD 86 26   	LDA $2686,X
-C1/8A7B:	8D 39 7B   	STA $7B39
-C1/8A7E:	BD 87 26   	LDA $2687,X
-C1/8A81:	8D 3A 7B   	STA $7B3A
-C1/8A84:	20 D5 89   	JSR $89D5
-C1/8A87:	90 07      	BCC $8A90
-C1/8A89:	E6 95      	INC $95
-C1/8A8B:	64 96      	STZ $96
+C1/8A31:	8E 05 7B   	STX $7B05      ; set swap-in item index
+C1/8A34:	AD 00 7B   	LDA $7B00      ; swap-out item location type
+C1/8A37:	F0 64      	BEQ $8A9D      ; branch if swapping inventory slot
+C1/8A39:	BD 86 26   	LDA $2686,X    ; swap-in item index
+C1/8A3C:	C9 FF      	CMP #$FF       ; empty?
+C1/8A3E:	F0 11      	BEQ $8A51      ; branch if destination slot is empty
+C1/8A40:	20 18 8A   	JSR $8A18      ; store character bitmask in $2C
+C1/8A43:	BD 87 26   	LDA $2687,X    ; swap-in item flags
+C1/8A46:	29 18      	AND #$18       ; weapon or shield
+C1/8A48:	F0 3F      	BEQ $8A89      ; branch if not weapon or shield
+C1/8A4A:	BD 8A 26   	LDA $268A,X    ; swap-in item equip blacklist
+C1/8A4D:	25 2C      	AND $2C        ; check unique character bit
+C1/8A4F:	D0 38      	BNE $8A89      ; branch if unequippable
+
+C1/8A51:	AD 00 7B   	LDA $7B00      ; selected item location type
+C1/8A54:	C9 01      	CMP #$01       ; righthand slot (left column)
+C1/8A56:	F0 11      	BEQ $8A69      ; branch if swapping righthand
+
+C1/8A58:	AC 03 7B   	LDY $7B03      ; index of swap-out equipment data
+C1/8A5B:	B9 86 2B   	LDA $2B86,Y    ; righthand (static) item index
+C1/8A5E:	8D 3B 7B   	STA $7B3B      ; save
+C1/8A61:	B9 87 2B   	LDA $2B87,Y    ; righthand (static) item flags
+C1/8A64:	8D 3C 7B   	STA $7B3C      ; save
+C1/8A67:	80 0F      	BRA $8A78      ; skip lefthand handling
+
+C1/8A69:	AC 03 7B   	LDY $7B03      ; index of swap-out equipment data
+C1/8A6C:	B9 9A 2B   	LDA $2B9A,Y    ; lefthand (static) item index
+C1/8A6F:	8D 3B 7B   	STA $7B3B      ; save
+C1/8A72:	B9 9B 2B   	LDA $2B9B,Y    ; lefthand (static) item flags
+C1/8A75:	8D 3C 7B   	STA $7B3C      ; save
+
+C1/8A78:	BD 86 26   	LDA $2686,X    ; swap-in item index
+C1/8A7B:	8D 39 7B   	STA $7B39      ; save
+C1/8A7E:	BD 87 26   	LDA $2687,X    ; swap-in item flags
+C1/8A81:	8D 3A 7B   	STA $7B3A      ; save
+C1/8A84:	20 D5 89   	JSR $89D5      ; validate equip swap and flag stat update
+C1/8A87:	90 07      	BCC $8A90      ; branch if valid equipment setup
+
+; Invalid equipment swap
+C1/8A89:	E6 95      	INC $95        ; sound: buzzer
+C1/8A8B:	64 96      	STZ $96        ; cancel select sound
 C1/8A8D:	4C 0A 8B   	JMP $8B0A
 
-C1/8A90:	AD 00 7B   	LDA $7B00
-C1/8A93:	C9 01      	CMP #$01
-C1/8A95:	F0 03      	BEQ $8A9A
-C1/8A97:	4C 02 8C   	JMP $8C02
+; Valid equipment setup
+C1/8A90:	AD 00 7B   	LDA $7B00      ; selected item location type
+C1/8A93:	C9 01      	CMP #$01       ; righthand slot (left column)
+C1/8A95:	F0 03      	BEQ $8A9A      ; branch if swapping righthand
+C1/8A97:	4C 02 8C   	JMP $8C02      ; handle lefthand swap
+C1/8A9A:	4C 4D 8B   	JMP $8B4D      ; handle righthand swap
 
-C1/8A9A:	4C 4D 8B   	JMP $8B4D
-
-C1/8A9D:	EC 03 7B   	CPX $7B03
-C1/8AA0:	D0 2C      	BNE $8ACE
+; Swapping inventory items
+C1/8A9D:	EC 03 7B   	CPX $7B03      ; index of swap-in item data
+C1/8AA0:	D0 2C      	BNE $8ACE      ; branch if different items
 C1/8AA2:	9C AF 7B   	STZ $7BAF
-C1/8AA5:	9C B5 7B   	STZ $7BB5
-C1/8AA8:	BD 86 26   	LDA $2686,X
-C1/8AAB:	C9 FF      	CMP #$FF
-C1/8AAD:	F0 05      	BEQ $8AB4
-C1/8AAF:	BD 87 26   	LDA $2687,X
-C1/8AB2:	10 12      	BPL $8AC6
-C1/8AB4:	E6 95      	INC $95
-C1/8AB6:	64 96      	STZ $96
-C1/8AB8:	9C 0C 89   	STZ $890C
-C1/8ABB:	9C 02 7B   	STZ $7B02
+C1/8AA5:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8AA8:	BD 86 26   	LDA $2686,X    ; item index
+C1/8AAB:	C9 FF      	CMP #$FF       ; empty?
+C1/8AAD:	F0 05      	BEQ $8AB4      ; branch if empty slot
+C1/8AAF:	BD 87 26   	LDA $2687,X    ; item flags
+C1/8AB2:	10 12      	BPL $8AC6      ; branch if usable in battle
+
+; Fail to use item
+C1/8AB4:	E6 95      	INC $95        ; sound: buzzer
+C1/8AB6:	64 96      	STZ $96        ; cancel select sound
+C1/8AB8:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
+C1/8ABB:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
 C1/8ABE:	9C AF 7B   	STZ $7BAF
-C1/8AC1:	9C B5 7B   	STZ $7BB5
+C1/8AC1:	9C B5 7B   	STZ $7BB5      ; source item cursor position
 C1/8AC4:	18         	CLC
 C1/8AC5:	60         	RTS
 
-C1/8AC6:	BD 87 26   	LDA $2687,X
-C1/8AC9:	9C 0C 89   	STZ $890C
-C1/8ACC:	38         	SEC
+; Use item
+C1/8AC6:	BD 87 26   	LDA $2687,X    ; these flags aren't used after this [?]
+C1/8AC9:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
+C1/8ACC:	38         	SEC            ; set carry to indicate item used [?]
 C1/8ACD:	60         	RTS
 
+; Swap two battle inventory items
 C1/8ACE:	5A          PHY
 C1/8ACF:	7B          TDC
 C1/8AD0:	A8          TAY
@@ -17622,8 +17668,8 @@ C1/8AD7:	E8          INX
 C1/8AD8:	C8          INY
 C1/8AD9:	C0 05 00    CPY #$0005
 C1/8ADC:	D0 F3       BNE $8AD1
-C1/8ADE:	AC 05 7B    LDY $7B05
-C1/8AE1:	AE 03 7B    LDX $7B03
+C1/8ADE:	AC 05 7B    LDY $7B05      ; index of swap-out item data
+C1/8AE1:	AE 03 7B    LDX $7B03      ; index of swap-in item data
 C1/8AE4:	A9 05       LDA #$05
 C1/8AE6:	85 40       STA $40
 C1/8AE8:	BD 86 26    LDA $2686,X
@@ -17634,36 +17680,37 @@ C1/8AF0:	C6 40       DEC $40
 C1/8AF2:	D0 F4       BNE $8AE8
 C1/8AF4:	7B          TDC
 C1/8AF5:	AA          TAX
-C1/8AF6:	AC 03 7B    LDY $7B03
+C1/8AF6:	AC 03 7B    LDY $7B03      ; index of swap-in item data
 C1/8AF9:	BD 07 7B    LDA $7B07,X
 C1/8AFC:	99 86 26    STA $2686,Y
 C1/8AFF:	E8          INX
 C1/8B00:	C8          INY
 C1/8B01:	E0 05 00    CPX #$0005
 C1/8B04:	D0 F3       BNE $8AF9
-C1/8B06:	9C 02 7B    STZ $7B02
+C1/8B06:	9C 02 7B    STZ $7B02      ; unset item swapping flag
 C1/8B09:	7A          PLY
-C1/8B0A:	9C 0C 89    STZ $890C
+
+C1/8B0A:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/8B0D:	A9 0A       LDA #$0A
 C1/8B0F:	8D C3 7B    STA $7BC3
 C1/8B12:	20 76 8D    JSR $8D76
-C1/8B15:	9C 00 7B    STZ $7B00
-C1/8B18:	9C 02 7B    STZ $7B02
+C1/8B15:	9C 00 7B    STZ $7B00      ; selected item location type
+C1/8B18:	9C 02 7B    STZ $7B02      ; unset item swapping flag
 C1/8B1B:	9C AF 7B    STZ $7BAF
-C1/8B1E:	9C B5 7B    STZ $7BB5
+C1/8B1E:	9C B5 7B    STZ $7BB5      ; source item cursor position
 C1/8B21:	18          CLC
 C1/8B22:	60          RTS
 
-C1/8B23:	9C 00 7B   	STZ $7B00
-C1/8B26:	8E 03 7B   	STX $7B03
-C1/8B29:	EE 02 7B   	INC $7B02
-C1/8B2C:	B9 4B 89   	LDA $894B,Y
+C1/8B23:	9C 00 7B   	STZ $7B00      ; selected item location type
+C1/8B26:	8E 03 7B   	STX $7B03      ; index of swap-in item data
+C1/8B29:	EE 02 7B   	INC $7B02      ; set item swapping flag
+C1/8B2C:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
 C1/8B2F:	AA         	TAX
 C1/8B30:	BF 87 82 C1	LDA $C18287,X
 C1/8B34:	18         	CLC
 C1/8B35:	69 03      	ADC #$03
 C1/8B37:	8D B0 7B   	STA $7BB0
-C1/8B3A:	B9 4F 89   	LDA $894F,Y
+C1/8B3A:	B9 4F 89   	LDA $894F,Y    ; which visible item slot is selected
 C1/8B3D:	AA         	TAX
 C1/8B3E:	BF 8D 82 C1	LDA $C1828D,X
 C1/8B42:	AA         	TAX
@@ -17673,31 +17720,33 @@ C1/8B48:	8D AF 7B   	STA $7BAF
 C1/8B4B:	18         	CLC
 C1/8B4C:	60         	RTS
 
+; Handle righthand swap
 C1/8B4D:	5A          PHY
 C1/8B4E:	7B          TDC
 C1/8B4F:	AA          TAX
-C1/8B50:	AC 03 7B    LDY $7B03
+C1/8B50:	AC 03 7B    LDY $7B03      ; index of swap-in item data
 C1/8B53:	B9 86 2B    LDA $2B86,Y
 C1/8B56:	9D 07 7B    STA $7B07,X
 C1/8B59:	E8          INX
 C1/8B5A:	C8          INY
 C1/8B5B:	E0 05 00    CPX #$0005
 C1/8B5E:	D0 F3       BNE $8B53
-C1/8B60:	AE 05 7B    LDX $7B05
-C1/8B63:	AC 03 7B    LDY $7B03
-C1/8B66:	B9 86 2B    LDA $2B86,Y
-C1/8B69:	DD 86 26    CMP $2686,X
-C1/8B6C:	D0 17       BNE $8B85
-C1/8B6E:	A9 FF       LDA #$FF
-C1/8B70:	99 86 2B    STA $2B86,Y
+C1/8B60:	AE 05 7B    LDX $7B05      ; index of swap-out item data
+C1/8B63:	AC 03 7B    LDY $7B03      ; index of swap-in item data
+C1/8B66:	B9 86 2B    LDA $2B86,Y    ; righthand equip item index
+C1/8B69:	DD 86 26    CMP $2686,X    ; swap-in item index
+C1/8B6C:	D0 17       BNE $8B85      ; branch if not the same
+C1/8B6E:	A9 FF       LDA #$FF       ; if same, remove righthand
+C1/8B70:	99 86 2B    STA $2B86,Y    ; null righthand equip item
 C1/8B73:	A9 80       LDA #$80
-C1/8B75:	99 87 2B    STA $2B87,Y
-C1/8B78:	7B          TDC
-C1/8B79:	99 88 2B    STA $2B88,Y
-C1/8B7C:	99 89 2B    STA $2B89,Y
-C1/8B7F:	99 8A 2B    STA $2B8A,Y
+C1/8B75:	99 87 2B    STA $2B87,Y    ; righthand equip unusable in battle
+C1/8B78:	7B          TDC            ; A = 0000
+C1/8B79:	99 88 2B    STA $2B88,Y    ; zero quantity
+C1/8B7C:	99 89 2B    STA $2B89,Y    ; zero targeting
+C1/8B7F:	99 8A 2B    STA $2B8A,Y    ; zero equip blacklist
 C1/8B82:	4C E1 8B    JMP $8BE1
 
+; Valid swap
 C1/8B85:	BD 86 26    LDA $2686,X
 C1/8B88:	99 86 2B    STA $2B86,Y
 C1/8B8B:	BD 87 26    LDA $2687,X
@@ -17714,12 +17763,12 @@ C1/8BA7:	90 05       BCC $8BAE
 C1/8BA9:	DE 89 26    DEC $2689,X
 C1/8BAC:	80 13       BRA $8BC1
 C1/8BAE:	A9 FF       LDA #$FF
-C1/8BB0:	9D 86 26    STA $2686,X
+C1/8BB0:	9D 86 26    STA $2686,X      ; clear item slot
 C1/8BB3:	A9 80       LDA #$80
-C1/8BB5:	9D 87 26    STA $2687,X
-C1/8BB8:	9E 88 26    STZ $2688,X
-C1/8BBB:	9E 89 26    STZ $2689,X
-C1/8BBE:	9E 8A 26    STZ $268A,X
+C1/8BB5:	9D 87 26    STA $2687,X      ; set unusable in battle
+C1/8BB8:	9E 88 26    STZ $2688,X      ; zero targeting
+C1/8BBB:	9E 89 26    STZ $2689,X      ; zero quantity
+C1/8BBE:	9E 8A 26    STZ $268A,X      ; zero equip blacklist
 C1/8BC1:	AD 07 7B    LDA $7B07
 C1/8BC4:	85 40       STA $40
 C1/8BC6:	20 B7 8C    JSR $8CB7
@@ -17735,40 +17784,43 @@ C1/8BD9:	C8          INY
 C1/8BDA:	C0 05 00    CPY #$0005
 C1/8BDD:	D0 F3       BNE $8BD2
 C1/8BDF:	80 0A       BRA $8BEB
+
+; Finish removing equipped item [?]
 C1/8BE1:	BD 89 26    LDA $2689,X
 C1/8BE4:	C9 63       CMP #$63
 C1/8BE6:	B0 03       BCS $8BEB
 C1/8BE8:	FE 89 26    INC $2689,X
-C1/8BEB:	9C 0C 89    STZ $890C
+C1/8BEB:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/8BEE:	A9 0A       LDA #$0A
 C1/8BF0:	8D C3 7B    STA $7BC3
 C1/8BF3:	20 76 8D    JSR $8D76
 C1/8BF6:	9C AF 7B    STZ $7BAF
-C1/8BF9:	9C B5 7B    STZ $7BB5
-C1/8BFC:	9C 02 7B    STZ $7B02
+C1/8BF9:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8BFC:	9C 02 7B    STZ $7B02      ; unset item swapping flag
 C1/8BFF:	7A          PLY
 C1/8C00:	18          CLC
 C1/8C01:	60          RTS
 
+; Handle lefthand swap
 C1/8C02:	5A          PHY
 C1/8C03:	7B          TDC
 C1/8C04:	AA          TAX
-C1/8C05:	AC 03 7B    LDY $7B03
+C1/8C05:	AC 03 7B    LDY $7B03      ; index of swap-in item data
 C1/8C08:	B9 9A 2B    LDA $2B9A,Y
 C1/8C0B:	9D 07 7B    STA $7B07,X
 C1/8C0E:	E8          INX
 C1/8C0F:	C8          INY
 C1/8C10:	E0 05 00    CPX #$0005
 C1/8C13:	D0 F3       BNE $8C08
-C1/8C15:	AE 05 7B    LDX $7B05
-C1/8C18:	AC 03 7B    LDY $7B03
+C1/8C15:	AE 05 7B    LDX $7B05      ; index of swap-out item data
+C1/8C18:	AC 03 7B    LDY $7B03      ; index of swap-in item data
 C1/8C1B:	B9 9A 2B    LDA $2B9A,Y
 C1/8C1E:	DD 86 26    CMP $2686,X
 C1/8C21:	D0 17       BNE $8C3A
 C1/8C23:	A9 FF       LDA #$FF
 C1/8C25:	99 9A 2B    STA $2B9A,Y
 C1/8C28:	A9 80       LDA #$80
-C1/8C2A:	99 9B 2B    STA $2B9B,Y
+C1/8C2A:	99 9B 2B    STA $2B9B,Y    ; set unusable in battle
 C1/8C2D:	7B          TDC
 C1/8C2E:	99 9C 2B    STA $2B9C,Y
 C1/8C31:	99 9D 2B    STA $2B9D,Y
@@ -17791,12 +17843,12 @@ C1/8C5C:	90 05       BCC $8C63
 C1/8C5E:	DE 89 26    DEC $2689,X
 C1/8C61:	80 13       BRA $8C76
 C1/8C63:	A9 FF       LDA #$FF
-C1/8C65:	9D 86 26    STA $2686,X
+C1/8C65:	9D 86 26    STA $2686,X    ; clear item slot
 C1/8C68:	A9 80       LDA #$80
-C1/8C6A:	9D 87 26    STA $2687,X
-C1/8C6D:	9E 88 26    STZ $2688,X
-C1/8C70:	9E 89 26    STZ $2689,X
-C1/8C73:	9E 8A 26    STZ $268A,X
+C1/8C6A:	9D 87 26    STA $2687,X    ; set unusable in battle
+C1/8C6D:	9E 88 26    STZ $2688,X    ; zero targeting
+C1/8C70:	9E 89 26    STZ $2689,X    ; zero quantity
+C1/8C73:	9E 8A 26    STZ $268A,X    ; zero equip blacklist
 C1/8C76:	AD 07 7B    LDA $7B07
 C1/8C79:	85 40       STA $40
 C1/8C7B:	20 B7 8C    JSR $8CB7
@@ -17816,13 +17868,13 @@ C1/8C96:	BD 89 26    LDA $2689,X
 C1/8C99:	C9 63       CMP #$63
 C1/8C9B:	B0 03       BCS $8CA0
 C1/8C9D:	FE 89 26    INC $2689,X
-C1/8CA0:	9C 0C 89    STZ $890C
+C1/8CA0:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/8CA3:	A9 0A       LDA #$0A
 C1/8CA5:	8D C3 7B    STA $7BC3
 C1/8CA8:	20 76 8D    JSR $8D76
 C1/8CAB:	9C AF 7B    STZ $7BAF
-C1/8CAE:	9C B5 7B    STZ $7BB5
-C1/8CB1:	9C 02 7B    STZ $7B02
+C1/8CAE:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8CB1:	9C 02 7B    STZ $7B02      ; unset item swapping flag
 C1/8CB4:	7A          PLY
 C1/8CB5:	18          CLC
 C1/8CB6:	60          RTS
@@ -17936,173 +17988,187 @@ C1/8D70:	A9 02      	LDA #$02
 C1/8D72:	8D C2 7B   	STA $7BC2
 C1/8D75:	60         	RTS
 
-C1/8D76:	AC CA 62   	LDY $62CA
-C1/8D79:	AD FD 7A   	LDA $7AFD
-C1/8D7C:	C9 04      	CMP #$04
-C1/8D7E:	D0 03      	BNE $8D83
-C1/8D80:	7B         	TDC
-C1/8D81:	80 01      	BRA $8D84
-C1/8D83:	1A         	INC A
-C1/8D84:	8D A6 7B   	STA $7BA6
-C1/8D87:	B9 47 89   	LDA $8947,Y
-C1/8D8A:	8D A7 7B   	STA $7BA7
+C1/8D76:	AC CA 62   	LDY $62CA      ; active character index
+C1/8D79:	AD FD 7A   	LDA $7AFD      ; some counter from 0-4 [?]
+C1/8D7C:	C9 04      	CMP #$04       ; at max value
+C1/8D7E:	D0 03      	BNE $8D83      ; branch if not
+C1/8D80:	7B         	TDC            ; else, reset to zero
+C1/8D81:	80 01      	BRA $8D84      ; and skip increment
+C1/8D83:	1A         	INC A          ; increment counter
+C1/8D84:	8D A6 7B   	STA $7BA6      ; save next counter value
+C1/8D87:	B9 47 89   	LDA $8947,Y    ; character's top visible item slot offset
+C1/8D8A:	8D A7 7B   	STA $7BA7      ; save item menu slot offset
 C1/8D8D:	A9 04      	LDA #$04
 C1/8D8F:	8D A5 7B   	STA $7BA5
 C1/8D92:	A9 31      	LDA #$31
-C1/8D94:	8D C2 7B   	STA $7BC2
+C1/8D94:	8D C2 7B   	STA $7BC2      ; update current menu cursor state
 C1/8D97:	60         	RTS
 
-C1/8D98:	AD 02 7B   	LDA $7B02
-C1/8D9B:	F0 06      	BEQ $8DA3
-C1/8D9D:	AD 00 7B   	LDA $7B00
-C1/8DA0:	8D B5 7B   	STA $7BB5
-C1/8DA3:	9C E3 88   	STZ $88E3
-C1/8DA6:	AD CB 7B   	LDA $7BCB
-C1/8DA9:	F0 06      	BEQ $8DB1
+; Handle A button in battle inventory [?]
+C1/8D98:	AD 02 7B   	LDA $7B02      ; item swapping flag
+C1/8D9B:	F0 06      	BEQ $8DA3      ; branch if not already swapping
+C1/8D9D:	AD 00 7B   	LDA $7B00      ; selected item location type
+C1/8DA0:	8D B5 7B   	STA $7BB5      ; source item cursor position
+
+; Select item in current slot
+C1/8DA3:	9C E3 88   	STZ $88E3      ; set main cursor inactive
+C1/8DA6:	AD CB 7B   	LDA $7BCB      ; close menu flag [?]
+C1/8DA9:	F0 06      	BEQ $8DB1      ; branch if not closing menu [?]
 C1/8DAB:	A9 13      	LDA #$13
-C1/8DAD:	8D C2 7B   	STA $7BC2
+C1/8DAD:	8D C2 7B   	STA $7BC2      ; update menu cursor state
 C1/8DB0:	60         	RTS
 
-C1/8DB1:	AE CA 62   	LDX $62CA
+C1/8DB1:	AE CA 62   	LDX $62CA     ; X = active character index
 C1/8DB4:	A5 05      	LDA $05
 C1/8DB6:	C9 01      	CMP #$01
 C1/8DB8:	D0 13      	BNE $8DCD
-C1/8DBA:	E6 94      	INC $94
-C1/8DBC:	BD 4B 89   	LDA $894B,X
+C1/8DBA:	E6 94      	INC $94        ; sound: cursor
+C1/8DBC:	BD 4B 89   	LDA $894B,X    ; right column cursor flag
 C1/8DBF:	C9 01      	CMP #$01
 C1/8DC1:	D0 05      	BNE $8DC8
-C1/8DC3:	9E 4B 89   	STZ $894B,X
+C1/8DC3:	9E 4B 89   	STZ $894B,X    ; right column cursor flag
 C1/8DC6:	80 19      	BRA $8DE1
-C1/8DC8:	FE 4B 89   	INC $894B,X
+
+C1/8DC8:	FE 4B 89   	INC $894B,X    ; right column cursor flag
 C1/8DCB:	80 1F      	BRA $8DEC
 C1/8DCD:	C9 02      	CMP #$02
 C1/8DCF:	D0 0C      	BNE $8DDD
-C1/8DD1:	BD 4B 89   	LDA $894B,X
+C1/8DD1:	BD 4B 89   	LDA $894B,X    ; right column cursor flag
 C1/8DD4:	F0 16      	BEQ $8DEC
-C1/8DD6:	E6 94      	INC $94
-C1/8DD8:	DE 4B 89   	DEC $894B,X
+C1/8DD6:	E6 94      	INC $94        ; sound: cursor
+C1/8DD8:	DE 4B 89   	DEC $894B,X    ; right column cursor flag
 C1/8DDB:	80 0F      	BRA $8DEC
 C1/8DDD:	C9 04      	CMP #$04
 C1/8DDF:	D0 0B      	BNE $8DEC
-C1/8DE1:	9E 4B 89   	STZ $894B,X
-C1/8DE4:	9C B5 7B   	STZ $7BB5
-C1/8DE7:	E6 94      	INC $94
+
+C1/8DE1:	9E 4B 89   	STZ $894B,X    ; right column cursor flag
+C1/8DE4:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8DE7:	E6 94      	INC $94        ; sound: cursor
 C1/8DE9:	4C 69 56   	JMP $5669
 
 C1/8DEC:	A5 04      	LDA $04
-C1/8DEE:	10 18      	BPL $8E08
-C1/8DF0:	AE CA 62   	LDX $62CA
-C1/8DF3:	BD 86 62   	LDA $6286,X
-C1/8DF6:	F0 04      	BEQ $8DFC
-C1/8DF8:	E6 95      	INC $95
+C1/8DEE:	10 18      	BPL $8E08      ; branch if not attempting equip swap
+C1/8DF0:	AE CA 62   	LDX $62CA      ; X = active character index
+C1/8DF3:	BD 86 62   	LDA $6286,X    ; character can't swap equipment
+C1/8DF6:	F0 04      	BEQ $8DFC      ; branch if equip swap allowed
+C1/8DF8:	E6 95      	INC $95       ; sound: buzzer
 C1/8DFA:	80 0C      	BRA $8E08
+
 C1/8DFC:	A9 01      	LDA #$01
-C1/8DFE:	9D 30 2F   	STA $2F30,X
-C1/8E01:	E6 96      	INC $96
-C1/8E03:	20 51 8E   	JSR $8E51
-C1/8E06:	90 00      	BCC $8E08 ; ...
+C1/8DFE:	9D 30 2F   	STA $2F30,X    ; set character swapping equipment flag
+C1/8E01:	E6 96      	INC $96        ; sound: select
+C1/8E03:	20 51 8E   	JSR $8E51      ;
+C1/8E06:	90 00      	BCC $8E08      ; carry may be set in $8EF7
 C1/8E08:	A5 09      	LDA $09
 C1/8E0A:	10 11      	BPL $8E1D
-C1/8E0C:	E6 96      	INC $96
-C1/8E0E:	9C 0C 89   	STZ $890C
+C1/8E0C:	E6 96      	INC $96        ; sound: select (why again [?])
+C1/8E0E:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
 C1/8E11:	20 34 8E   	JSR $8E34
 C1/8E14:	9C AF 7B   	STZ $7BAF
-C1/8E17:	9C B5 7B   	STZ $7BB5
-C1/8E1A:	9C 02 7B   	STZ $7B02
+C1/8E17:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8E1A:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
 C1/8E1D:	AE CA 62   	LDX $62CA
-C1/8E20:	BD 4B 89   	LDA $894B,X
+C1/8E20:	BD 4B 89   	LDA $894B,X    ; right column cursor flag
 C1/8E23:	AA         	TAX
 C1/8E24:	BF 83 82 C1	LDA $C18283,X
-C1/8E28:	8D E4 88   	STA $88E4
+C1/8E28:	8D E4 88   	STA $88E4      ; main cursor X position
 C1/8E2B:	A9 B4      	LDA #$B4
 C1/8E2D:	8D E5 88   	STA $88E5
 C1/8E30:	EE E3 88   	INC $88E3
 C1/8E33:	60         	RTS
 
-C1/8E34:	20 BA 4B    JSR $4BBA
+C1/8E34:	20 BA 4B    JSR $4BBA      ; draw equipped items (menu)
 C1/8E37:	A2 40 7E    LDX #$7E40
 C1/8E3A:	8E AA 7B    STX $7BAA
 C1/8E3D:	EE A9 7B    INC $7BA9
-C1/8E40:	A9 0C       LDA #$0C
-C1/8E42:	8D C3 7B    STA $7BC3
-C1/8E45:	4C 76 8D    JMP $8D76
 
-C1/8E48:	AE CA 62   	LDX $62CA
-C1/8E4B:	BF 67 4B C1	LDA $C14B67,X
-C1/8E4F:	AA         	TAX
+; Update cursor state [?]
+C1/8E40:	A9 0C       LDA #$0C
+C1/8E42:	8D C3 7B    STA $7BC3      ; queue next menu cursor state [?]
+C1/8E45:	4C 76 8D    JMP $8D76      ; update current cursor state [?]
+
+; Set character data index in X
+C1/8E48:	AE CA 62   	LDX $62CA      ; X = active character index
+C1/8E4B:	BF 67 4B C1	LDA $C14B67,X  ; active character id * 5 (0,5,10,15)
+C1/8E4F:	AA         	TAX            ; set index to character data
 C1/8E50:	60         	RTS
 
-C1/8E51:	20 48 8E   	JSR $8E48
-C1/8E54:	AC CA 62   	LDY $62CA
-C1/8E57:	AD 02 7B   	LDA $7B02
-C1/8E5A:	D0 03      	BNE $8E5F
-C1/8E5C:	4C 28 8F   	JMP $8F28
+C1/8E51:	20 48 8E   	JSR $8E48      ; X = active character data index
+C1/8E54:	AC CA 62   	LDY $62CA      ; Y = active character index
+C1/8E57:	AD 02 7B   	LDA $7B02      ; item swapping flag
+C1/8E5A:	D0 03      	BNE $8E5F      ; branch if already swapping
+C1/8E5C:	4C 28 8F   	JMP $8F28      ; enter equipment swap mode (clear carry)
 
-C1/8E5F:	8E 05 7B   	STX $7B05
-C1/8E62:	AD 00 7B   	LDA $7B00
-C1/8E65:	D0 03      	BNE $8E6A
-C1/8E67:	4C FE 8E   	JMP $8EFE
+; Finish/confirm equipment swap
+C1/8E5F:	8E 05 7B   	STX $7B05      ; set index for character equip data
+C1/8E62:	AD 00 7B   	LDA $7B00      ; selected item location type
+C1/8E65:	D0 03      	BNE $8E6A      ; branch if swapping/using current equips
+C1/8E67:	4C FE 8E   	JMP $8EFE      ; swap equipment with inventory
 
-C1/8E6A:	B9 4B 89    LDA $894B,Y
+; Swap hands or use equipped item
+C1/8E6A:	B9 4B 89    LDA $894B,Y    ; right column cursor flag
 C1/8E6D:	1A          INC A
-C1/8E6E:	CD 00 7B    CMP $7B00
-C1/8E71:	F0 56       BEQ $8EC9
-C1/8E73:	7B          TDC
-C1/8E74:	A8          TAY
-C1/8E75:	BD 86 2B    LDA $2B86,X
-C1/8E78:	99 07 7B    STA $7B07,Y
-C1/8E7B:	E8          INX
-C1/8E7C:	C8          INY
-C1/8E7D:	C0 05 00    CPY #$0005
-C1/8E80:	D0 F3       BNE $8E75
-C1/8E82:	84 40       STY $40
-C1/8E84:	AE 05 7B    LDX $7B05
-C1/8E87:	BD 9A 2B    LDA $2B9A,X
-C1/8E8A:	9D 86 2B    STA $2B86,X
-C1/8E8D:	E8          INX
-C1/8E8E:	C6 40       DEC $40
-C1/8E90:	D0 F5       BNE $8E87
-C1/8E92:	AE 05 7B    LDX $7B05
-C1/8E95:	7B          TDC
-C1/8E96:	A8          TAY
-C1/8E97:	B9 07 7B    LDA $7B07,Y
-C1/8E9A:	9D 9A 2B    STA $2B9A,X
-C1/8E9D:	E8          INX
-C1/8E9E:	C8          INY
-C1/8E9F:	C0 05 00    CPY #$0005
-C1/8EA2:	D0 F3       BNE $8E97
-C1/8EA4:	9C 0C 89    STZ $890C
-C1/8EA7:	20 BA 4B    JSR $4BBA
-C1/8EAA:	A2 40 7E    LDX #$7E40
-C1/8EAD:	8E AA 7B    STX $7BAA
-C1/8EB0:	EE A9 7B    INC $7BA9
-C1/8EB3:	9C 02 7B    STZ $7B02
-C1/8EB6:	9C AF 7B    STZ $7BAF
-C1/8EB9:	9C B5 7B    STZ $7BB5
-C1/8EBC:	20 40 8E    JSR $8E40
-C1/8EBF:	AE CA 62    LDX $62CA
+C1/8E6E:	CD 00 7B    CMP $7B00      ; selected item location type
+C1/8E71:	F0 56       BEQ $8EC9      ; branch if using equipment as item
+
+; Swap left and right hand equips
+C1/8E73:	7B          TDC            ; A = 0000
+C1/8E74:	A8          TAY            ; Y = 0000
+C1/8E75:	BD 86 2B    LDA $2B86,X    ; character righthand data byte
+C1/8E78:	99 07 7B    STA $7B07,Y    ; move to temporary buffer
+C1/8E7B:	E8          INX            ; advance source index
+C1/8E7C:	C8          INY            ; advance buffer index
+C1/8E7D:	C0 05 00    CPY #$0005     ; 5 byte block
+C1/8E80:	D0 F3       BNE $8E75      ; copy full righthand data block
+C1/8E82:	84 40       STY $40        ; store buffer index
+C1/8E84:	AE 05 7B    LDX $7B05      ; index of character equip data
+C1/8E87:	BD 9A 2B    LDA $2B9A,X    ; character lefthand data byte
+C1/8E8A:	9D 86 2B    STA $2B86,X    ; move to righthand data
+C1/8E8D:	E8          INX            ; advance index
+C1/8E8E:	C6 40       DEC $40        ; decrement buffer index
+C1/8E90:	D0 F5       BNE $8E87      ; loop until full data block copied
+C1/8E92:	AE 05 7B    LDX $7B05      ; index of character equip data
+C1/8E95:	7B          TDC            ; A = 0000
+C1/8E96:	A8          TAY            ; Y = 0000
+C1/8E97:	B9 07 7B    LDA $7B07,Y    ; old righthand data byte
+C1/8E9A:	9D 9A 2B    STA $2B9A,X    ; move to lefthand data
+C1/8E9D:	E8          INX            ; advance destination index
+C1/8E9E:	C8          INY            ; advance source index
+C1/8E9F:	C0 05 00    CPY #$0005     ; 5-byte block
+C1/8EA2:	D0 F3       BNE $8E97      ; loop until 5 bytes moved
+C1/8EA4:	9C 0C 89    STZ $890C      ; reset equipment swap mode
+C1/8EA7:	20 BA 4B    JSR $4BBA      ; draw new equipped items (menu)
+C1/8EAA:	A2 40 7E    LDX #$7E40     ; index to menu window color palette [?]
+C1/8EAD:	8E AA 7B    STX $7BAA      ; set VRAM destination [?]
+C1/8EB0:	EE A9 7B    INC $7BA9      ; flag pending VRAM [?]
+C1/8EB3:	9C 02 7B    STZ $7B02      ; unset item swapping flag
+C1/8EB6:	9C AF 7B    STZ $7BAF      ; [?]
+C1/8EB9:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8EBC:	20 40 8E    JSR $8E40      ; update cursor state [?]
+C1/8EBF:	AE CA 62    LDX $62CA      ; active character index
 C1/8EC2:	A9 01       LDA #$01
-C1/8EC4:	9D 30 2F    STA $2F30,X
-C1/8EC7:	18          CLC
+C1/8EC4:	9D 30 2F    STA $2F30,X    ; mark equipment change for stat update
+C1/8EC7:	18          CLC            ; clear carry to indicate success [?]
 C1/8EC8:	60          RTS
 
-C1/8EC9:	9C 02 7B   	STZ $7B02
+; Attempt to use equipment as item (eg Rod)
+C1/8EC9:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
 C1/8ECC:	9C AF 7B   	STZ $7BAF
-C1/8ECF:	9C B5 7B   	STZ $7BB5
-C1/8ED2:	9C 0C 89   	STZ $890C
-C1/8ED5:	B9 4B 89   	LDA $894B,Y
+C1/8ECF:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8ED2:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
+C1/8ED5:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
 C1/8ED8:	F0 0E      	BEQ $8EE8
 C1/8EDA:	BD 9A 2B   	LDA $2B9A,X
 C1/8EDD:	C9 FF      	CMP #$FF
 C1/8EDF:	F0 18      	BEQ $8EF9
 C1/8EE1:	BD 9B 2B   	LDA $2B9B,X
-C1/8EE4:	10 0E      	BPL $8EF4
+C1/8EE4:	10 0E      	BPL $8EF4      ; branch if usable in battle
 C1/8EE6:	80 11      	BRA $8EF9
 C1/8EE8:	BD 86 2B   	LDA $2B86,X
 C1/8EEB:	C9 FF      	CMP #$FF
 C1/8EED:	F0 0A      	BEQ $8EF9
 C1/8EEF:	BD 87 2B   	LDA $2B87,X
-C1/8EF2:	30 05      	BMI $8EF9
+C1/8EF2:	30 05      	BMI $8EF9      ; branch if unusable in battle
 C1/8EF4:	20 40 8E   	JSR $8E40
 C1/8EF7:	38         	SEC
 C1/8EF8:	60         	RTS
@@ -18111,27 +18177,28 @@ C1/8EF9:	20 40 8E   	JSR $8E40
 C1/8EFC:	18         	CLC
 C1/8EFD:	60         	RTS
 
-C1/8EFE:	B9 4B 89    LDA $894B,Y
-C1/8F01:	F0 05       BEQ $8F08
-C1/8F03:	20 3D 90    JSR $903D
-C1/8F06:	80 03       BRA $8F0B
-C1/8F08:	20 76 8F    JSR $8F76
-C1/8F0B:	9C 0C 89    STZ $890C
+C1/8EFE:	B9 4B 89    LDA $894B,Y    ; right column cursor flag
+C1/8F01:	F0 05       BEQ $8F08      ; branch if swapping right-hand (left column)
+C1/8F03:	20 3D 90    JSR $903D      ; check left-hand swap
+C1/8F06:	80 03       BRA $8F0B      ; skip right-hand check
+C1/8F08:	20 76 8F    JSR $8F76      ; check right-hand swap
+
+C1/8F0B:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/8F0E:	20 BA 4B    JSR $4BBA
 C1/8F11:	A2 40 7E    LDX #$7E40
 C1/8F14:	8E AA 7B    STX $7BAA
 C1/8F17:	EE A9 7B    INC $7BA9
-C1/8F1A:	9C 02 7B    STZ $7B02
+C1/8F1A:	9C 02 7B    STZ $7B02      ; unset item swapping flag
 C1/8F1D:	9C AF 7B    STZ $7BAF
-C1/8F20:	9C B5 7B    STZ $7BB5
+C1/8F20:	9C B5 7B    STZ $7BB5      ; source item cursor position
 C1/8F23:	20 40 8E    JSR $8E40
 C1/8F26:	18          CLC
 C1/8F27:	60          RTS
 
 C1/8F28:	A9 01      	LDA #$01
 C1/8F2A:	8D 0C 89   	STA $890C      ; set equipment swap mode
-C1/8F2D:	B9 4B 89   	LDA $894B,Y    ; cursor column position [?]
-C1/8F30:	D0 0E      	BNE $8F40      ; branch if left side
+C1/8F2D:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
+C1/8F30:	D0 0E      	BNE $8F40      ; branch if swapping left-hand (right column)
 C1/8F32:	BD 9A 2B   	LDA $2B9A,X    ; character's left-hand item index
 C1/8F35:	8D 0D 89   	STA $890D      ; set equipped item index
 C1/8F38:	BD 9B 2B   	LDA $2B9B,X    ; character's left-hand item flags
@@ -18143,27 +18210,27 @@ C1/8F43:	8D 0D 89   	STA $890D      ; set equipped item index
 C1/8F46:	BD 87 2B   	LDA $2B87,X    ; character's right-hand item flags
 C1/8F49:	8D 0E 89   	STA $890E      ; set equipped item flags
 
-C1/8F4C:	B9 4B 89   	LDA $894B,Y
+C1/8F4C:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
 C1/8F4F:	1A         	INC A
-C1/8F50:	8D 00 7B   	STA $7B00
-C1/8F53:	EE 02 7B   	INC $7B02
-C1/8F56:	8E 03 7B   	STX $7B03
-C1/8F59:	B9 4B 89   	LDA $894B,Y
+C1/8F50:	8D 00 7B   	STA $7B00      ; #01 if righthand, #02 if lefthand
+C1/8F53:	EE 02 7B   	INC $7B02      ; set item swap active
+C1/8F56:	8E 03 7B   	STX $7B03      ; index of swap-in item data
+C1/8F59:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
 C1/8F5C:	AA         	TAX
-C1/8F5D:	BF 83 82 C1	LDA $C18283,X
+C1/8F5D:	BF 83 82 C1	LDA $C18283,X  ; cursor xpos [?]
 C1/8F61:	18         	CLC
 C1/8F62:	69 03      	ADC #$03
 C1/8F64:	8D B6 7B   	STA $7BB6
 C1/8F67:	A9 B4      	LDA #$B4
 C1/8F69:	8D B7 7B   	STA $7BB7
 C1/8F6C:	A9 01      	LDA #$01
-C1/8F6E:	8D B5 7B   	STA $7BB5
+C1/8F6E:	8D B5 7B   	STA $7BB5      ; source item cursor position
 C1/8F71:	20 40 8E   	JSR $8E40
 C1/8F74:	18         	CLC
 C1/8F75:	60         	RTS
 
-C1/8F76:	AE 03 7B   	LDX $7B03
-C1/8F79:	AC 05 7B   	LDY $7B05
+C1/8F76:	AE 03 7B   	LDX $7B03      ; index of swap-in item data
+C1/8F79:	AC 05 7B   	LDY $7B05      ; index of swap-out item data
 C1/8F7C:	B9 86 2B   	LDA $2B86,Y
 C1/8F7F:	DD 86 26   	CMP $2686,X
 C1/8F82:	D0 01      	BNE $8F85
@@ -18172,9 +18239,9 @@ C1/8F84:	60         	RTS
 C1/8F85:	BD 86 26    LDA $2686,X
 C1/8F88:	C9 FF       CMP #$FF
 C1/8F8A:	F0 11       BEQ $8F9D
-C1/8F8C:	20 18 8A    JSR $8A18
+C1/8F8C:	20 18 8A    JSR $8A18      ; store character bitmask in $2C
 C1/8F8F:	BD 87 26    LDA $2687,X
-C1/8F92:	29 18       AND #$18
+C1/8F92:	29 18       AND #$18       ; is weapon or shield
 C1/8F94:	F0 EE       BEQ $8F84
 C1/8F96:	BD 8A 26    LDA $268A,X
 C1/8F99:	25 2C       AND $2C
@@ -18187,21 +18254,21 @@ C1/8FA9:	BD 86 26    LDA $2686,X
 C1/8FAC:	8D 39 7B    STA $7B39
 C1/8FAF:	BD 87 26    LDA $2687,X
 C1/8FB2:	8D 3A 7B    STA $7B3A
-C1/8FB5:	20 D5 89    JSR $89D5
-C1/8FB8:	B0 CA       BCS $8F84
-C1/8FBA:	AE 03 7B    LDX $7B03
-C1/8FBD:	AC 05 7B    LDY $7B05
-C1/8FC0:	7B          TDC
-C1/8FC1:	AA          TAX
-C1/8FC2:	AC 05 7B    LDY $7B05
+C1/8FB5:	20 D5 89    JSR $89D5      ; validate equip swap and flag stat update
+C1/8FB8:	B0 CA       BCS $8F84      ; branch if invalid equipment setup
+C1/8FBA:	AE 03 7B    LDX $7B03      ; index of swap-in item data (why?)
+C1/8FBD:	AC 05 7B    LDY $7B05      ; index of swap-out item data
+C1/8FC0:	7B          TDC            ; A = 0000
+C1/8FC1:	AA          TAX            ; X = 0000 (undoes LDX above)
+C1/8FC2:	AC 05 7B    LDY $7B05      ; index of swap-out item data
 C1/8FC5:	B9 86 2B    LDA $2B86,Y
 C1/8FC8:	9D 07 7B    STA $7B07,X
 C1/8FCB:	E8          INX
 C1/8FCC:	C8          INY
 C1/8FCD:	E0 05 00    CPX #$0005
 C1/8FD0:	D0 F3       BNE $8FC5
-C1/8FD2:	AE 03 7B    LDX $7B03
-C1/8FD5:	AC 05 7B    LDY $7B05
+C1/8FD2:	AE 03 7B    LDX $7B03      ; index of swap-in item data
+C1/8FD5:	AC 05 7B    LDY $7B05      ; index of swap-out item data
 C1/8FD8:	BD 86 26    LDA $2686,X
 C1/8FDB:	99 86 2B    STA $2B86,Y
 C1/8FDE:	BD 87 26    LDA $2687,X
@@ -18218,12 +18285,12 @@ C1/8FFA:	90 05       BCC $9001
 C1/8FFC:	DE 89 26    DEC $2689,X
 C1/8FFF:	80 13       BRA $9014
 C1/9001:	A9 FF       LDA #$FF
-C1/9003:	9D 86 26    STA $2686,X
+C1/9003:	9D 86 26    STA $2686,X   ; clear item slot
 C1/9006:	A9 80       LDA #$80
-C1/9008:	9D 87 26    STA $2687,X
-C1/900B:	9E 88 26    STZ $2688,X
-C1/900E:	9E 89 26    STZ $2689,X
-C1/9011:	9E 8A 26    STZ $268A,X
+C1/9008:	9D 87 26    STA $2687,X   ; set unusable in battle
+C1/900B:	9E 88 26    STZ $2688,X   ; zero targeting
+C1/900E:	9E 89 26    STZ $2689,X   ; zero quantity
+C1/9011:	9E 8A 26    STZ $268A,X   ; zero equip blacklist
 C1/9014:	AD 07 7B    LDA $7B07
 C1/9017:	85 40       STA $40
 C1/9019:	20 B7 8C    JSR $8CB7
@@ -18244,23 +18311,24 @@ C1/9037:	B0 03       BCS $903C
 C1/9039:	FE 89 26    INC $2689,X
 C1/903C:	60          RTS
 
-C1/903D:	AE 03 7B   	LDX $7B03
-C1/9040:	AC 05 7B   	LDY $7B05
-C1/9043:	B9 9A 2B   	LDA $2B9A,Y
-C1/9046:	DD 86 26   	CMP $2686,X
-C1/9049:	D0 01      	BNE $904C
+C1/903D:	AE 03 7B   	LDX $7B03      ; index of swap-in item data
+C1/9040:	AC 05 7B   	LDY $7B05      ; index of swap-out item data
+C1/9043:	B9 9A 2B   	LDA $2B9A,Y    ; lefthand item index
+C1/9046:	DD 86 26   	CMP $2686,X    ; swap-in item index
+C1/9049:	D0 01      	BNE $904C      ; continue if not same item
 C1/904B:	60         	RTS
 
-C1/904C:	BD 86 26    LDA $2686,X
-C1/904F:	C9 FF       CMP #$FF
-C1/9051:	F0 11       BEQ $9064
-C1/9053:	20 18 8A    JSR $8A18
-C1/9056:	BD 87 26    LDA $2687,X
-C1/9059:	29 18       AND #$18
-C1/905B:	F0 EE       BEQ $904B
-C1/905D:	BD 8A 26    LDA $268A,X
-C1/9060:	25 2C       AND $2C
-C1/9062:	D0 E7       BNE $904B
+C1/904C:	BD 86 26    LDA $2686,X    ; swap-in item index (redundant)
+C1/904F:	C9 FF       CMP #$FF       ; empty slot
+C1/9051:	F0 11       BEQ $9064      ; branch if unequipping item
+C1/9053:	20 18 8A    JSR $8A18      ; store character bitmask in $2C
+C1/9056:	BD 87 26    LDA $2687,X    ; swap-in item flags
+C1/9059:	29 18       AND #$18       ; is weapon or shield
+C1/905B:	F0 EE       BEQ $904B      ; exit if not weapon or shield
+C1/905D:	BD 8A 26    LDA $268A,X    ; equippable blacklist
+C1/9060:	25 2C       AND $2C        ; check character's unique bit
+C1/9062:	D0 E7       BNE $904B      ; exit if character cannot equip
+
 C1/9064:	B9 86 2B    LDA $2B86,Y
 C1/9067:	8D 3B 7B    STA $7B3B
 C1/906A:	B9 87 2B    LDA $2B87,Y
@@ -18269,26 +18337,26 @@ C1/9070:	BD 86 26    LDA $2686,X
 C1/9073:	8D 39 7B    STA $7B39
 C1/9076:	BD 87 26    LDA $2687,X
 C1/9079:	8D 3A 7B    STA $7B3A
-C1/907C:	20 D5 89    JSR $89D5
-C1/907F:	B0 CA       BCS $904B
-C1/9081:	AE 03 7B    LDX $7B03
-C1/9084:	AC 05 7B    LDY $7B05
+C1/907C:	20 D5 89    JSR $89D5      ; validate equip swap and flag stat update
+C1/907F:	B0 CA       BCS $904B      ; branch if invalid equipment setup
+C1/9081:	AE 03 7B    LDX $7B03      ; index of swap-in item data
+C1/9084:	AC 05 7B    LDY $7B05      ; index of swap-out item data
 C1/9087:	7B          TDC
 C1/9088:	AA          TAX
-C1/9089:	AC 05 7B    LDY $7B05
+C1/9089:	AC 05 7B    LDY $7B05      ; index of swap-out item data
 C1/908C:	B9 9A 2B    LDA $2B9A,Y
 C1/908F:	9D 07 7B    STA $7B07,X
 C1/9092:	E8          INX
 C1/9093:	C8          INY
 C1/9094:	E0 05 00    CPX #$0005
 C1/9097:	D0 F3       BNE $908C
-C1/9099:	AE 03 7B    LDX $7B03
-C1/909C:	AC 05 7B    LDY $7B05
-C1/909F:	BD 86 26    LDA $2686,X
-C1/90A2:	99 9A 2B    STA $2B9A,Y
-C1/90A5:	BD 87 26    LDA $2687,X
-C1/90A8:	99 9B 2B    STA $2B9B,Y
-C1/90AB:	BD 88 26    LDA $2688,X
+C1/9099:	AE 03 7B    LDX $7B03      ; index of swap-in item data
+C1/909C:	AC 05 7B    LDY $7B05      ; index of swap-out item data
+C1/909F:	BD 86 26    LDA $2686,X    ; item index
+C1/90A2:	99 9A 2B    STA $2B9A,Y    ; set left-hand item index
+C1/90A5:	BD 87 26    LDA $2687,X    ; item flags
+C1/90A8:	99 9B 2B    STA $2B9B,Y    ; set left-hand item flags
+C1/90AB:	BD 88 26    LDA $2688,X    ; item targeting
 C1/90AE:	99 9C 2B    STA $2B9C,Y
 C1/90B1:	BD 8A 26    LDA $268A,X
 C1/90B4:	99 9E 2B    STA $2B9E,Y
@@ -18300,12 +18368,12 @@ C1/90C1:	90 05       BCC $90C8
 C1/90C3:	DE 89 26    DEC $2689,X
 C1/90C6:	80 13       BRA $90DB
 C1/90C8:	A9 FF       LDA #$FF
-C1/90CA:	9D 86 26    STA $2686,X
+C1/90CA:	9D 86 26    STA $2686,X    ; clear item slot
 C1/90CD:	A9 80       LDA #$80
-C1/90CF:	9D 87 26    STA $2687,X
-C1/90D2:	9E 88 26    STZ $2688,X
-C1/90D5:	9E 89 26    STZ $2689,X
-C1/90D8:	9E 8A 26    STZ $268A,X
+C1/90CF:	9D 87 26    STA $2687,X    ; set unusable in battle
+C1/90D2:	9E 88 26    STZ $2688,X    ; zero targeting
+C1/90D5:	9E 89 26    STZ $2689,X    ; zero quantity
+C1/90D8:	9E 8A 26    STZ $268A,X    ; zero equip blacklist
 C1/90DB:	AD 07 7B    LDA $7B07
 C1/90DE:	85 40       STA $40
 C1/90E0:	20 B7 8C    JSR $8CB7
@@ -19569,7 +19637,7 @@ C1/9AA8:	20 89 BC   	JSR $BC89      ; set attacker index in $10
 C1/9AAB:	A5 10      	LDA $10        ; A = attacker index
 C1/9AAD:	30 76      	BMI $9B25      ; branch if is a monster (flash sprite twice)
 C1/9AAF:	29 03      	AND #$03       ; else make sure index is 0-3
-C1/9AB1:	A8         	TAY            ; Y = character attacker index
+C1/9AB1:	A8         	TAY            ; character attacker index
 C1/9AB2:	0A         	ASL A
 C1/9AB3:	0A         	ASL A
 C1/9AB4:	0A         	ASL A
@@ -19595,7 +19663,7 @@ C1/9AD5:	0A         	ASL A
 C1/9AD6:	AA         	TAX            ; X = monster target index * 2
 C1/9AD7:	A5 10      	LDA $10
 C1/9AD9:	0A         	ASL A
-C1/9ADA:	A8         	TAY            ; Y = character attacker index * 2
+C1/9ADA:	A8         	TAY            ; character attacker index * 2
 C1/9ADB:	C2 20      	REP #$20       ; 16-bit A
 C1/9ADD:	B9 33 80   	LDA $8033,Y    ; A = character xpos (center of sprite)
 C1/9AE0:	29 FF 01   	AND #$01FF     ; zero high byte (except bit 0)
@@ -19606,7 +19674,7 @@ C1/9AEB:	85 22      	STA $22        ; save it
 C1/9AED:	7B         	TDC            ; A = 0000
 C1/9AEE:	E2 20      	SEP #$20       ; 8-bit A
 C1/9AF0:	A5 10      	LDA $10
-C1/9AF2:	A8         	TAY            ; Y = character attacker index
+C1/9AF2:	A8         	TAY            ; character attacker index
 C1/9AF3:	B9 10 7B   	LDA $7B10,Y    ; is facing right?
 C1/9AF6:	F0 11      	BEQ $9B09      ; branch if not
 C1/9AF8:	A6 24      	LDX $24
@@ -19647,7 +19715,7 @@ C1/9B36:	A5 12      	LDA $12        ; A = first target
 C1/9B38:	30 30      	BMI $9B6A      ; branch if is monster
 C1/9B3A:	29 03      	AND #$03       ; ensure A is only 0-3 character index
 C1/9B3C:	0A         	ASL A
-C1/9B3D:	A8         	TAY            ; Y = character target index * 2
+C1/9B3D:	A8         	TAY            ; character target index * 2
 C1/9B3E:	C2 20      	REP #$20       ; 16-bit A
 C1/9B40:	B9 33 80   	LDA $8033,Y    ; A = character X position
 C1/9B43:	85 24      	STA $24        ; save it
@@ -23094,7 +23162,7 @@ C1/B5C2:	80 03      	BRA $B5C7
 C1/B5C4:	9C E7 88   	STZ $88E7
 C1/B5C7:	E2 10      	SEP #$10
 C1/B5C9:	9C EB 88   	STZ $88EB
-C1/B5CC:	AD B5 7B   	LDA $7BB5
+C1/B5CC:	AD B5 7B   	LDA $7BB5      ; source item cursor position
 C1/B5CF:	F0 0F      	BEQ $B5E0
 C1/B5D1:	AD B6 7B   	LDA $7BB6
 C1/B5D4:	8D EC 88   	STA $88EC
@@ -23673,10 +23741,10 @@ C1/BA2C:	AA         	TAX
 C1/BA2D:	BF 67 4B C1	LDA $C14B67,X    ; Data
 C1/BA31:	AA         	TAX
 C1/BA32:	BD 87 2B   	LDA $2B87,X
-C1/BA35:	29 10      	AND #$10
+C1/BA35:	29 10      	AND #$10         ; is weapon
 C1/BA37:	D0 11      	BNE $BA4A
 C1/BA39:	BD 9B 2B   	LDA $2B9B,X
-C1/BA3C:	29 10      	AND #$10
+C1/BA3C:	29 10      	AND #$10         ; is weapon
 C1/BA3E:	D0 04      	BNE $BA44
 C1/BA40:	A9 FF      	LDA #$FF
 C1/BA42:	80 0A      	BRA $BA4E
