@@ -9625,41 +9625,43 @@ C1/4B68:	05
 C1/4B69:	0A
 C1/4B6A:	0F
 
-C1/4B6B:	29 80      	AND #$80
+C1/4B6B:	29 80      	AND #$80       ; isolate bit 7
 C1/4B6D:	4A         	LSR A
 C1/4B6E:	4A         	LSR A
 C1/4B6F:	4A         	LSR A
 C1/4B70:	4A         	LSR A
-C1/4B71:	4A         	LSR A
+C1/4B71:	4A         	LSR A          ; move into bit 2 ($04)
 C1/4B72:	60         	RTS
 
-C1/4B73:	25 40      	AND $40
-C1/4B75:	F0 03      	BEQ $4B7A
-C1/4B77:	A9 04      	LDA #$04
+C1/4B73:	25 40      	AND $40        ; active char bit in blocked equippers
+C1/4B75:	F0 03      	BEQ $4B7A      ; continue if equip not blocked
+C1/4B77:	A9 04      	LDA #$04       ; load gray color
 C1/4B79:	60         	RTS
 
-C1/4B7A:	AD 0D 89   	LDA $890D
-C1/4B7D:	C9 FF      	CMP #$FF
-C1/4B7F:	F0 28      	BEQ $4BA9
-C1/4B81:	A5 2C      	LDA $2C
-C1/4B83:	C9 FF      	CMP #$FF
-C1/4B85:	F0 22      	BEQ $4BA9
-C1/4B87:	AE CA 62   	LDX $62CA
-C1/4B8A:	BD 6E 2E   	LDA $2E6E,X
-C1/4B8D:	F0 0F      	BEQ $4B9E
-C1/4B8F:	AD 0E 89   	LDA $890E
-C1/4B92:	29 08      	AND #$08
-C1/4B94:	F0 13      	BEQ $4BA9
-C1/4B96:	A5 2D      	LDA $2D
-C1/4B98:	29 08      	AND #$08
-C1/4B9A:	D0 DB      	BNE $4B77
-C1/4B9C:	80 0B      	BRA $4BA9
-C1/4B9E:	A5 2D      	LDA $2D
-C1/4BA0:	0D 0E 89   	ORA $890E
-C1/4BA3:	29 18      	AND #$18
-C1/4BA5:	C9 18      	CMP #$18
-C1/4BA7:	D0 CE      	BNE $4B77
-C1/4BA9:	A9 08      	LDA #$08
+C1/4B7A:	AD 0D 89   	LDA $890D      ; equipped item index
+C1/4B7D:	C9 FF      	CMP #$FF       ; is it null
+C1/4B7F:	F0 28      	BEQ $4BA9      ; exit if no swap item selected
+C1/4B81:	A5 2C      	LDA $2C        ; item index
+C1/4B83:	C9 FF      	CMP #$FF       ; is it null
+C1/4B85:	F0 22      	BEQ $4BA9      ; exit if so
+C1/4B87:	AE CA 62   	LDX $62CA      ; character index
+C1/4B8A:	BD 6E 2E   	LDA $2E6E,X    ; has genji glove
+C1/4B8D:	F0 0F      	BEQ $4B9E      ; branch if no dual-wield
+C1/4B8F:	AD 0E 89   	LDA $890E      ; equipped item flags
+C1/4B92:	29 08      	AND #$08       ; non-weapon
+C1/4B94:	F0 13      	BEQ $4BA9      ; exit w/ yellow if is a weapon
+C1/4B96:	A5 2D      	LDA $2D        ; item flags
+C1/4B98:	29 08      	AND #$08       ; non-weapon
+C1/4B9A:	D0 DB      	BNE $4B77      ; exit w/ gray if non-weapon [?]
+C1/4B9C:	80 0B      	BRA $4BA9      ; else exit w/ yellow [?]
+
+; Character cannot dual wield
+C1/4B9E:	A5 2D      	LDA $2D        ; item flags
+C1/4BA0:	0D 0E 89   	ORA $890E      ; equipped item flags
+C1/4BA3:	29 18      	AND #$18       ; get `is weapon` and `jumpable` flags [?]
+C1/4BA5:	C9 18      	CMP #$18       ; check both flags
+C1/4BA7:	D0 CE      	BNE $4B77      ; exit if not a weapon-for-weapon swap
+C1/4BA9:	A9 08      	LDA #$08       ; yellow palette color [?]
 C1/4BAB:	60         	RTS
 
 C1/4BAC:	05
@@ -9769,56 +9771,63 @@ C1/4C66:	20 AB 63   	JSR $63AB
 C1/4C69:	7A         	PLY
 C1/4C6A:	60         	RTS
 
-C1/4C6B:	5A         	PHY
-C1/4C6C:	C2 20      	REP #$20
-C1/4C6E:	85 40      	STA $40
+; Draw in-battle item menu slot
+C1/4C6B:	5A         	PHY              ; store Y
+C1/4C6C:	C2 20      	REP #$20         ; 16-bit A
+C1/4C6E:	85 40      	STA $40          ; store A (only used in math below)
 C1/4C70:	0A         	ASL A
 C1/4C71:	0A         	ASL A
 C1/4C72:	18         	CLC
-C1/4C73:	65 40      	ADC $40
-C1/4C75:	A8         	TAY
-C1/4C76:	7B         	TDC
-C1/4C77:	E2 20      	SEP #$20
-C1/4C79:	AA         	TAX
-C1/4C7A:	BF 74 E0 C2	LDA $C2E074,X
-C1/4C7E:	9D 55 57   	STA $5755,X
-C1/4C81:	E8         	INX
-C1/4C82:	E0 13 00   	CPX #$0013
-C1/4C85:	D0 F3      	BNE $4C7A
-C1/4C87:	AE CA 62   	LDX $62CA
-C1/4C8A:	BF 01 1A C1	LDA $C11A01,X
-C1/4C8E:	85 40      	STA $40
-C1/4C90:	B9 86 26   	LDA $2686,Y
-C1/4C93:	C9 FF      	CMP #$FF
-C1/4C95:	F0 08      	BEQ $4C9F
-C1/4C97:	B9 89 26   	LDA $2689,Y
-C1/4C9A:	8D 5D 57   	STA $575D
-C1/4C9D:	D0 09      	BNE $4CA8
-C1/4C9F:	7B         	TDC
-C1/4CA0:	8D 5D 57   	STA $575D
-C1/4CA3:	A9 FF      	LDA #$FF
-C1/4CA5:	8D 5B 57   	STA $575B
-C1/4CA8:	B9 86 26   	LDA $2686,Y
-C1/4CAB:	8D 5A 57   	STA $575A
-C1/4CAE:	8D 61 57   	STA $5761
-C1/4CB1:	AD 0C 89   	LDA $890C
-C1/4CB4:	F0 18      	BEQ $4CCE
-C1/4CB6:	B9 86 26   	LDA $2686,Y
-C1/4CB9:	85 2C      	STA $2C
-C1/4CBB:	B9 87 26   	LDA $2687,Y
-C1/4CBE:	85 2D      	STA $2D
-C1/4CC0:	B9 8A 26   	LDA $268A,Y
-C1/4CC3:	20 73 4B   	JSR $4B73
-C1/4CC6:	0D 58 57   	ORA $5758
-C1/4CC9:	8D 58 57   	STA $5758
+C1/4C73:	65 40      	ADC $40          ; A = item slot * 5
+C1/4C75:	A8         	TAY              ; index to battle inventory
+C1/4C76:	7B         	TDC              ; A = 0000
+C1/4C77:	E2 20      	SEP #$20         ; 8-bit A
+C1/4C79:	AA         	TAX              ; X = 0000
+C1/4C7A:	BF 74 E0 C2	LDA $C2E074,X    ; next item menu script byte
+C1/4C7E:	9D 55 57   	STA $5755,X      ; copy to buffer
+C1/4C81:	E8         	INX              ; increment script index
+C1/4C82:	E0 13 00   	CPX #$0013       ; copied 19 bytes?
+C1/4C85:	D0 F3      	BNE $4C7A        ; loop if not
+C1/4C87:	AE CA 62   	LDX $62CA        ; X = active character
+C1/4C8A:	BF 01 1A C1	LDA $C11A01,X    ; unique bit for active character
+C1/4C8E:	85 40      	STA $40          ; store bit mask (used in $4B73)
+C1/4C90:	B9 86 26   	LDA $2686,Y      ; slot's item index
+C1/4C93:	C9 FF      	CMP #$FF         ; check for null value
+C1/4C95:	F0 08      	BEQ $4C9F        ; branch if empty slot
+C1/4C97:	B9 89 26   	LDA $2689,Y      ; item quantity
+C1/4C9A:	8D 5D 57   	STA $575D        ; replace quantity placeholder
+C1/4C9D:	D0 09      	BNE $4CA8        ; branch if not zero
+
+; Empty item slot or zero quantity
+C1/4C9F:	7B         	TDC              ; A = 0000
+C1/4CA0:	8D 5D 57   	STA $575D        ; replace quantity placeholder
+C1/4CA3:	A9 FF      	LDA #$FF         ; space character
+C1/4CA5:	8D 5B 57   	STA $575B        ; replace ':' character with space
+
+C1/4CA8:	B9 86 26   	LDA $2686,Y      ; slot's item index
+C1/4CAB:	8D 5A 57   	STA $575A        ; replace item index placeholder
+C1/4CAE:	8D 61 57   	STA $5761        ; replace item index placeholder
+C1/4CB1:	AD 0C 89   	LDA $890C        ; equipment swap mode
+C1/4CB4:	F0 18      	BEQ $4CCE        ; branch if unset
+C1/4CB6:	B9 86 26   	LDA $2686,Y      ; slot's item index
+C1/4CB9:	85 2C      	STA $2C          ; save for later
+C1/4CBB:	B9 87 26   	LDA $2687,Y      ; slot's item flags
+C1/4CBE:	85 2D      	STA $2D          ; save for later
+C1/4CC0:	B9 8A 26   	LDA $268A,Y      ; slot's item equipability blacklist
+C1/4CC3:	20 73 4B   	JSR $4B73        ; genji check
+C1/4CC6:	0D 58 57   	ORA $5758        ; combine with slot color palette
+C1/4CC9:	8D 58 57   	STA $5758        ; save updated palette (gray if $04)
 C1/4CCC:	80 0C      	BRA $4CDA
-C1/4CCE:	B9 87 26   	LDA $2687,Y
-C1/4CD1:	20 6B 4B   	JSR $4B6B
-C1/4CD4:	0D 58 57   	ORA $5758
-C1/4CD7:	8D 58 57   	STA $5758
-C1/4CDA:	20 07 4E   	JSR $4E07
-C1/4CDD:	20 AB 63   	JSR $63AB
-C1/4CE0:	7A         	PLY
+
+; Fork if not swapping equipment
+C1/4CCE:	B9 87 26   	LDA $2687,Y      ; slot's item flags
+C1/4CD1:	20 6B 4B   	JSR $4B6B        ; get "not usable in battle" bit as $04
+C1/4CD4:	0D 58 57   	ORA $5758        ; combine with slot color palette
+C1/4CD7:	8D 58 57   	STA $5758        ; save updated palette (gray if $04)
+
+C1/4CDA:	20 07 4E   	JSR $4E07        ; prepare tile move [?]
+C1/4CDD:	20 AB 63   	JSR $63AB        ; perform tile move [?]
+C1/4CE0:	7A         	PLY              ; restore Y
 C1/4CE1:	60         	RTS
 
 C1/4CE2:	5A         	PHY
@@ -9964,6 +9973,7 @@ C1/4E02:	20 AB 63   	JSR $63AB
 C1/4E05:	7A         	PLY
 C1/4E06:	60         	RTS
 
+; Prepare tile move [?]
 C1/4E07:	A2 55 57   	LDX #$5755
 C1/4E0A:	8E DD 88   	STX $88DD
 C1/4E0D:	A2 4D 5E   	LDX #$5E4D
@@ -11141,7 +11151,7 @@ C1/5782:	8D A6 7B   	STA $7BA6
 C1/5785:	A9 80      	LDA #$80
 C1/5787:	8D A5 7B   	STA $7BA5
 C1/578A:	AD A6 7B   	LDA $7BA6
-C1/578D:	20 6B 4C   	JSR $4C6B
+C1/578D:	20 6B 4C   	JSR $4C6B         ; draw in-battle item menu slot
 C1/5790:	20 29 57   	JSR $5729
 C1/5793:	90 0A      	BCC $579F
 C1/5795:	A9 07      	LDA #$07
@@ -17860,7 +17870,7 @@ C1/8CE8:	60         	RTS
 
 C1/8CE9:	18         	CLC
 C1/8CEA:	69 03      	ADC #$03
-C1/8CEC:	20 6B 4C   	JSR $4C6B
+C1/8CEC:	20 6B 4C   	JSR $4C6B         ; draw in-battle item menu slot
 C1/8CEF:	AE B1 7B   	LDX $7BB1
 C1/8CF2:	CA         	DEX
 C1/8CF3:	CA         	DEX
@@ -17878,7 +17888,8 @@ C1/8D09:	80 01      	BRA $8D0C
 C1/8D0B:	7B         	TDC
 C1/8D0C:	8D FD 7A   	STA $7AFD
 C1/8D0F:	80 22      	BRA $8D33
-C1/8D11:	20 6B 4C   	JSR $4C6B
+
+C1/8D11:	20 6B 4C   	JSR $4C6B         ; draw in-battle item menu slot
 C1/8D14:	AE B1 7B   	LDX $7BB1
 C1/8D17:	E8         	INX
 C1/8D18:	E8         	INX
@@ -17894,6 +17905,7 @@ C1/8D2B:	3A         	DEC A
 C1/8D2C:	80 02      	BRA $8D30
 C1/8D2E:	A9 04      	LDA #$04
 C1/8D30:	8D FD 7A   	STA $7AFD
+
 C1/8D33:	A9 03      	LDA #$03
 C1/8D35:	8D A8 7B   	STA $7BA8
 C1/8D38:	A9 0A      	LDA #$0A
@@ -17901,7 +17913,7 @@ C1/8D3A:	8D C3 7B   	STA $7BC3
 C1/8D3D:	60         	RTS
 
 C1/8D3E:	AD A7 7B   	LDA $7BA7
-C1/8D41:	20 6B 4C   	JSR $4C6B
+C1/8D41:	20 6B 4C   	JSR $4C6B         ; draw in-battle item menu slot
 C1/8D44:	AD A6 7B   	LDA $7BA6
 C1/8D47:	0A         	ASL A
 C1/8D48:	AA         	TAX
@@ -18117,18 +18129,20 @@ C1/8F26:	18          CLC
 C1/8F27:	60          RTS
 
 C1/8F28:	A9 01      	LDA #$01
-C1/8F2A:	8D 0C 89   	STA $890C
-C1/8F2D:	B9 4B 89   	LDA $894B,Y
-C1/8F30:	D0 0E      	BNE $8F40
-C1/8F32:	BD 9A 2B   	LDA $2B9A,X
-C1/8F35:	8D 0D 89   	STA $890D
-C1/8F38:	BD 9B 2B   	LDA $2B9B,X
-C1/8F3B:	8D 0E 89   	STA $890E
-C1/8F3E:	80 0C      	BRA $8F4C
-C1/8F40:	BD 86 2B   	LDA $2B86,X
-C1/8F43:	8D 0D 89   	STA $890D
-C1/8F46:	BD 87 2B   	LDA $2B87,X
-C1/8F49:	8D 0E 89   	STA $890E
+C1/8F2A:	8D 0C 89   	STA $890C      ; set equipment swap mode
+C1/8F2D:	B9 4B 89   	LDA $894B,Y    ; cursor column position [?]
+C1/8F30:	D0 0E      	BNE $8F40      ; branch if left side
+C1/8F32:	BD 9A 2B   	LDA $2B9A,X    ; character's left-hand item index
+C1/8F35:	8D 0D 89   	STA $890D      ; set equipped item index
+C1/8F38:	BD 9B 2B   	LDA $2B9B,X    ; character's left-hand item flags
+C1/8F3B:	8D 0E 89   	STA $890E      ; set equipped item flags
+C1/8F3E:	80 0C      	BRA $8F4C      ; skip right-hand
+
+C1/8F40:	BD 86 2B   	LDA $2B86,X    ; character's right-hand item index
+C1/8F43:	8D 0D 89   	STA $890D      ; set equipped item index
+C1/8F46:	BD 87 2B   	LDA $2B87,X    ; character's right-hand item flags
+C1/8F49:	8D 0E 89   	STA $890E      ; set equipped item flags
+
 C1/8F4C:	B9 4B 89   	LDA $894B,Y
 C1/8F4F:	1A         	INC A
 C1/8F50:	8D 00 7B   	STA $7B00
@@ -20957,6 +20971,7 @@ C1/A4CC:	F0 0E      	BEQ $A4DC       ; if dmg numeral thread not active, loop
 C1/A4CE:	B1 76      	LDA ($76),Y     ; A = param 1 (damage target?)
 C1/A4D0:	DD 1E 63   	CMP $631E,X     ; damage numeral thread target?
 C1/A4D3:	D0 07      	BNE $A4DC       ; loop to check for matching targets
+
 ; Found matching numeral thread
 C1/A4D5:	A9 08      	LDA #$08
 C1/A4D7:	20 B6 9B   	JSR $9BB6       ; wait 8 frames
