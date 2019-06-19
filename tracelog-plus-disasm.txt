@@ -1501,13 +1501,14 @@ C1/0CD8:	D0 03      	BNE $0CDD
 C1/0CDA:	20 D3 2D   	JSR $2DD3
 C1/0CDD:	20 14 5B   	JSR $5B14
 C1/0CE0:	20 5C 5A   	JSR $5A5C
-C1/0CE3:	AD 85 7B   	LDA $7B85
-C1/0CE6:	F0 0C      	BEQ $0CF4
+C1/0CE3:	AD 85 7B   	LDA $7B85      ; flag to open menu instantly [?]
+C1/0CE6:	F0 0C      	BEQ $0CF4      ; branch if not opening instantly [?]
 C1/0CE8:	20 14 5B   	JSR $5B14
 C1/0CEB:	20 5C 5A   	JSR $5A5C
 C1/0CEE:	20 14 5B   	JSR $5B14
 C1/0CF1:	20 5C 5A   	JSR $5A5C
-C1/0CF4:	20 24 55   	JSR $5524
+
+C1/0CF4:	20 24 55   	JSR $5524      ; do next action
 C1/0CF7:	20 00 18   	JSR $1800
 C1/0CFA:	20 73 0B   	JSR $0B73
 C1/0CFD:	8B         	PHB
@@ -8721,49 +8722,52 @@ C1/44A1:	60         	RTS
 
 ; Draw active battle menu
 C1/44A2:	A9 01      	LDA #$01
-C1/44A4:	8D 98 7B   	STA $7B98      ; pending battle menu draw [?]
+C1/44A4:	8D 98 7B   	STA $7B98      ; battle menu opening
 C1/44A7:	20 45 44   	JSR $4445      ; add obtained items to battle inventory
 C1/44AA:	20 59 47   	JSR $4759      ; transfer battle menu tiles [?]
 C1/44AD:	A9 04      	LDA #$04
 C1/44AF:	8D C3 7B   	STA $7BC3      ; set queued menu cursor state to 4
 C1/44B2:	A9 01      	LDA #$01
-C1/44B4:	8D C2 7B   	STA $7BC2      ; set menu cursor state to 1
+C1/44B4:	8D C2 7B   	STA $7BC2      ; set menu cursor state to advance
 C1/44B7:	EE BB 7B   	INC $7BBB      ; battle menu update pending
 C1/44BA:	EE CA 7B   	INC $7BCA      ; flag menu open or opening
 C1/44BD:	60         	RTS
 
-C1/44BE:	AD 98 7B   	LDA $7B98
-C1/44C1:	0D 9C 7B   	ORA $7B9C
-C1/44C4:	D0 11      	BNE $44D7
-C1/44C6:	AD 99 7B   	LDA $7B99
+; Update ATB/Morph/Condemned graphics (every frame)
+C1/44BE:	AD 98 7B   	LDA $7B98      ; battle menu opening
+C1/44C1:	0D 9C 7B   	ORA $7B9C      ; drawing menu text [?]
+C1/44C4:	D0 11      	BNE $44D7      ; branch if either ^ set
+C1/44C6:	AD 99 7B   	LDA $7B99      ; counter 0-7 [?]
 C1/44C9:	0A         	ASL A
 C1/44CA:	AA         	TAX
 C1/44CB:	FC ED 44   	JSR ($44ED,X)  ; Pointer table
-C1/44CE:	AD 99 7B   	LDA $7B99
-C1/44D1:	1A         	INC A
-C1/44D2:	29 07      	AND #$07
-C1/44D4:	8D 99 7B   	STA $7B99
-C1/44D7:	AD 9A 7B   	LDA $7B9A
-C1/44DA:	1A         	INC A
-C1/44DB:	29 03      	AND #$03
-C1/44DD:	8D 9A 7B   	STA $7B9A
+C1/44CE:	AD 99 7B   	LDA $7B99      ; get counter
+C1/44D1:	1A         	INC A          ; increment counter
+C1/44D2:	29 07      	AND #$07       ; modulo 8
+C1/44D4:	8D 99 7B   	STA $7B99      ; save updated counter
+
+C1/44D7:	AD 9A 7B   	LDA $7B9A      ; counter 0-3 for gauge/condemned updates
+C1/44DA:	1A         	INC A          ; do next character
+C1/44DB:	29 03      	AND #$03       ; modulo 4
+C1/44DD:	8D 9A 7B   	STA $7B9A      ; save updated counter
 C1/44E0:	0A         	ASL A
 C1/44E1:	AA         	TAX
-C1/44E2:	7C E5 44   	JMP ($44E5,X)  ; Jump table
+C1/44E2:	7C E5 44   	JMP ($44E5,X)  ; update one character's gauge per frame
 
-C1/44E5:	BC4A
-C1/44E7:	CA4A
-C1/44E9:	DB4A
-C1/44EB:	EC4A
+; Pointers to ATB/Morph/Condemned updates
+C1/44E5:	BC4A ; 00: Character 1 ($4ABC)
+C1/44E7:	CA4A ; 01: Character 2 ($4ACA)
+C1/44E9:	DB4A ; 02: Character 3 ($4ADB)
+C1/44EB:	EC4A ; 03: Character 4 ($4AEC)
 
-C1/44ED:	FD4A
-C1/44EF:	0045
-C1/44F1:	044B
-C1/44F3:	0045
-C1/44F5:	0D4B
-C1/44F7:	0045
-C1/44F9:	164B
-C1/44FB:	FD44
+C1/44ED:	FD4A ; 00: Character 1 menu text [?] ($4AFD)
+C1/44EF:	0045 ; 01: Set flag ($4500)
+C1/44F1:	044B ; 02: Character 2 menu text [?] ($4B04)
+C1/44F3:	0045 ; 03: Set flag ($4500)
+C1/44F5:	0D4B ; 04: Character 3 menu text [?] ($4B0D)
+C1/44F7:	0045 ; 05: Set flag ($4500)
+C1/44F9:	164B ; 06: Character 4 menu text [?] ($4B16)
+C1/44FB:	FD44 ; 07: ($44FD)
 
 C1/44FD:	20 3E 4B   	JSR $4B3E
 C1/4500:	EE 9C 7B   	INC $7B9C
@@ -8774,59 +8778,59 @@ C1/4504:	AD BB 7B   	LDA $7BBB      ; battle menu update pending
 C1/4507:	D0 0C      	BNE $4515      ; branch to exit if so
 C1/4509:	A6 00      	LDX $00
 C1/450B:	86 10      	STX $10
-C1/450D:	AD F0 7B   	LDA $7BF0      ; A = current menu state
+C1/450D:	AD F0 7B   	LDA $7BF0      ; current menu state
 C1/4510:	0A         	ASL A
 C1/4511:	AA         	TAX
-C1/4512:	7C 17 45   	JMP ($4517,X)  ; jump table for menu state changes
+C1/4512:	7C 17 45   	JMP ($4517,X)  ; jump table for menu state
 C1/4515:	60         	RTS
 
 C1/4516:	60         	RTS
 
-C1/4517:	1645
-C1/4519:	CE50
-C1/451B:	DD50
-C1/451D:	3746
-C1/451F:	F34F
-C1/4521:	6B46
-C1/4523:	AD50
-C1/4525:	8850
-C1/4527:	B650
-C1/4529:	B74F
-C1/452B:	C44F
-C1/452D:	9850
-C1/452F:	B650
-C1/4531:	9B4F
-C1/4533:	A84F
-C1/4535:	1645
-C1/4537:	E950
-C1/4539:	9850
-C1/453B:	B650
-C1/453D:	8850
-C1/453F:	B650
-C1/4541:	8850
-C1/4543:	B650
-C1/4545:	074F
-C1/4547:	464F
-C1/4549:	184F
-C1/454B:	464F
-C1/454D:	8850
-C1/454F:	B650
-C1/4551:	8850
-C1/4553:	B650
-C1/4555:	C850
-C1/4557:	8850
-C1/4559:	B650
-C1/455B:	E243
-C1/455D:	1645
-C1/455F:	1645
-C1/4561:	DA4E
-C1/4563:	F24E
-C1/4565:	3E50
-C1/4567:	6250
-C1/4569:	2052
-C1/456B:	3552
-C1/456D:	FE45
-C1/456F:	7145
+C1/4517:	1645 ; 00: Empty ($4516)
+C1/4519:	CE50 ; 01: Advance menu state queue after changes ($50CE)
+C1/451B:	DD50 ; 02: ($50DD)
+C1/451D:	3746 ; 03
+C1/451F:	F34F ; 04
+C1/4521:	6B46 ; 05
+C1/4523:	AD50 ; 06
+C1/4525:	8850 ; 07
+C1/4527:	B650 ; 08
+C1/4529:	B74F ; 09: Load equipment menu ($4FB7)
+C1/452B:	C44F ; 0A
+C1/452D:	9850 ; 0B
+C1/452F:	B650 ; 0C
+C1/4531:	9B4F ; 0D
+C1/4533:	A84F ; 0E
+C1/4535:	1645 ; 0F
+C1/4537:	E950 ; 10: Advance menu state queue now ($50E9)
+C1/4539:	9850 ; 11
+C1/453B:	B650 ; 12
+C1/453D:	8850 ; 13
+C1/453F:	B650 ; 14
+C1/4541:	8850 ; 15
+C1/4543:	B650 ; 16
+C1/4545:	074F ; 17
+C1/4547:	464F ; 18
+C1/4549:	184F ; 19
+C1/454B:	464F ; 1A
+C1/454D:	8850 ; 1B
+C1/454F:	B650 ; 1C
+C1/4551:	8850 ; 1D
+C1/4553:	B650 ; 1E
+C1/4555:	C850 ; 1F
+C1/4557:	8850 ; 20
+C1/4559:	B650 ; 21
+C1/455B:	E243 ; 22
+C1/455D:	1645 ; 23
+C1/455F:	1645 ; 24
+C1/4561:	DA4E ; 25
+C1/4563:	F24E ; 26
+C1/4565:	3E50 ; 27
+C1/4567:	6250 ; 28
+C1/4569:	2052 ; 29
+C1/456B:	3552 ; 2A
+C1/456D:	FE45 ; 2B
+C1/456F:	7145 ; 2C
 
 C1/4571:	E6 10       INC $10
 C1/4573:	A9 1A       LDA #$1A
@@ -8918,8 +8922,8 @@ C1/4618:	20 04 47   	JSR $4704
 C1/461B:	A9 02      	LDA #$02
 C1/461D:	A0 53 8D   	LDY #$8D53
 C1/4620:	20 21 47   	JSR $4721
-C1/4623:	A9 01      	LDA #$01
-C1/4625:	8D 85 7B   	STA $7B85
+C1/4623:	A9 01      	LDA #$01      ; set flag
+C1/4625:	8D 85 7B   	STA $7B85     ; flag to open menu instantly [?]
 C1/4628:	64 10      	STZ $10
 C1/462A:	A9 19      	LDA #$19
 C1/462C:	20 FB 50   	JSR $50FB
@@ -8941,9 +8945,9 @@ C1/464E:	20 65 51   	JSR $5165
 C1/4651:	20 AC 47   	JSR $47AC
 C1/4654:	20 77 4F   	JSR $4F77
 C1/4657:	EE BB 7B   	INC $7BBB
-C1/465A:	A9 01      	LDA #$01
-C1/465C:	8D F0 7B   	STA $7BF0
-C1/465F:	8D 85 7B   	STA $7B85
+C1/465A:	A9 01      	LDA #$01      ; set flag
+C1/465C:	8D F0 7B   	STA $7BF0     ; menu: advance queue when ready
+C1/465F:	8D 85 7B   	STA $7B85     ; flag to open menu instantly [?]
 C1/4662:	EE DD 7B   	INC $7BDD
 C1/4665:	EE D1 7B   	INC $7BD1
 C1/4668:	E6 93      	INC $93       ; sound: character ready
@@ -8960,7 +8964,7 @@ C1/467A:	20 65 51   	JSR $5165
 C1/467D:	EE EE 7B   	INC $7BEE
 C1/4680:	A9 02      	LDA #$02
 C1/4682:	8D F0 7B   	STA $7BF0
-C1/4685:	9C 85 7B   	STZ $7B85
+C1/4685:	9C 85 7B   	STZ $7B85    ; flag to open menu instantly [?]
 C1/4688:	EE DD 7B   	INC $7BDD
 C1/468B:	EE D1 7B   	INC $7BD1
 C1/468E:	60         	RTS
@@ -9569,23 +9573,26 @@ C1/4AF7:	A9 03      	LDA #$03
 C1/4AF9:	8D 9B 7B   	STA $7B9B
 C1/4AFC:	60         	RTS
 
-C1/4AFD:	9C 9D 7B   	STZ $7B9D
+C1/4AFD:	9C 9D 7B   	STZ $7B9D      ; character 1 [?]
 C1/4B00:	A9 0E      	LDA #$0E
 C1/4B02:	80 19      	BRA $4B1D
-C1/4B04:	A9 01      	LDA #$01
+
+C1/4B04:	A9 01      	LDA #$01       ; character 2 [?]
 C1/4B06:	8D 9D 7B   	STA $7B9D
 C1/4B09:	A9 0F      	LDA #$0F
 C1/4B0B:	80 10      	BRA $4B1D
-C1/4B0D:	A9 02      	LDA #$02
+
+C1/4B0D:	A9 02      	LDA #$02       ; character 3 [?]
 C1/4B0F:	8D 9D 7B   	STA $7B9D
 C1/4B12:	A9 10      	LDA #$10
 C1/4B14:	80 07      	BRA $4B1D
-C1/4B16:	A9 03      	LDA #$03
+
+C1/4B16:	A9 03      	LDA #$03       ; character 4 [?]
 C1/4B18:	8D 9D 7B   	STA $7B9D
 C1/4B1B:	A9 11      	LDA #$11
 
 C1/4B1D:	20 5A 4E   	JSR $4E5A
-C1/4B20:	4C B1 66   	JMP $66B1
+C1/4B20:	4C B1 66   	JMP $66B1      ; write menu text tiles [?]
 
 C1/4B23:	A9 02      	LDA #$02
 C1/4B25:	20 5A 4E   	JSR $4E5A
@@ -10161,17 +10168,19 @@ C1/4F71:	20 8C 4F   	JSR $4F8C
 C1/4F74:	4C F2 48   	JMP $48F2
 
 C1/4F77:	EE BB 7B   	INC $7BBB
-C1/4F7A:	A9 01      	LDA #$01
-C1/4F7C:	8D F0 7B   	STA $7BF0
-C1/4F7F:	9C 85 7B   	STZ $7B85
+
+; Finish menu window dimensions prep [?]
+C1/4F7A:	A9 01      	LDA #$01     ; advance menu state queue when ready
+C1/4F7C:	8D F0 7B   	STA $7BF0    ; set new menu state
+C1/4F7F:	9C 85 7B   	STZ $7B85    ; flag to open menu instantly [?]
 C1/4F82:	EE DD 7B   	INC $7BDD
-C1/4F85:	EE D1 7B   	INC $7BD1
+C1/4F85:	EE D1 7B   	INC $7BD1    ; menu window size change pending
 C1/4F88:	60         	RTS
 
 C1/4F89:	EE BB 7B   	INC $7BBB
 C1/4F8C:	A9 02      	LDA #$02
 C1/4F8E:	8D F0 7B   	STA $7BF0
-C1/4F91:	9C 85 7B   	STZ $7B85
+C1/4F91:	9C 85 7B   	STZ $7B85    ; flag to open menu instantly [?]
 C1/4F94:	EE DD 7B   	INC $7BDD
 C1/4F97:	EE D1 7B   	INC $7BD1
 C1/4F9A:	60         	RTS
@@ -10189,10 +10198,11 @@ C1/4FAF:	A9 03      	LDA #$03
 C1/4FB1:	20 65 51   	JSR $5165
 C1/4FB4:	4C 8C 4F   	JMP $4F8C
 
-C1/4FB7:	A9 05      	LDA #$05
-C1/4FB9:	20 FB 50   	JSR $50FB
+; Initialize equipment menu
+C1/4FB7:	A9 05      	LDA #$05      ; menu window size id
+C1/4FB9:	20 FB 50   	JSR $50FB     ; get menu window dimensions
 C1/4FBC:	A9 04      	LDA #$04
-C1/4FBE:	20 65 51   	JSR $5165
+C1/4FBE:	20 65 51   	JSR $5165     ; get more dimensions [?]
 C1/4FC1:	4C 7A 4F   	JMP $4F7A
 
 C1/4FC4:	E6 10      	INC $10
@@ -10330,75 +10340,85 @@ C1/50C5:	4C 8C 4F   	JMP $4F8C
 C1/50C8:	20 F2 48   	JSR $48F2
 C1/50CB:	4C E9 50   	JMP $50E9
 
-C1/50CE:	AD D1 7B   	LDA $7BD1
-C1/50D1:	0D DD 7B   	ORA $7BDD
-C1/50D4:	D0 06      	BNE $50DC
-C1/50D6:	9C 98 7B   	STZ $7B98
-C1/50D9:	20 E9 50   	JSR $50E9
+; Advance menu queue when ready
+; (menu state 01)
+C1/50CE:	AD D1 7B   	LDA $7BD1      ; menu window needs size change
+C1/50D1:	0D DD 7B   	ORA $7BDD      ; [?]
+C1/50D4:	D0 06      	BNE $50DC      ; exit if either ^ set
+C1/50D6:	9C 98 7B   	STZ $7B98      ; battle menu opening
+C1/50D9:	20 E9 50   	JSR $50E9      ; advance menu queue
 C1/50DC:	60         	RTS
 
-C1/50DD:	AD D1 7B   	LDA $7BD1
-C1/50E0:	0D DD 7B   	ORA $7BDD
-C1/50E3:	D0 03      	BNE $50E8
-C1/50E5:	20 E9 50   	JSR $50E9
+; Advance menu queue when ready
+; (menu state 02)
+C1/50DD:	AD D1 7B   	LDA $7BD1      ; menu window needs size change
+C1/50E0:	0D DD 7B   	ORA $7BDD      ; [?]
+C1/50E3:	D0 03      	BNE $50E8      ; exit if either ^ set
+C1/50E5:	20 E9 50   	JSR $50E9      ; advance menu queue
 C1/50E8:	60         	RTS
 
-C1/50E9:	7B         	TDC
-C1/50EA:	AA         	TAX
-C1/50EB:	8D FF 7B   	STA $7BFF
-C1/50EE:	BD F1 7B   	LDA $7BF1,X
-C1/50F1:	9D F0 7B   	STA $7BF0,X
+; Advance menu queue
+; (menu state 10)
+C1/50E9:	7B         	TDC            ; A = 0000
+C1/50EA:	AA         	TAX            ; X = 0000
+C1/50EB:	8D FF 7B   	STA $7BFF      ; set queue endpoint
+C1/50EE:	BD F1 7B   	LDA $7BF1,X    ; queued state
+C1/50F1:	9D F0 7B   	STA $7BF0,X    ; move downward
 C1/50F4:	E8         	INX
-C1/50F5:	E0 0F 00   	CPX #$000F
-C1/50F8:	D0 F4      	BNE $50EE
+C1/50F5:	E0 0F 00   	CPX #$000F     ; shift 15 queue entries
+C1/50F8:	D0 F4      	BNE $50EE      ; loop till all shifted down
 C1/50FA:	60         	RTS
 
-C1/50FB:	0A         	ASL A
-C1/50FC:	0A         	ASL A
-C1/50FD:	AA         	TAX
-C1/50FE:	A5 10      	LDA $10
-C1/5100:	F0 31      	BEQ $5133
-C1/5102:	C2 20      	REP #$20
+; Get menu window dimensions
+C1/50FB:	0A         	ASL A          ; *2
+C1/50FC:	0A         	ASL A          ; *4
+C1/50FD:	AA         	TAX            ; index to 4 byte block
+C1/50FE:	A5 10      	LDA $10        ; menu drawing buffer index [?]
+C1/5100:	F0 31      	BEQ $5133      ; branch if no other menu open [?]
+
+C1/5102:	C2 20      	REP #$20       ; 16-bit A
 C1/5104:	BF A2 DE C2	LDA $C2DEA2,X
-C1/5108:	8D D2 7B   	STA $7BD2
+C1/5108:	8D D2 7B   	STA $7BD2      ; menu horizontal scroll (pixels)
 C1/510B:	BF A4 DE C2	LDA $C2DEA4,X
-C1/510F:	8D D4 7B   	STA $7BD4
+C1/510F:	8D D4 7B   	STA $7BD4      ; menu vertical scroll (pixels)
 C1/5112:	BF 34 DE C2	LDA $C2DE34,X
-C1/5116:	8D D6 7B   	STA $7BD6
+C1/5116:	8D D6 7B   	STA $7BD6      ; menu window height (tiles)
 C1/5119:	0A         	ASL A
 C1/511A:	0A         	ASL A
 C1/511B:	0A         	ASL A
 C1/511C:	0A         	ASL A
-C1/511D:	0A         	ASL A
+C1/511D:	0A         	ASL A          ; tiles * 32 (pixels)
 C1/511E:	18         	CLC
-C1/511F:	7F 32 DE C2	ADC $C2DE32,X
+C1/511F:	7F 32 DE C2	ADC $C2DE32,X  ; add window top (pixels)
 C1/5123:	38         	SEC
-C1/5124:	E9 10 00   	SBC #$0010
-C1/5127:	8D D7 7B   	STA $7BD7
+C1/5124:	E9 10 00   	SBC #$0010     ; subtract 16 pixels [?]
+C1/5127:	8D D7 7B   	STA $7BD7      ; menu window bottom (pixels)
 C1/512A:	BF 32 DE C2	LDA $C2DE32,X
-C1/512E:	8D D9 7B   	STA $7BD9
+C1/512E:	8D D9 7B   	STA $7BD9      ; menu window top (pixels)
 C1/5131:	80 2B      	BRA $515E
-C1/5133:	C2 20      	REP #$20
+
+C1/5133:	C2 20      	REP #$20       ; 16-bit A
 C1/5135:	BF A2 DE C2	LDA $C2DEA2,X
-C1/5139:	8D D2 7B   	STA $7BD2
+C1/5139:	8D D2 7B   	STA $7BD2      ; menu horizontal scroll (pixels)
 C1/513C:	BF A4 DE C2	LDA $C2DEA4,X
-C1/5140:	8D D4 7B   	STA $7BD4
+C1/5140:	8D D4 7B   	STA $7BD4      ; menu vertical scroll (pixels)
 C1/5143:	BF 34 DE C2	LDA $C2DE34,X
-C1/5147:	8D D6 7B   	STA $7BD6
+C1/5147:	8D D6 7B   	STA $7BD6      ; menu window height (tiles)
 C1/514A:	3A         	DEC A
 C1/514B:	0A         	ASL A
 C1/514C:	0A         	ASL A
 C1/514D:	0A         	ASL A
-C1/514E:	0A         	ASL A
+C1/514E:	0A         	ASL A          ; (tiles - 1) * 16
 C1/514F:	18         	CLC
-C1/5150:	7F 32 DE C2	ADC $C2DE32,X
-C1/5154:	8D D7 7B   	STA $7BD7
+C1/5150:	7F 32 DE C2	ADC $C2DE32,X  ; add window top (pixels)
+C1/5154:	8D D7 7B   	STA $7BD7      ; menu window bottom (pixels)
 C1/5157:	18         	CLC
-C1/5158:	69 10 00   	ADC #$0010
-C1/515B:	8D D9 7B   	STA $7BD9
-C1/515E:	9C DB 7B   	STZ $7BDB
-C1/5161:	7B         	TDC
-C1/5162:	E2 20      	SEP #$20
+C1/5158:	69 10 00   	ADC #$0010     ; add 16 pixels [?]
+C1/515B:	8D D9 7B   	STA $7BD9      ; menu window top (pixels)
+
+C1/515E:	9C DB 7B   	STZ $7BDB      ; menu update for BG1, not BG2 [?]
+C1/5161:	7B         	TDC            ; A = 0000
+C1/5162:	E2 20      	SEP #$20       ; 8-bit A
 C1/5164:	60         	RTS
 
 C1/5165:	0A         	ASL A
@@ -10408,6 +10428,7 @@ C1/5168:	AA         	TAX
 C1/5169:	9C EB 7B   	STZ $7BEB
 C1/516C:	A5 10      	LDA $10
 C1/516E:	F0 3D      	BEQ $51AD
+
 C1/5170:	C2 20      	REP #$20
 C1/5172:	BF DA DD C2	LDA $C2DDDA,X
 C1/5176:	18         	CLC
@@ -10436,6 +10457,7 @@ C1/51A4:	38         	SEC
 C1/51A5:	E9 20 00   	SBC #$0020
 C1/51A8:	8D E0 7B   	STA $7BE0
 C1/51AB:	80 2B      	BRA $51D8
+
 C1/51AD:	C2 20      	REP #$20
 C1/51AF:	BF DE DD C2	LDA $C2DDDE,X
 C1/51B3:	3A         	DEC A
@@ -10457,6 +10479,7 @@ C1/51CE:	8D E0 7B   	STA $7BE0
 C1/51D1:	18         	CLC
 C1/51D2:	69 10 00   	ADC #$0010
 C1/51D5:	8D E4 7B   	STA $7BE4
+
 C1/51D8:	BF DA DD C2	LDA $C2DDDA,X
 C1/51DC:	18         	CLC
 C1/51DD:	69 10 00   	ADC #$0010
@@ -10868,83 +10891,83 @@ C1/551E:	3634
 C1/5520:	3735
 C1/5522:	3735
 
-C1/5524:	AD C2 7B   	LDA $7BC2
-C1/5527:	0A         	ASL A
+C1/5524:	AD C2 7B   	LDA $7BC2      ; next menu cursor state
+C1/5527:	0A         	ASL A          ; get pointer index
 C1/5528:	AA         	TAX
-C1/5529:	7C 2C 55   	JMP ($552C,X)  ; Jump table
+C1/5529:	7C 2C 55   	JMP ($552C,X)  ; execute cursor state
 
-C1/552C:	405A
-C1/552E:	415A
-C1/5530:	4A5A
-C1/5532:	405A
-C1/5534:	D659
-C1/5536:	927A
-C1/5538:	AE59
-C1/553A:	A056
-C1/553C:	087F
-C1/553E:	6957
-C1/5540:	7D88
-C1/5542:	4556
-C1/5544:	988D ; $8D98
-C1/5546:	A057
-C1/5548:	4581
-C1/554A:	8556
-C1/554C:	5B56
-C1/554E:	405A
-C1/5550:	F256
-C1/5552:	6956
-C1/5554:	E956
-C1/5556:	1F57
-C1/5558:	B382
-C1/555A:	915C
-C1/555C:	F75C
-C1/555E:	ED58
-C1/5560:	FB56
-C1/5562:	0883
-C1/5564:	2759
-C1/5566:	0457
-C1/5568:	C684
-C1/556A:	5859
-C1/556C:	0D57
-C1/556E:	B485
-C1/5570:	3156
-C1/5572:	7C56
-C1/5574:	737E
-C1/5576:	3B56
-C1/5578:	7356
-C1/557A:	057E
-C1/557C:	8359
-C1/557E:	1657
-C1/5580:	2586
-C1/5582:	7558
-C1/5584:	E056
-C1/5586:	B586
-C1/5588:	B158
-C1/558A:	9756
-C1/558C:	9D87
-C1/558E:	3E8D
-C1/5590:	C955
-C1/5592:	D756
-C1/5594:	B556
-C1/5596:	1B56
-C1/5598:	2856
-C1/559A:	257D
-C1/559C:	906D
-C1/559E:	6842
-C1/55A0:	C842
-C1/55A2:	5557
-C1/55A4:	5F57
-C1/55A6:	F86F
-C1/55A8:	4C5B
-C1/55AA:	B055
-C1/55AC:	BA55
-C1/55AE:	1C91
+C1/552C:	405A ; 00: Empty ($5A40)
+C1/552E:	415A ; 01: Shift state queue downward ($5A41)
+C1/5530:	4A5A ; 02
+C1/5532:	405A ; 03
+C1/5534:	D659 ; 04: ($59D6)
+C1/5536:	927A ; 05
+C1/5538:	AE59 ; 06
+C1/553A:	A056 ; 07
+C1/553C:	087F ; 08
+C1/553E:	6957 ; 09
+C1/5540:	7D88 ; 0A
+C1/5542:	4556 ; 0B
+C1/5544:	988D ; 0C: Sustain battle inventory ($8D98)
+C1/5546:	A057 ; 0D
+C1/5548:	4581 ; 0E
+C1/554A:	8556 ; 0F
+C1/554C:	5B56 ; 10
+C1/554E:	405A ; 11
+C1/5550:	F256 ; 12
+C1/5552:	6956 ; 13
+C1/5554:	E956 ; 14
+C1/5556:	1F57 ; 15
+C1/5558:	B382 ; 16
+C1/555A:	915C ; 17
+C1/555C:	F75C ; 18
+C1/555E:	ED58 ; 19
+C1/5560:	FB56 ; 1A
+C1/5562:	0883 ; 1B
+C1/5564:	2759 ; 1C
+C1/5566:	0457 ; 1D
+C1/5568:	C684 ; 1E
+C1/556A:	5859 ; 1F
+C1/556C:	0D57 ; 20
+C1/556E:	B485 ; 21
+C1/5570:	3156 ; 22
+C1/5572:	7C56 ; 23
+C1/5574:	737E ; 24
+C1/5576:	3B56 ; 25
+C1/5578:	7356 ; 26
+C1/557A:	057E ; 27
+C1/557C:	8359 ; 28
+C1/557E:	1657 ; 29
+C1/5580:	2586 ; 2A
+C1/5582:	7558 ; 2B
+C1/5584:	E056 ; 2C
+C1/5586:	B586 ; 2D
+C1/5588:	B158 ; 2E
+C1/558A:	9756 ; 2F
+C1/558C:	9D87 ; 30
+C1/558E:	3E8D ; 31
+C1/5590:	C955 ; 32
+C1/5592:	D756 ; 33
+C1/5594:	B556 ; 34
+C1/5596:	1B56 ; 35
+C1/5598:	2856 ; 36
+C1/559A:	257D ; 37
+C1/559C:	906D ; 38: Sustain targeting ($6D90)
+C1/559E:	6842 ; 39
+C1/55A0:	C842 ; 3A
+C1/55A2:	5557 ; 3B
+C1/55A4:	5F57 ; 3C
+C1/55A6:	F86F ; 3D
+C1/55A8:	4C5B ; 3E
+C1/55AA:	B055 ; 3F
+C1/55AC:	BA55 ; 40
+C1/55AE:	1C91 ; 41
 
 ; Target allies
 C1/55B0:	A9 2B       LDA #$2B
 C1/55B2:	8D F0 7B    STA $7BF0
 C1/55B5:	A9 12       LDA #$12
-C1/55B7:	4C 2C 5A    JMP $5A2C
+C1/55B7:	4C 2C 5A    JMP $5A2C      ; queue cursor state sequence 12
 
 C1/55BA:	A9 2C      	LDA #$2C
 C1/55BC:	8D F0 7B   	STA $7BF0
@@ -10952,7 +10975,7 @@ C1/55BF:	AD BA EC   	LDA $ECBA
 C1/55C2:	0A         	ASL A
 C1/55C3:	18         	CLC
 C1/55C4:	69 02      	ADC #$02
-C1/55C6:	4C 2C 5A   	JMP $5A2C
+C1/55C6:	4C 2C 5A   	JMP $5A2C      ; queue cursor state sequence 02
 
 C1/55C9:	7B         	TDC
 C1/55CA:	AA         	TAX
@@ -10991,31 +11014,31 @@ C1/561B:	9C 82 7B   	STZ $7B82
 C1/561E:	A9 25      	LDA #$25
 C1/5620:	8D F0 7B   	STA $7BF0
 C1/5623:	A9 10      	LDA #$10
-C1/5625:	4C 2C 5A   	JMP $5A2C
+C1/5625:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 10
 
 C1/5628:	A9 26      	LDA #$26
 C1/562A:	8D F0 7B   	STA $7BF0
 C1/562D:	7B         	TDC
-C1/562E:	4C 2C 5A   	JMP $5A2C
+C1/562E:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/5631:	A9 17      	LDA #$17
 C1/5633:	8D F0 7B   	STA $7BF0
 C1/5636:	A9 0B      	LDA #$0B
-C1/5638:	4C 2C 5A   	JMP $5A2C
+C1/5638:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 0B
 
 C1/563B:	A9 19      	LDA #$19
 C1/563D:	8D F0 7B   	STA $7BF0
 C1/5640:	A9 0C      	LDA #$0C
-C1/5642:	4C 2C 5A   	JMP $5A2C
+C1/5642:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 0C
 
-C1/5645:	20 BA 4B   	JSR $4BBA     ; draw equipped items (menu)
-C1/5648:	A2 40 7E   	LDX #$7E40
-C1/564B:	8E AA 7B   	STX $7BAA
-C1/564E:	EE A9 7B   	INC $7BA9
+C1/5645:	20 BA 4B   	JSR $4BBA     ; draw equipped items menu
+C1/5648:	A2 40 7E   	LDX #$7E40    ; menu window palette offset
+C1/564B:	8E AA 7B   	STX $7BAA     ; VRAM destination [?]
+C1/564E:	EE A9 7B   	INC $7BA9     ; pending VRAM [?]
 C1/5651:	A9 09      	LDA #$09
-C1/5653:	8D F0 7B   	STA $7BF0
-C1/5656:	A9 03      	LDA #$03
-C1/5658:	4C 2C 5A   	JMP $5A2C
+C1/5653:	8D F0 7B   	STA $7BF0     ; update current menu state
+C1/5656:	A9 03      	LDA #$03      ; cursor state sequence: 010C
+C1/5658:	4C 2C 5A   	JMP $5A2C     ; update cursor after menu loads
 
 C1/565B:	9C CB 7B   	STZ $7BCB
 C1/565E:	A9 22      	LDA #$22
@@ -11027,17 +11050,17 @@ C1/5668:	60         	RTS
 C1/5669:	A9 0A      	LDA #$0A
 C1/566B:	8D F0 7B   	STA $7BF0
 C1/566E:	A9 08      	LDA #$08
-C1/5670:	4C 2C 5A   	JMP $5A2C
+C1/5670:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 08
 
 C1/5673:	A9 1A      	LDA #$1A
 C1/5675:	8D F0 7B   	STA $7BF0
 C1/5678:	7B         	TDC
-C1/5679:	4C 2C 5A   	JMP $5A2C
+C1/5679:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/567C:	A9 18      	LDA #$18
 C1/567E:	8D F0 7B   	STA $7BF0
 C1/5681:	7B         	TDC
-C1/5682:	4C 2C 5A   	JMP $5A2C
+C1/5682:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/5685:	9C 2F 63   	STZ $632F
 C1/5688:	A9 05      	LDA #$05
@@ -11050,7 +11073,7 @@ C1/5694:	4C 2C 5A   	JMP $5A2C
 C1/5697:	A9 21      	LDA #$21
 C1/5699:	8D F0 7B   	STA $7BF0
 C1/569C:	7B         	TDC
-C1/569D:	4C 2C 5A   	JMP $5A2C
+C1/569D:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/56A0:	A9 80      	LDA #$80
 C1/56A2:	8D 83 7B   	STA $7B83
@@ -11079,42 +11102,42 @@ C1/56D6:	60         	RTS
 C1/56D7:	A9 06      	LDA #$06
 C1/56D9:	8D F0 7B   	STA $7BF0
 C1/56DC:	7B         	TDC
-C1/56DD:	4C 2C 5A   	JMP $5A2C
+C1/56DD:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/56E0:	A9 1E      	LDA #$1E
 C1/56E2:	8D F0 7B   	STA $7BF0
 C1/56E5:	7B         	TDC
-C1/56E6:	4C 2C 5A   	JMP $5A2C
+C1/56E6:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/56E9:	A9 0C      	LDA #$0C
 C1/56EB:	8D F0 7B   	STA $7BF0
 C1/56EE:	7B         	TDC
-C1/56EF:	4C 2C 5A   	JMP $5A2C
+C1/56EF:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/56F2:	A9 08      	LDA #$08
 C1/56F4:	8D F0 7B   	STA $7BF0
 C1/56F7:	7B         	TDC
-C1/56F8:	4C 2C 5A   	JMP $5A2C
+C1/56F8:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/56FB:	A9 12      	LDA #$12
 C1/56FD:	8D F0 7B   	STA $7BF0
 C1/5700:	7B         	TDC
-C1/5701:	4C 2C 5A   	JMP $5A2C
+C1/5701:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/5704:	A9 14      	LDA #$14
 C1/5706:	8D F0 7B   	STA $7BF0
 C1/5709:	7B         	TDC
-C1/570A:	4C 2C 5A   	JMP $5A2C
+C1/570A:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/570D:	A9 16      	LDA #$16
 C1/570F:	8D F0 7B   	STA $7BF0
 C1/5712:	7B         	TDC
-C1/5713:	4C 2C 5A   	JMP $5A2C
+C1/5713:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/5716:	A9 1C      	LDA #$1C
 C1/5718:	8D F0 7B   	STA $7BF0
 C1/571B:	7B         	TDC
-C1/571C:	4C 2C 5A   	JMP $5A2C
+C1/571C:	4C 2C 5A   	JMP $5A2C     ; queue cursor state sequence 00
 
 C1/571F:	A9 0E      	LDA #$0E
 C1/5721:	8D F0 7B   	STA $7BF0
@@ -11444,25 +11467,27 @@ C1/59D2:	4C 2C 5A   	JMP $5A2C
 
 C1/59D5:	60         	RTS
 
-C1/59D6:	AF 4E 1D 00	LDA $001D4E
+; Menu cursor state 04
+C1/59D6:	AF 4E 1D 00	LDA $001D4E    ; why long [?]
 C1/59DA:	29 40      	AND #$40
 C1/59DC:	D0 0B      	BNE $59E9
-C1/59DE:	7B         	TDC
-C1/59DF:	AA         	TAX
-C1/59E0:	9E 0F 89   	STZ $890F,X
+C1/59DE:	7B         	TDC            ; A = 0000
+C1/59DF:	AA         	TAX            ; X = 0000
+C1/59E0:	9E 0F 89   	STZ $890F,X    ; cursor position data
 C1/59E3:	E8         	INX
-C1/59E4:	E0 5C 00   	CPX #$005C
-C1/59E7:	D0 F7      	BNE $59E0
+C1/59E4:	E0 5C 00   	CPX #$005C     ; clear $890F-$896B
+C1/59E7:	D0 F7      	BNE $59E0      ; loop till done
+
 C1/59E9:	A9 01      	LDA #$01
 C1/59EB:	8D 2F 63   	STA $632F
 C1/59EE:	A9 29      	LDA #$29
-C1/59F0:	8D F0 7B   	STA $7BF0
+C1/59F0:	8D F0 7B   	STA $7BF0      ; current (next) menu state
 C1/59F3:	A9 03      	LDA #$03
-C1/59F5:	8D F1 7B   	STA $7BF1
+C1/59F5:	8D F1 7B   	STA $7BF1      ; queued menu state
 C1/59F8:	A9 1F      	LDA #$1F
-C1/59FA:	8D F2 7B   	STA $7BF2
-C1/59FD:	7B         	TDC
-C1/59FE:	4C 2C 5A   	JMP $5A2C
+C1/59FA:	8D F2 7B   	STA $7BF2      ; queued menu state
+C1/59FD:	7B         	TDC            ; A = 0000
+C1/59FE:	4C 2C 5A   	JMP $5A2C      ; queue up cursor state sequence 00
 
 C1/5A01:	20 1E 4E   	JSR $4E1E
 C1/5A04:	A2 80 7B   	LDX #$7B80
@@ -11471,7 +11496,7 @@ C1/5A0A:	EE A9 7B   	INC $7BA9
 C1/5A0D:	A9 0D      	LDA #$0D
 C1/5A0F:	8D F0 7B   	STA $7BF0
 C1/5A12:	A9 06      	LDA #$06
-C1/5A14:	4C 2C 5A   	JMP $5A2C
+C1/5A14:	4C 2C 5A   	JMP $5A2C      ; queue cursor state sequence 06
 
 C1/5A17:	C2 20      	REP #$20
 C1/5A19:	A6 00      	LDX $00
@@ -11485,34 +11510,36 @@ C1/5A28:	7B         	TDC
 C1/5A29:	E2 20      	SEP #$20
 C1/5A2B:	60         	RTS
 
+; Queue cursor state sequence
 C1/5A2C:	0A         	ASL A
 C1/5A2D:	0A         	ASL A
-C1/5A2E:	AA         	TAX
-C1/5A2F:	A4 00      	LDY $00
-C1/5A31:	BF 48 E3 C2	LDA $C2E348,X
-C1/5A35:	99 C2 7B   	STA $7BC2,Y
+C1/5A2E:	AA         	TAX            ; X = cursor state sequence index
+C1/5A2F:	A4 00      	LDY $00        ; Y = 00
+C1/5A31:	BF 48 E3 C2	LDA $C2E348,X  ; cursor state entry
+C1/5A35:	99 C2 7B   	STA $7BC2,Y    ; set in current (and queued) state
 C1/5A38:	E8         	INX
 C1/5A39:	C8         	INY
-C1/5A3A:	C0 04 00   	CPY #$0004
-C1/5A3D:	D0 F2      	BNE $5A31
+C1/5A3A:	C0 04 00   	CPY #$0004     ; queue 4 states
+C1/5A3D:	D0 F2      	BNE $5A31      ; loop till done
 C1/5A3F:	60         	RTS
 
 C1/5A40:	60         	RTS
 
-C1/5A41:	AD F0 7B   	LDA $7BF0
-C1/5A44:	D0 03      	BNE $5A49
-C1/5A46:	4C 4A 5A   	JMP $5A4A
-
+; Menu cursor action 01
+C1/5A41:	AD F0 7B   	LDA $7BF0       ; current menu state
+C1/5A44:	D0 03      	BNE $5A49       ; exit if not zero
+C1/5A46:	4C 4A 5A   	JMP $5A4A       ; shift menu cursor queue downward
 C1/5A49:	60         	RTS
 
-C1/5A4A:	7B         	TDC
-C1/5A4B:	AA         	TAX
-C1/5A4C:	8D C9 7B   	STA $7BC9
-C1/5A4F:	BD C3 7B   	LDA $7BC3,X
-C1/5A52:	9D C2 7B   	STA $7BC2,X
+; Shift menu cursor queue downward
+C1/5A4A:	7B         	TDC             ; A = 0000
+C1/5A4B:	AA         	TAX             ; X = 0000
+C1/5A4C:	8D C9 7B   	STA $7BC9       ; set cursor queue endpoint
+C1/5A4F:	BD C3 7B   	LDA $7BC3,X     ; get later queue entry
+C1/5A52:	9D C2 7B   	STA $7BC2,X     ; shift down one byte
 C1/5A55:	E8         	INX
-C1/5A56:	E0 07 00   	CPX #$0007
-C1/5A59:	D0 F4      	BNE $5A4F
+C1/5A56:	E0 07 00   	CPX #$0007      ; move 7 entries downward
+C1/5A59:	D0 F4      	BNE $5A4F       ; loop till whole queue shifted
 C1/5A5B:	60         	RTS
 
 C1/5A5C:	AD DD 7B   	LDA $7BDD
@@ -11613,17 +11640,17 @@ C1/5B46:	D0 03      	BNE $5B4B
 C1/5B48:	9C D1 7B   	STZ $7BD1
 C1/5B4B:	60         	RTS
 
-C1/5B4C:	AD AF 7B   	LDA $7BAF
+C1/5B4C:	AD AF 7B   	LDA $7BAF      ; item menu cursor frozen
 C1/5B4F:	F0 11      	BEQ $5B62
 C1/5B51:	AD A8 7B   	LDA $7BA8
 C1/5B54:	C9 01      	CMP #$01
 C1/5B56:	F0 0A      	BEQ $5B62
-C1/5B58:	AE B1 7B   	LDX $7BB1
+C1/5B58:	AE B1 7B   	LDX $7BB1      ; frozen cursor ypos
 C1/5B5B:	CA         	DEX
 C1/5B5C:	CA         	DEX
 C1/5B5D:	CA         	DEX
-C1/5B5E:	CA         	DEX
-C1/5B5F:	8E B1 7B   	STX $7BB1
+C1/5B5E:	CA         	DEX            ; subtract 4
+C1/5B5F:	8E B1 7B   	STX $7BB1      ; save cursor ypos
 C1/5B62:	E2 10      	SEP #$10
 C1/5B64:	7B         	TDC
 C1/5B65:	AA         	TAX
@@ -11654,19 +11681,20 @@ C1/5B91:	4C 5C 5D   	JMP $5D5C
 C1/5B94:	CE A8 7B   	DEC $7BA8
 C1/5B97:	CE A8 7B   	DEC $7BA8
 C1/5B9A:	CE A8 7B   	DEC $7BA8
-C1/5B9D:	AD AF 7B   	LDA $7BAF
-C1/5BA0:	F0 0C      	BEQ $5BAE
-C1/5BA2:	C2 20      	REP #$20
-C1/5BA4:	AD B1 7B   	LDA $7BB1
+C1/5B9D:	AD AF 7B   	LDA $7BAF      ; item menu cursor frozen
+C1/5BA0:	F0 0C      	BEQ $5BAE      ; branch if not ^
+C1/5BA2:	C2 20      	REP #$20       ; 16-bit A
+C1/5BA4:	AD B1 7B   	LDA $7BB1      ; frozen cursor ypos
 C1/5BA7:	18         	CLC
-C1/5BA8:	69 08 00   	ADC #$0008
-C1/5BAB:	8D B1 7B   	STA $7BB1
-C1/5BAE:	E2 10      	SEP #$10
+C1/5BA8:	69 08 00   	ADC #$0008     ; add 8
+C1/5BAB:	8D B1 7B   	STA $7BB1      ; save ypos
+
+C1/5BAE:	E2 10      	SEP #$10       ; 8-bit XY
 C1/5BB0:	A2 90      	LDX #$90
-C1/5BB2:	C2 20      	REP #$20
+C1/5BB2:	C2 20      	REP #$20       ; 16-bit A
 C1/5BB4:	A9 00 01   	LDA #$0100
 C1/5BB7:	48         	PHA
-C1/5BB8:	2B         	PLD
+C1/5BB8:	2B         	PLD            ; direct page $7F00--
 C1/5BB9:	B5 32      	LDA $32,X
 C1/5BBB:	8D FE 7A   	STA $7AFE
 C1/5BBE:	B5 02      	LDA $02,X
@@ -11698,13 +11726,14 @@ C1/5BEF:	80 59      	BRA $5C4A
 C1/5BF1:	CE A8 7B   	DEC $7BA8
 C1/5BF4:	CE A8 7B   	DEC $7BA8
 C1/5BF7:	CE A8 7B   	DEC $7BA8
-C1/5BFA:	AD AF 7B   	LDA $7BAF
+C1/5BFA:	AD AF 7B   	LDA $7BAF      ; item menu cursor frozen
 C1/5BFD:	F0 0C      	BEQ $5C0B
 C1/5BFF:	C2 20      	REP #$20
 C1/5C01:	AD B1 7B   	LDA $7BB1
 C1/5C04:	38         	SEC
 C1/5C05:	E9 08 00   	SBC #$0008
 C1/5C08:	8D B1 7B   	STA $7BB1
+
 C1/5C0B:	E2 10      	SEP #$10
 C1/5C0D:	7B         	TDC
 C1/5C0E:	AA         	TAX
@@ -11771,7 +11800,7 @@ C1/5C86:	2B         	PLD
 C1/5C87:	E2 20      	SEP #$20
 C1/5C89:	C2 10      	REP #$10
 C1/5C8B:	20 4A 5A   	JSR $5A4A
-C1/5C8E:	4C 24 55   	JMP $5524
+C1/5C8E:	4C 24 55   	JMP $5524      ; do next action
 
 C1/5C91:	A5 06      	LDA $06
 C1/5C93:	29 10      	AND #$10
@@ -11788,7 +11817,7 @@ C1/5CA8:	05 36      	ORA $36
 C1/5CAA:	85 05      	STA $05
 C1/5CAC:	4C F1 5B   	JMP $5BF1
 
-C1/5CAF:	AD AF 7B   	LDA $7BAF
+C1/5CAF:	AD AF 7B   	LDA $7BAF      ; item menu cursor frozen
 C1/5CB2:	F0 11      	BEQ $5CC5
 C1/5CB4:	AD A8 7B   	LDA $7BA8
 C1/5CB7:	C9 01      	CMP #$01
@@ -11841,7 +11870,7 @@ C1/5D0E:	05 36      	ORA $36
 C1/5D10:	85 05      	STA $05
 C1/5D12:	4C 94 5B   	JMP $5B94
 
-C1/5D15:	AD AF 7B   	LDA $7BAF
+C1/5D15:	AD AF 7B   	LDA $7BAF      ; item menu cursor frozen
 C1/5D18:	F0 11      	BEQ $5D2B
 C1/5D1A:	AD A8 7B    LDA $7BA8
 C1/5D1D:	C9 01       CMP #$01
@@ -11904,7 +11933,7 @@ C1/5D8B:	C2 10      	REP #$10
 C1/5D8D:	CE A8 7B   	DEC $7BA8
 C1/5D90:	D0 06      	BNE $5D98
 C1/5D92:	20 4A 5A   	JSR $5A4A
-C1/5D95:	4C 24 55   	JMP $5524
+C1/5D95:	4C 24 55   	JMP $5524      ; do next action
 
 C1/5D98:	60         	RTS
 
@@ -14034,6 +14063,8 @@ C1/6D8D:	68         	PLA
 C1/6D8E:	18         	CLC
 C1/6D8F:	60         	RTS
 
+; Sustain targeting cursor(s)
+
 C1/6D90:	AD CB 7B   	LDA $7BCB
 C1/6D93:	F0 03      	BEQ $6D98
 C1/6D95:	4C 57 6F   	JMP $6F57
@@ -14202,8 +14233,9 @@ C1/6EFD:	D0 06      	BNE $6F05
 C1/6EFF:	20 4A 77   	JSR $774A
 C1/6F02:	4C 05 6F   	JMP $6F05
 
+; Handle A
 C1/6F05:	A5 04      	LDA $04
-C1/6F07:	10 43      	BPL $6F4C
+C1/6F07:	10 43      	BPL $6F4C     ; branch if not pushing A
 C1/6F09:	E6 96      	INC $96       ; sound: select
 C1/6F0B:	AD 84 7A   	LDA $7A84
 C1/6F0E:	10 15      	BPL $6F25
@@ -14233,8 +14265,9 @@ C1/6F45:	EE CB 7B   	INC $7BCB
 C1/6F48:	EE 80 7B   	INC $7B80
 C1/6F4B:	60         	RTS
 
+; Handle B
 C1/6F4C:	A5 09      	LDA $09
-C1/6F4E:	10 19      	BPL $6F69
+C1/6F4E:	10 19      	BPL $6F69     ; exit if not pushing B
 C1/6F50:	AD B1 62   	LDA $62B1
 C1/6F53:	D0 14      	BNE $6F69
 C1/6F55:	E6 96      	INC $96       ; sound: select
@@ -14445,19 +14478,20 @@ C1/7113:	C9 01      	CMP #$01
 C1/7115:	D0 1C      	BNE $7133
 C1/7117:	AD 1E 7A   	LDA $7A1E
 C1/711A:	F0 4B      	BEQ $7167
-C1/711C:	20 48 8E   	JSR $8E48
-C1/711F:	AC CA 62   	LDY $62CA
-C1/7122:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
-C1/7125:	29 01      	AND #$01
-C1/7127:	F0 1F      	BEQ $7148
-C1/7129:	BD 9D 2B   	LDA $2B9D,X
-C1/712C:	C9 02      	CMP #$02
-C1/712E:	90 04      	BCC $7134
-C1/7130:	DE 9D 2B   	DEC $2B9D,X
+C1/711C:	20 48 8E   	JSR $8E48       ; X = character equip data index
+C1/711F:	AC CA 62   	LDY $62CA       ; character index
+C1/7122:	B9 4B 89   	LDA $894B,Y     ; right column cursor flag
+C1/7125:	29 01      	AND #$01        ; is it set?
+C1/7127:	F0 1F      	BEQ $7148       ; branch if left column
+C1/7129:	BD 9D 2B   	LDA $2B9D,X     ; left-hand quantity
+C1/712C:	C9 02      	CMP #$02        ; less than 2?
+C1/712E:	90 04      	BCC $7134       ; branch if only one
+C1/7130:	DE 9D 2B   	DEC $2B9D,X     ; decrement quantity (never runs [?])
 C1/7133:	60         	RTS
 
+; Remove left-hand equipment
 C1/7134:	A9 FF      	LDA #$FF
-C1/7136:	9D 9A 2B   	STA $2B9A,X     ; clear item slot
+C1/7136:	9D 9A 2B   	STA $2B9A,X     ; clear left-hand equip
 C1/7139:	A9 80      	LDA #$80
 C1/713B:	9D 9B 2B   	STA $2B9B,X     ; set unusable in battle
 C1/713E:	9E 9C 2B   	STZ $2B9C,X     ; zero quantity
@@ -14465,14 +14499,16 @@ C1/7141:	9E 9D 2B   	STZ $2B9D,X     ; zero targeting
 C1/7144:	9E 9E 2B   	STZ $2B9E,X     ; zero equip blacklist
 C1/7147:	60         	RTS
 
-C1/7148:	BD 89 2B   	LDA $2B89,X
-C1/714B:	C9 02      	CMP #$02
-C1/714D:	90 04      	BCC $7153
-C1/714F:	DE 89 2B   	DEC $2B89,X
+; Reduce right-hand equipment
+C1/7148:	BD 89 2B   	LDA $2B89,X     ; right-hand quantity
+C1/714B:	C9 02      	CMP #$02        ; less than 2?
+C1/714D:	90 04      	BCC $7153       ; branch if only one
+C1/714F:	DE 89 2B   	DEC $2B89,X     ; decrement quantity (never runs [?])
 C1/7152:	60         	RTS
 
+; Remove right-hand equipment
 C1/7153:	A9 FF      	LDA #$FF
-C1/7155:	9D 86 2B   	STA $2B86,X     ; clear item slot
+C1/7155:	9D 86 2B   	STA $2B86,X     ; clear right-hand equip
 C1/7158:	A9 80      	LDA #$80
 C1/715A:	9D 87 2B   	STA $2B87,X     ; set unusable in battle
 C1/715D:	9E 88 2B   	STZ $2B88,X     ; zero quantity
@@ -14480,8 +14516,8 @@ C1/7160:	9E 89 2B   	STZ $2B89,X     ; zero targeting
 C1/7163:	9E 8A 2B   	STZ $2B8A,X     ; zero equip blacklist
 C1/7166:	60         	RTS
 
-C1/7167:	7B          TDC
-C1/7168:	AA          TAX
+C1/7167:	7B          TDC             ; A = 0000
+C1/7168:	AA          TAX             ; X = 0000
 C1/7169:	B9 B0 2B    LDA $2BB0,Y     ; using item
 C1/716C:	DD 86 26    CMP $2686,X     ; check battle inventory slot
 C1/716F:	F0 0B       BEQ $717C       ; branch if match
@@ -14494,12 +14530,14 @@ C1/7176:	E0 00 05    CPX #$0500      ; 255 slots
 C1/7179:	D0 F1       BNE $716C       ; loop through all slots
 C1/717B:	60          RTS
 
-C1/717C:	BD 89 26    LDA $2689,X     ; quantity in slot
+; Item match found
+C1/717C:	BD 89 26    LDA $2689,X     ; item quantity
 C1/717F:	C9 02       CMP #$02
 C1/7181:	90 04       BCC $7187       ; branch if only 1 left
 C1/7183:	DE 89 26    DEC $2689,X     ; else decrement quantity
 C1/7186:	60          RTS
 
+; Use last of item quantity
 C1/7187:	A9 FF      	LDA #$FF
 C1/7189:	9D 86 26   	STA $2686,X     ; clear item slot
 C1/718C:	A9 80      	LDA #$80
@@ -15783,9 +15821,10 @@ C1/7B9E:	E6 94      	INC $94        ; sound: cursor
 C1/7BA0:	20 A9 7C   	JSR $7CA9
 C1/7BA3:	4C 3B 56   	JMP $563B
 
+; Handle A
 C1/7BA6:	A5 04      	LDA $04
-C1/7BA8:	10 08      	BPL $7BB2
-C1/7BAA:	E6 96      	INC $96       ; sound: select
+C1/7BA8:	10 08      	BPL $7BB2      ; branch if not pressing A
+C1/7BAA:	E6 96      	INC $96        ; sound: select
 C1/7BAC:	EE 41 2F   	INC $2F41
 C1/7BAF:	4C C8 7C   	JMP $7CC8
 
@@ -16618,11 +16657,15 @@ C1/827F:	60         	RTS
 C1/8280:	08
 C1/8281:	50
 C1/8282:	70
+
+; Xpos offset for equip menu columns
 C1/8283:	00
 C1/8284:	78
+
 C1/8285:	00
 C1/8286:	78
 
+; Xpos offset for item menu columns
 C1/8287:	10
 C1/8288:	80
 
@@ -16631,6 +16674,7 @@ C1/828A:	78
 C1/828B:	08
 C1/828C:	58
 
+; Ypos offset for visible slots
 C1/828D:	A4
 C1/828E:	B0
 C1/828F:	BC
@@ -17363,8 +17407,8 @@ C1/887D:	9C E3 88   	STZ $88E3
 C1/8880:	9C EF 88   	STZ $88EF
 C1/8883:	AD CB 7B   	LDA $7BCB
 C1/8886:	F0 0F      	BEQ $8897
-C1/8888:	9C AF 7B   	STZ $7BAF
-C1/888B:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8888:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/888B:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/888E:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
 C1/8891:	A9 12      	LDA #$12
 C1/8893:	8D C2 7B   	STA $7BC2
@@ -17428,8 +17472,8 @@ C1/890E:	20 24 8A   	JSR $8A24      ; handle swap or initial selection
 C1/8911:	90 50      	BCC $8963      ; branch if not using item
 
 ; Use selected item
-C1/8913:	9C AF 7B   	STZ $7BAF
-C1/8916:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8913:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/8916:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8919:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
 C1/891C:	20 BE 89   	JSR $89BE      ; X = selected item data index
 C1/891F:	BD 86 26   	LDA $2686,X    ; item id
@@ -17443,16 +17487,16 @@ C1/8933:	D0 03      	BNE $8938      ; branch if targets enemies
 C1/8935:	4C B0 55   	JMP $55B0      ; target allies
 C1/8938:	4C 95 77   	JMP $7795      ; target enemies
 
-; Handle B [?]
+; Handle B
 C1/893B:	A5 09      	LDA $09        ; button pressed byte
-C1/893D:	10 24      	BPL $8963      ; branch if not pressing B [?]
+C1/893D:	10 24      	BPL $8963      ; branch if not pressing B
 C1/893F:	E6 96      	INC $96        ; sound: select
-C1/8941:	9C AF 7B   	STZ $7BAF
-C1/8944:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8941:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/8944:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8947:	AD 02 7B   	LDA $7B02      ; item swapping flag
 C1/894A:	D0 09      	BNE $8955
-C1/894C:	9C AF 7B   	STZ $7BAF
-C1/894F:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/894C:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/894F:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8952:	4C F2 56   	JMP $56F2
 
 C1/8955:	9C 02 7B    STZ $7B02      ; unset item swapping flag
@@ -17561,7 +17605,7 @@ C1/8A0B:	60         	RTS
 C1/8A0C:	DA         	PHX           ; store selected item index
 C1/8A0D:	AE CA 62   	LDX $62CA     ; X = character index
 C1/8A10:	A9 01      	LDA #$01
-C1/8A12:	9D 30 2F   	STA $2F30,X   ; flag equipment changed (re-calc stats)
+C1/8A12:	9D 30 2F   	STA $2F30,X   ; flag character for status update
 C1/8A15:	FA         	PLX           ; restore selected item index
 C1/8A16:	18         	CLC           ; clear carry to indicate valid equipment
 C1/8A17:	60         	RTS
@@ -17576,11 +17620,12 @@ C1/8A23:	60         	RTS
 
 ; Select item slot
 C1/8A24:	E6 96      	INC $96        ; sound: select
-C1/8A26:	20 BE 89   	JSR $89BE      ; X = item data index for selected item
+C1/8A26:	20 BE 89   	JSR $89BE      ; X = item data index for selected slot
 C1/8A29:	AD 02 7B   	LDA $7B02      ; item swapping flag
 C1/8A2C:	D0 03      	BNE $8A31      ; branch if mid-swap
-C1/8A2E:	4C 23 8B   	JMP $8B23
+C1/8A2E:	4C 23 8B   	JMP $8B23      ; handle initial item select
 
+; Handle second item select
 C1/8A31:	8E 05 7B   	STX $7B05      ; set swap-in item index
 C1/8A34:	AD 00 7B   	LDA $7B00      ; swap-out item location type
 C1/8A37:	F0 64      	BEQ $8A9D      ; branch if swapping inventory slot
@@ -17634,8 +17679,8 @@ C1/8A9A:	4C 4D 8B   	JMP $8B4D      ; handle righthand swap
 ; Swapping inventory items
 C1/8A9D:	EC 03 7B   	CPX $7B03      ; index of swap-in item data
 C1/8AA0:	D0 2C      	BNE $8ACE      ; branch if different items
-C1/8AA2:	9C AF 7B   	STZ $7BAF
-C1/8AA5:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8AA2:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/8AA5:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8AA8:	BD 86 26   	LDA $2686,X    ; item index
 C1/8AAB:	C9 FF      	CMP #$FF       ; empty?
 C1/8AAD:	F0 05      	BEQ $8AB4      ; branch if empty slot
@@ -17647,8 +17692,8 @@ C1/8AB4:	E6 95      	INC $95        ; sound: buzzer
 C1/8AB6:	64 96      	STZ $96        ; cancel select sound
 C1/8AB8:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
 C1/8ABB:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
-C1/8ABE:	9C AF 7B   	STZ $7BAF
-C1/8AC1:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8ABE:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/8AC1:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8AC4:	18         	CLC
 C1/8AC5:	60         	RTS
 
@@ -17696,27 +17741,28 @@ C1/8B0F:	8D C3 7B    STA $7BC3
 C1/8B12:	20 76 8D    JSR $8D76
 C1/8B15:	9C 00 7B    STZ $7B00      ; selected item location type
 C1/8B18:	9C 02 7B    STZ $7B02      ; unset item swapping flag
-C1/8B1B:	9C AF 7B    STZ $7BAF
-C1/8B1E:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8B1B:	9C AF 7B    STZ $7BAF      ; item menu cursor frozen
+C1/8B1E:	9C B5 7B    STZ $7BB5      ; equip menu cursor frozen
 C1/8B21:	18          CLC
 C1/8B22:	60          RTS
 
+; Handle initial item select
 C1/8B23:	9C 00 7B   	STZ $7B00      ; selected item location type
-C1/8B26:	8E 03 7B   	STX $7B03      ; index of swap-in item data
+C1/8B26:	8E 03 7B   	STX $7B03      ; index of swap-out item data
 C1/8B29:	EE 02 7B   	INC $7B02      ; set item swapping flag
 C1/8B2C:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
-C1/8B2F:	AA         	TAX
-C1/8B30:	BF 87 82 C1	LDA $C18287,X
+C1/8B2F:	AA         	TAX            ; left: 0, right: 1
+C1/8B30:	BF 87 82 C1	LDA $C18287,X  ; column xpos
 C1/8B34:	18         	CLC
-C1/8B35:	69 03      	ADC #$03
-C1/8B37:	8D B0 7B   	STA $7BB0
+C1/8B35:	69 03      	ADC #$03       ; add 3 to xpos
+C1/8B37:	8D B0 7B   	STA $7BB0      ; save cursor xpos
 C1/8B3A:	B9 4F 89   	LDA $894F,Y    ; which visible item slot is selected
-C1/8B3D:	AA         	TAX
-C1/8B3E:	BF 8D 82 C1	LDA $C1828D,X
-C1/8B42:	AA         	TAX
-C1/8B43:	8E B1 7B   	STX $7BB1
+C1/8B3D:	AA         	TAX            ; top (0) - bottom (3)
+C1/8B3E:	BF 8D 82 C1	LDA $C1828D,X  ; row ypos
+C1/8B42:	AA         	TAX            ; move to X register (why [?])
+C1/8B43:	8E B1 7B   	STX $7BB1      ; save frozen cursor ypos
 C1/8B46:	A9 01      	LDA #$01
-C1/8B48:	8D AF 7B   	STA $7BAF
+C1/8B48:	8D AF 7B   	STA $7BAF      ; item menu cursor frozen
 C1/8B4B:	18         	CLC
 C1/8B4C:	60         	RTS
 
@@ -17794,8 +17840,8 @@ C1/8BEB:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/8BEE:	A9 0A       LDA #$0A
 C1/8BF0:	8D C3 7B    STA $7BC3
 C1/8BF3:	20 76 8D    JSR $8D76
-C1/8BF6:	9C AF 7B    STZ $7BAF
-C1/8BF9:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8BF6:	9C AF 7B    STZ $7BAF      ; item menu cursor frozen
+C1/8BF9:	9C B5 7B    STZ $7BB5      ; equip menu cursor frozen
 C1/8BFC:	9C 02 7B    STZ $7B02      ; unset item swapping flag
 C1/8BFF:	7A          PLY
 C1/8C00:	18          CLC
@@ -17872,8 +17918,8 @@ C1/8CA0:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/8CA3:	A9 0A       LDA #$0A
 C1/8CA5:	8D C3 7B    STA $7BC3
 C1/8CA8:	20 76 8D    JSR $8D76
-C1/8CAB:	9C AF 7B    STZ $7BAF
-C1/8CAE:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8CAB:	9C AF 7B    STZ $7BAF      ; item menu cursor frozen
+C1/8CAE:	9C B5 7B    STZ $7BB5      ; equip menu cursor frozen
 C1/8CB1:	9C 02 7B    STZ $7B02      ; unset item swapping flag
 C1/8CB4:	7A          PLY
 C1/8CB5:	18          CLC
@@ -18004,21 +18050,24 @@ C1/8D92:	A9 31      	LDA #$31
 C1/8D94:	8D C2 7B   	STA $7BC2      ; update current menu cursor state
 C1/8D97:	60         	RTS
 
-; Handle A button in battle inventory [?]
+; Sustain battle inventory (cursor state 0C)
 C1/8D98:	AD 02 7B   	LDA $7B02      ; item swapping flag
 C1/8D9B:	F0 06      	BEQ $8DA3      ; branch if not already swapping
 C1/8D9D:	AD 00 7B   	LDA $7B00      ; selected item location type
-C1/8DA0:	8D B5 7B   	STA $7BB5      ; source item cursor position
+C1/8DA0:	8D B5 7B   	STA $7BB5      ; equip menu cursor frozen
 
 ; Select item in current slot
 C1/8DA3:	9C E3 88   	STZ $88E3      ; set main cursor inactive
 C1/8DA6:	AD CB 7B   	LDA $7BCB      ; close menu flag [?]
 C1/8DA9:	F0 06      	BEQ $8DB1      ; branch if not closing menu [?]
+
+; Close battle inventory [?]
 C1/8DAB:	A9 13      	LDA #$13
-C1/8DAD:	8D C2 7B   	STA $7BC2      ; update menu cursor state
+C1/8DAD:	8D C2 7B   	STA $7BC2      ; change menu cursor state
 C1/8DB0:	60         	RTS
 
-C1/8DB1:	AE CA 62   	LDX $62CA     ; X = active character index
+; Equipment menu open
+C1/8DB1:	AE CA 62   	LDX $62CA      ; X = active character index
 C1/8DB4:	A5 05      	LDA $05
 C1/8DB6:	C9 01      	CMP #$01
 C1/8DB8:	D0 13      	BNE $8DCD
@@ -18042,31 +18091,37 @@ C1/8DDD:	C9 04      	CMP #$04
 C1/8DDF:	D0 0B      	BNE $8DEC
 
 C1/8DE1:	9E 4B 89   	STZ $894B,X    ; right column cursor flag
-C1/8DE4:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8DE4:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8DE7:	E6 94      	INC $94        ; sound: cursor
 C1/8DE9:	4C 69 56   	JMP $5669
 
+; Handle A
 C1/8DEC:	A5 04      	LDA $04
-C1/8DEE:	10 18      	BPL $8E08      ; branch if not attempting equip swap
-C1/8DF0:	AE CA 62   	LDX $62CA      ; X = active character index
+C1/8DEE:	10 18      	BPL $8E08      ; branch if not pressing A
+C1/8DF0:	AE CA 62   	LDX $62CA      ; active character index
 C1/8DF3:	BD 86 62   	LDA $6286,X    ; character can't swap equipment
 C1/8DF6:	F0 04      	BEQ $8DFC      ; branch if equip swap allowed
-C1/8DF8:	E6 95      	INC $95       ; sound: buzzer
-C1/8DFA:	80 0C      	BRA $8E08
+C1/8DF8:	E6 95      	INC $95        ; sound: buzzer
+C1/8DFA:	80 0C      	BRA $8E08      ; branch to B button check
 
+; Select equipped item
 C1/8DFC:	A9 01      	LDA #$01
-C1/8DFE:	9D 30 2F   	STA $2F30,X    ; set character swapping equipment flag
+C1/8DFE:	9D 30 2F   	STA $2F30,X    ; flag character for status update
 C1/8E01:	E6 96      	INC $96        ; sound: select
-C1/8E03:	20 51 8E   	JSR $8E51      ;
-C1/8E06:	90 00      	BCC $8E08      ; carry may be set in $8EF7
+C1/8E03:	20 51 8E   	JSR $8E51      ; handle equip selection
+C1/8E06:	90 00      	BCC $8E08      ; useless branch (why?)
+
+; Handle B
 C1/8E08:	A5 09      	LDA $09
-C1/8E0A:	10 11      	BPL $8E1D
+C1/8E0A:	10 11      	BPL $8E1D      ; branch if not pressing B
 C1/8E0C:	E6 96      	INC $96        ; sound: select (why again [?])
 C1/8E0E:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
 C1/8E11:	20 34 8E   	JSR $8E34
-C1/8E14:	9C AF 7B   	STZ $7BAF
-C1/8E17:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8E14:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/8E17:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8E1A:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
+
+; Finish up [?]
 C1/8E1D:	AE CA 62   	LDX $62CA
 C1/8E20:	BD 4B 89   	LDA $894B,X    ; right column cursor flag
 C1/8E23:	AA         	TAX
@@ -18093,11 +18148,12 @@ C1/8E4B:	BF 67 4B C1	LDA $C14B67,X  ; active character id * 5 (0,5,10,15)
 C1/8E4F:	AA         	TAX            ; set index to character data
 C1/8E50:	60         	RTS
 
+; Handle equipment selection
 C1/8E51:	20 48 8E   	JSR $8E48      ; X = active character data index
 C1/8E54:	AC CA 62   	LDY $62CA      ; Y = active character index
 C1/8E57:	AD 02 7B   	LDA $7B02      ; item swapping flag
 C1/8E5A:	D0 03      	BNE $8E5F      ; branch if already swapping
-C1/8E5C:	4C 28 8F   	JMP $8F28      ; enter equipment swap mode (clear carry)
+C1/8E5C:	4C 28 8F   	JMP $8F28      ; enter equipment swap mode
 
 ; Finish/confirm equipment swap
 C1/8E5F:	8E 05 7B   	STX $7B05      ; set index for character equip data
@@ -18140,21 +18196,21 @@ C1/8EA4:	9C 0C 89    STZ $890C      ; reset equipment swap mode
 C1/8EA7:	20 BA 4B    JSR $4BBA      ; draw new equipped items (menu)
 C1/8EAA:	A2 40 7E    LDX #$7E40     ; index to menu window color palette [?]
 C1/8EAD:	8E AA 7B    STX $7BAA      ; set VRAM destination [?]
-C1/8EB0:	EE A9 7B    INC $7BA9      ; flag pending VRAM [?]
+C1/8EB0:	EE A9 7B    INC $7BA9      ; pending VRAM [?]
 C1/8EB3:	9C 02 7B    STZ $7B02      ; unset item swapping flag
-C1/8EB6:	9C AF 7B    STZ $7BAF      ; [?]
-C1/8EB9:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8EB6:	9C AF 7B    STZ $7BAF      ; item menu cursor frozen
+C1/8EB9:	9C B5 7B    STZ $7BB5      ; equip menu cursor frozen
 C1/8EBC:	20 40 8E    JSR $8E40      ; update cursor state [?]
 C1/8EBF:	AE CA 62    LDX $62CA      ; active character index
 C1/8EC2:	A9 01       LDA #$01
-C1/8EC4:	9D 30 2F    STA $2F30,X    ; mark equipment change for stat update
+C1/8EC4:	9D 30 2F    STA $2F30,X    ; flag character for status update
 C1/8EC7:	18          CLC            ; clear carry to indicate success [?]
 C1/8EC8:	60          RTS
 
 ; Attempt to use equipment as item (eg Rod)
 C1/8EC9:	9C 02 7B   	STZ $7B02      ; unset item swapping flag
-C1/8ECC:	9C AF 7B   	STZ $7BAF
-C1/8ECF:	9C B5 7B   	STZ $7BB5      ; source item cursor position
+C1/8ECC:	9C AF 7B   	STZ $7BAF      ; item menu cursor frozen
+C1/8ECF:	9C B5 7B   	STZ $7BB5      ; equip menu cursor frozen
 C1/8ED2:	9C 0C 89   	STZ $890C      ; reset equipment swap mode
 C1/8ED5:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
 C1/8ED8:	F0 0E      	BEQ $8EE8
@@ -18189,12 +18245,13 @@ C1/8F11:	A2 40 7E    LDX #$7E40
 C1/8F14:	8E AA 7B    STX $7BAA
 C1/8F17:	EE A9 7B    INC $7BA9
 C1/8F1A:	9C 02 7B    STZ $7B02      ; unset item swapping flag
-C1/8F1D:	9C AF 7B    STZ $7BAF
-C1/8F20:	9C B5 7B    STZ $7BB5      ; source item cursor position
+C1/8F1D:	9C AF 7B    STZ $7BAF      ; item menu cursor frozen
+C1/8F20:	9C B5 7B    STZ $7BB5      ; equip menu cursor frozen
 C1/8F23:	20 40 8E    JSR $8E40
 C1/8F26:	18          CLC
 C1/8F27:	60          RTS
 
+; Begin equipment swapping
 C1/8F28:	A9 01      	LDA #$01
 C1/8F2A:	8D 0C 89   	STA $890C      ; set equipment swap mode
 C1/8F2D:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
@@ -18216,15 +18273,15 @@ C1/8F50:	8D 00 7B   	STA $7B00      ; #01 if righthand, #02 if lefthand
 C1/8F53:	EE 02 7B   	INC $7B02      ; set item swap active
 C1/8F56:	8E 03 7B   	STX $7B03      ; index of swap-in item data
 C1/8F59:	B9 4B 89   	LDA $894B,Y    ; right column cursor flag
-C1/8F5C:	AA         	TAX
-C1/8F5D:	BF 83 82 C1	LDA $C18283,X  ; cursor xpos [?]
+C1/8F5C:	AA         	TAX            ; left: 0, right: 1
+C1/8F5D:	BF 83 82 C1	LDA $C18283,X  ; equipment menu column offset
 C1/8F61:	18         	CLC
-C1/8F62:	69 03      	ADC #$03
-C1/8F64:	8D B6 7B   	STA $7BB6
-C1/8F67:	A9 B4      	LDA #$B4
-C1/8F69:	8D B7 7B   	STA $7BB7
+C1/8F62:	69 03      	ADC #$03       ; add 3
+C1/8F64:	8D B6 7B   	STA $7BB6      ; save equipment menu cursor xpos
+C1/8F67:	A9 B4      	LDA #$B4       ; equipment menu cursor ypos
+C1/8F69:	8D B7 7B   	STA $7BB7      ; save
 C1/8F6C:	A9 01      	LDA #$01
-C1/8F6E:	8D B5 7B   	STA $7BB5      ; source item cursor position
+C1/8F6E:	8D B5 7B   	STA $7BB5      ; equip menu cursor frozen
 C1/8F71:	20 40 8E   	JSR $8E40
 C1/8F74:	18         	CLC
 C1/8F75:	60         	RTS
@@ -23144,7 +23201,7 @@ C1/B593:	80 08      	BRA $B59D
 C1/B595:	A9 E0      	LDA #$E0
 C1/B597:	8D 18 03   	STA $0318
 C1/B59A:	8D 19 03   	STA $0319
-C1/B59D:	AD AF 7B   	LDA $7BAF
+C1/B59D:	AD AF 7B   	LDA $7BAF      ; item menu cursor frozen
 C1/B5A0:	F0 22      	BEQ $B5C4
 C1/B5A2:	AD B0 7B   	LDA $7BB0
 C1/B5A5:	8D E8 88   	STA $88E8
@@ -23162,7 +23219,7 @@ C1/B5C2:	80 03      	BRA $B5C7
 C1/B5C4:	9C E7 88   	STZ $88E7
 C1/B5C7:	E2 10      	SEP #$10
 C1/B5C9:	9C EB 88   	STZ $88EB
-C1/B5CC:	AD B5 7B   	LDA $7BB5      ; source item cursor position
+C1/B5CC:	AD B5 7B   	LDA $7BB5      ; equip menu cursor frozen
 C1/B5CF:	F0 0F      	BEQ $B5E0
 C1/B5D1:	AD B6 7B   	LDA $7BB6
 C1/B5D4:	8D EC 88   	STA $88EC
