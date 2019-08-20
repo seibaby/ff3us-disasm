@@ -8,20 +8,20 @@ C1/0003:	0A         	ASL A
 C1/0004:	AA         	TAX
 C1/0005:	7C 08 00   	JMP ($0008,X)  ; Jump table
 
-C1/0008:	EC01
-C1/000A:	FB01
-C1/000C:	5702
-C1/000E:	4C02
-C1/0010:	1295
-C1/0012:	CC01
-C1/0014:	9701
-C1/0016:	7001
-C1/0018:	1701
-C1/001A:	AF00
-C1/001C:	AB00
-C1/001E:	7101
-C1/0020:	2D00
-C1/0022:	2400
+C1/0008:	EC01 ; $00
+C1/000A:	FB01 ; $01
+C1/000C:	5702 ; $02
+C1/000E:	4C02 ; $03
+C1/0010:	1295 ; $04
+C1/0012:	CC01 ; $05 ($01CC)
+C1/0014:	9701 ; $06
+C1/0016:	7001 ; $07
+C1/0018:	1701 ; $08
+C1/001A:	AF00 ; $09
+C1/001C:	AB00 ; $0A ($00AB)
+C1/001E:	7101 ; $0B
+C1/0020:	2D00 ; $0C
+C1/0022:	2400 : $0D
 
 C1/0024:	A5 10       LDA $10
 C1/0026:	29 03       AND #$03
@@ -77,6 +77,8 @@ C1/00A0:	20 8F 0F    JSR $0F8F
 C1/00A3:	20 7C 95    JSR $957C
 C1/00A6:	22 52 B6 C2 JSL $C2B652
 C1/00AA:	60          RTS
+
+; Copy $602D obtained items buffer to Item menu
 
 C1/00AB:	20 45 44   	JSR $4445
 C1/00AE:	6B         	RTL
@@ -211,6 +213,8 @@ C1/01C5:	E8         	INX
 C1/01C6:	E0 10 00   	CPX #$0010
 C1/01C9:	D0 F4      	BNE $01BF
 C1/01CB:	60         	RTS
+
+; Copy obtained item to buffer
 
 C1/01CC:	AD DA 64   	LDA $64DA
 C1/01CF:	29 0F      	AND #$0F
@@ -8671,6 +8675,7 @@ C1/4440:	22 97 01 C1	JSL $C10197
 C1/4444:	60         	RTS
 
 ; Add obtained items to battle inventory (for Steal [?])
+
 C1/4445:	AD DB 64   	LDA $64DB      ; how many items added to inventory
 C1/4448:	29 0F      	AND #$0F       ; should be 0-15
 C1/444A:	85 10      	STA $10
@@ -18640,6 +18645,7 @@ C1/91B6:	3598      ; $10 - load pointer to battle dialogue, bank 2: <dialogue>
 C1/91B8:	2897      ; $11
 C1/91BA:	2993      ; $12
 C1/91BC:	9C93      ; $13 - monster entry (and exit???) special animations
+
 C1/91BE:	CC91      ; $14
 C1/91C0:	8FA9      ; $15
 C1/91C2:	76AB      ; $16
@@ -20154,47 +20160,52 @@ C1/9D8E:	20 6B 9C   	JSR $9C6B
 C1/9D91:	20 71 A7   	JSR $A771
 C1/9D94:	60         	RTS
 
-C1/9D95:	8D 6A 62   	STA $626A
-C1/9D98:	C2 20      	REP #$20
-C1/9D9A:	0A         	ASL A
-C1/9D9B:	0A         	ASL A
-C1/9D9C:	0A         	ASL A
-C1/9D9D:	AA         	TAX
-C1/9D9E:	7B         	TDC
-C1/9D9F:	A8         	TAY
-C1/9DA0:	7B         	TDC
-C1/9DA1:	E2 20      	SEP #$20
-C1/9DA3:	AD 8A 61   	LDA $618A
-C1/9DA6:	F0 10      	BEQ $9DB8
-C1/9DA8:	BF E8 E6 EC	LDA $ECE6E8,X
-C1/9DAC:	99 6B 62   	STA $626B,Y
-C1/9DAF:	E8         	INX
-C1/9DB0:	C8         	INY
-C1/9DB1:	C0 08 00   	CPY #$0008
-C1/9DB4:	D0 F2      	BNE $9DA8
-C1/9DB6:	80 0E      	BRA $9DC6
-C1/9DB8:	BF 00 E4 EC	LDA $ECE400,X
-C1/9DBC:	99 6B 62   	STA $626B,Y
-C1/9DBF:	E8         	INX
-C1/9DC0:	C8         	INY
-C1/9DC1:	C0 08 00   	CPY #$0008
-C1/9DC4:	D0 F2      	BNE $9DB8
-C1/9DC6:	A5 10      	LDA $10
-C1/9DC8:	29 03      	AND #$03
-C1/9DCA:	AA         	TAX
-C1/9DCB:	AD F4 7A   	LDA $7AF4
-C1/9DCE:	0A         	ASL A
-C1/9DCF:	2A         	ROL A
-C1/9DD0:	29 01      	AND #$01
-C1/9DD2:	5D 10 7B   	EOR $7B10,X
-C1/9DD5:	29 01      	AND #$01
-C1/9DD7:	AA         	TAX
-C1/9DD8:	BD 6B 62   	LDA $626B,X
-C1/9DDB:	AA         	TAX
-C1/9DDC:	20 8B A1   	JSR $A18B
-C1/9DDF:	AC EE 7A   	LDY $7AEE
-C1/9DE2:	8C 2D 7B   	STY $7B2D
-C1/9DE5:	AE EA 7A   	LDX $7AEA
+; Fight/Throw animation subroutine [?]
+
+C1/9D95:	8D 6A 62   	STA $626A          ; animation id
+C1/9D98:	C2 20      	REP #$20           ; 16-bit A
+C1/9D9A:	0A         	ASL A              ; animation id * 2
+C1/9D9B:	0A         	ASL A              ; animation id * 4
+C1/9D9C:	0A         	ASL A              ; animation id * 8
+C1/9D9D:	AA         	TAX                ; index it
+C1/9D9E:	7B         	TDC                ; A = 0000
+C1/9D9F:	A8         	TAY                ; Y = 0000
+C1/9DA0:	7B         	TDC                ; A = 0000 (again?)
+C1/9DA1:	E2 20      	SEP #$20           ; 8-bit A
+C1/9DA3:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
+C1/9DA6:	F0 10      	BEQ $9DB8          ; branch if not ^
+
+C1/9DA8:	BF E8 E6 EC	LDA $ECE6E8,X      ; data byte (monster animations) [?]
+C1/9DAC:	99 6B 62   	STA $626B,Y        ; move data
+C1/9DAF:	E8         	INX                ; next source offset
+C1/9DB0:	C8         	INY                ; next destination offset
+C1/9DB1:	C0 08 00   	CPY #$0008         ; move 8 bytes
+C1/9DB4:	D0 F2      	BNE $9DA8          ; loop until finished
+C1/9DB6:	80 0E      	BRA $9DC6          ; branch when done
+
+C1/9DB8:	BF 00 E4 EC	LDA $ECE400,X      ; data byte (character animations) [?]
+C1/9DBC:	99 6B 62   	STA $626B,Y        ; move data
+C1/9DBF:	E8         	INX                ; next source offset
+C1/9DC0:	C8         	INY                ; next destination offset
+C1/9DC1:	C0 08 00   	CPY #$0008         ; move 8 bytes
+C1/9DC4:	D0 F2      	BNE $9DB8          ; loop until finished
+
+C1/9DC6:	A5 10      	LDA $10            ; attacker id
+C1/9DC8:	29 03      	AND #$03           ; 0-4
+C1/9DCA:	AA         	TAX                ; index it
+C1/9DCB:	AD F4 7A   	LDA $7AF4          ; left-hand flag
+C1/9DCE:	0A         	ASL A              ; move "left-hand" bit into carry
+C1/9DCF:	2A         	ROL A              ; move into bit 0 of A
+C1/9DD0:	29 01      	AND #$01           ; isolate "left-hand" bit
+C1/9DD2:	5D 10 7B   	EOR $7B10,X        ; toggle if character facing right
+C1/9DD5:	29 01      	AND #$01           ; isolate "left-hand" bit (again)
+C1/9DD7:	AA         	TAX                ; X = 0 or 1
+C1/9DD8:	BD 6B 62   	LDA $626B,X        ; weapon animation data (first byte)
+C1/9DDB:	AA         	TAX                ; index it
+C1/9DDC:	20 8B A1   	JSR $A18B          ; move 6 bytes graphics data to $7AEA
+C1/9DDF:	AC EE 7A   	LDY $7AEE          ; Y = graphics bytes 5-6
+C1/9DE2:	8C 2D 7B   	STY $7B2D          ; set graphics frame width/height [?]
+C1/9DE5:	AE EA 7A   	LDX $7AEA          ; X = graphics bytes 1-2
 C1/9DE8:	20 C0 A1   	JSR $A1C0
 C1/9DEB:	20 B5 A0   	JSR $A0B5
 C1/9DEE:	AD 8A 61   	LDA $618A
@@ -20700,27 +20711,28 @@ C1/A187:	4C DE A0   	JMP $A0DE
 
 C1/A18A:	60         	RTS
 
-C1/A18B:	C2 20      	REP #$20
+C1/A18B:	C2 20      	REP #$20           ; 16-bit A
 C1/A18D:	8A         	TXA
-C1/A18E:	29 FF 7F   	AND #$7FFF
-C1/A191:	0A         	ASL A
-C1/A192:	8D EA 7A   	STA $7AEA
-C1/A195:	0A         	ASL A
+C1/A18E:	29 FF 7F   	AND #$7FFF         ; mask dirty bit (15 bits left)
+C1/A191:	0A         	ASL A              ; x2
+C1/A192:	8D EA 7A   	STA $7AEA          ; save for math
+C1/A195:	0A         	ASL A              ; x4
 C1/A196:	18         	CLC
-C1/A197:	6D EA 7A   	ADC $7AEA
-C1/A19A:	AA         	TAX
-C1/A19B:	7B         	TDC
-C1/A19C:	A8         	TAY
-C1/A19D:	BF 00 D0 D4	LDA $D4D000,X
-C1/A1A1:	99 EA 7A   	STA $7AEA,Y
+C1/A197:	6D EA 7A   	ADC $7AEA          ; x4 + x2 = x6
+C1/A19A:	AA         	TAX                ; index to 6-byte data block
+C1/A19B:	7B         	TDC                ; A = 0000
+C1/A19C:	A8         	TAY                ; Y = 0000
+
+C1/A19D:	BF 00 D0 D4	LDA $D4D000,X      ; animation graphics data byte
+C1/A1A1:	99 EA 7A   	STA $7AEA,Y        ; move to new location
 C1/A1A4:	E8         	INX
-C1/A1A5:	E8         	INX
+C1/A1A5:	E8         	INX                ; next source byte offset
 C1/A1A6:	C8         	INY
-C1/A1A7:	C8         	INY
-C1/A1A8:	C0 06 00   	CPY #$0006
-C1/A1AB:	D0 F0      	BNE $A19D
-C1/A1AD:	7B         	TDC
-C1/A1AE:	E2 20      	SEP #$20
+C1/A1A7:	C8         	INY                ; next destination byte offset
+C1/A1A8:	C0 06 00   	CPY #$0006         ; move 6 bytes total
+C1/A1AB:	D0 F0      	BNE $A19D          ; loop until finished
+C1/A1AD:	7B         	TDC                ; A = 0000
+C1/A1AE:	E2 20      	SEP #$20           ; 8-bit A
 C1/A1B0:	60         	RTS
 
 C1/A1B1:	86 10      	STX $10
@@ -20730,11 +20742,11 @@ C1/A1B8:	A2 00 24   	LDX #$2400
 C1/A1BB:	86 1A      	STX $1A
 C1/A1BD:	4C EF A1   	JMP $A1EF
 
-C1/A1C0:	86 10      	STX $10
-C1/A1C2:	A2 60 00   	LDX #$0060
-C1/A1C5:	86 16      	STX $16
-C1/A1C7:	A2 00 26   	LDX #$2600
-C1/A1CA:	86 1A      	STX $1A
+C1/A1C0:	86 10      	STX $10            ; store graphics bytes 1-2
+C1/A1C2:	A2 60 00   	LDX #$0060         ; number of 32-byte blocks to move
+C1/A1C5:	86 16      	STX $16            ; store it for later moves
+C1/A1C7:	A2 00 26   	LDX #$2600         ; end VRAM destination
+C1/A1CA:	86 1A      	STX $1A            ; store it for later VRAM move
 C1/A1CC:	4C EF A1   	JMP $A1EF
 
 C1/A1CF:	86 10      	STX $10
@@ -20752,155 +20764,159 @@ C1/A1E7:	A2 00 00   	LDX #$0000
 C1/A1EA:	86 1A      	STX $1A
 C1/A1EC:	4C EF A1   	JMP $A1EF
 
-C1/A1EF:	A5 10      	LDA $10
-C1/A1F1:	30 05      	BMI $A1F8
-C1/A1F3:	A5 11      	LDA $11
+C1/A1EF:	A5 10      	LDA $10            ; graphics byte 5
+C1/A1F1:	30 05      	BMI $A1F8          ; branch if bit 7 set
+C1/A1F3:	A5 11      	LDA $11            ; graphics byte 6
 C1/A1F5:	4C FD A1   	JMP $A1FD
 
-C1/A1F8:	A5 11      	LDA $11
-C1/A1FA:	4C 06 A3   	JMP $A306
+C1/A1F8:	A5 11      	LDA $11            ; graphics byte 6
+C1/A1FA:	4C 06 A3   	JMP $A306          ; alternate animation data format?
 
-C1/A1FD:	85 11      	STA $11
-C1/A1FF:	A5 10      	LDA $10
+C1/A1FD:	85 11      	STA $11            ; restore graphics byte 6
+C1/A1FF:	A5 10      	LDA $10            ; graphics byte 5
 C1/A201:	4A         	LSR A
 C1/A202:	4A         	LSR A
 C1/A203:	4A         	LSR A
 C1/A204:	4A         	LSR A
 C1/A205:	4A         	LSR A
-C1/A206:	4A         	LSR A
-C1/A207:	29 01      	AND #$01
-C1/A209:	85 10      	STA $10
-C1/A20B:	C2 20      	REP #$20
-C1/A20D:	A5 10      	LDA $10
-C1/A20F:	EB         	XBA
-C1/A210:	0A         	ASL A
-C1/A211:	0A         	ASL A
-C1/A212:	0A         	ASL A
-C1/A213:	0A         	ASL A
-C1/A214:	0A         	ASL A
-C1/A215:	0A         	ASL A
+C1/A206:	4A         	LSR A              ; move bit 6 into bit 0
+C1/A207:	29 01      	AND #$01           ; isolate bit 0 (unnecessary)
+C1/A209:	85 10      	STA $10            ; save it
+C1/A20B:	C2 20      	REP #$20           ; 16-bit A
+C1/A20D:	A5 10      	LDA $10            ; byte 5 bit 0 and byte 6
+C1/A20F:	EB         	XBA                ; swap -> [byte5(01), byte6]
+C1/A210:	0A         	ASL A              ; x2
+C1/A211:	0A         	ASL A              ; x4
+C1/A212:	0A         	ASL A              ; x8
+C1/A213:	0A         	ASL A              ; x16
+C1/A214:	0A         	ASL A              ; x32
+C1/A215:	0A         	ASL A              ; x64
 C1/A216:	18         	CLC
-C1/A217:	69 00 00   	ADC #$0000
-C1/A21A:	85 10      	STA $10
-C1/A21C:	7B         	TDC
-C1/A21D:	E2 20      	SEP #$20
-C1/A21F:	A9 D2      	LDA #$D2
-C1/A221:	85 12      	STA $12
-C1/A223:	A9 7F      	LDA #$7F
-C1/A225:	85 28      	STA $28
-C1/A227:	A2 00 E4   	LDX #$E400
-C1/A22A:	86 26      	STX $26
-C1/A22C:	C2 20      	REP #$20
-C1/A22E:	A5 16      	LDA $16
-C1/A230:	48         	PHA
-C1/A231:	64 24      	STZ $24
-C1/A233:	A7 10      	LDA [$10]
-C1/A235:	29 FF 3F   	AND #$3FFF
+C1/A217:	69 00 00   	ADC #$0000         ; add zero for no reason
+C1/A21A:	85 10      	STA $10            ; save this address
+C1/A21C:	7B         	TDC                ; A = 0000
+C1/A21D:	E2 20      	SEP #$20           ; 8-bit A
+C1/A21F:	A9 D2      	LDA #$D2           ; source bank (for address above)
+C1/A221:	85 12      	STA $12            ; save it
+C1/A223:	A9 7F      	LDA #$7F           ; destination bank
+C1/A225:	85 28      	STA $28            ; save it
+C1/A227:	A2 00 E4   	LDX #$E400         ; destination offset
+C1/A22A:	86 26      	STX $26            ; save it
+C1/A22C:	C2 20      	REP #$20           ; 16-bit A
+C1/A22E:	A5 16      	LDA $16            ; data block size
+C1/A230:	48         	PHA                ; store on stack
+
+C1/A231:	64 24      	STZ $24            ; zero $24-$25
+C1/A233:	A7 10      	LDA [$10]          ; access bytes at $D2....
+C1/A235:	29 FF 3F   	AND #$3FFF         ; keep lower 14 bits
 C1/A238:	0A         	ASL A
-C1/A239:	0A         	ASL A
-C1/A23A:	26 24      	ROL $24
-C1/A23C:	0A         	ASL A
-C1/A23D:	85 22      	STA $22
-C1/A23F:	0A         	ASL A
-C1/A240:	26 24      	ROL $24
-C1/A242:	18         	CLC
-C1/A243:	65 22      	ADC $22
-C1/A245:	85 22      	STA $22
-C1/A247:	A5 24      	LDA $24
-C1/A249:	69 00 00   	ADC #$0000
-C1/A24C:	85 24      	STA $24
+C1/A239:	0A         	ASL A              ; shift up
+C1/A23A:	26 24      	ROL $24            ; no effect, since carry will be clear
+C1/A23C:	0A         	ASL A              ; shift out top bit
+C1/A23D:	85 22      	STA $22            ; store value x8 (w/o top bit)
+C1/A23F:	0A         	ASL A              ; set carry to original bit 12
+C1/A240:	26 24      	ROL $24            ; move into bit 0 of $24
+C1/A242:	18         	CLC                ; unnecessary, since $24 was just zero
+C1/A243:	65 22      	ADC $22            ; possibly increment $22
+C1/A245:	85 22      	STA $22            ; why not just INC w/ a branch
+C1/A247:	A5 24      	LDA $24            ; 0 or 1, based on bit 12
+C1/A249:	69 00 00   	ADC #$0000         ; add zero for no reason
+C1/A24C:	85 24      	STA $24            ; reset for no reason
 C1/A24E:	A5 22      	LDA $22
 C1/A250:	18         	CLC
-C1/A251:	69 00 00   	ADC #$0000
+C1/A251:	69 00 00   	ADC #$0000         ; another add zero for no reason
 C1/A254:	85 22      	STA $22
 C1/A256:	A5 24      	LDA $24
 C1/A258:	69 D3 00   	ADC #$00D3
-C1/A25B:	85 24      	STA $24
-C1/A25D:	A7 10      	LDA [$10]
-C1/A25F:	29 00 40   	AND #$4000
-C1/A262:	85 14      	STA $14
-C1/A264:	A7 10      	LDA [$10]
-C1/A266:	29 00 80   	AND #$8000
-C1/A269:	D0 39      	BNE $A2A4
-C1/A26B:	7B         	TDC
-C1/A26C:	A8         	TAY
-C1/A26D:	A7 22      	LDA [$22]
-C1/A26F:	20 70 A4   	JSR $A470
-C1/A272:	97 26      	STA [$26],Y
+C1/A25B:	85 24      	STA $24            ; set source bank to $D3 or $D4
+C1/A25D:	A7 10      	LDA [$10]          ; get bytes at $D2.... again
+C1/A25F:	29 00 40   	AND #$4000         ; isolate bit 14
+C1/A262:	85 14      	STA $14            ; save it
+C1/A264:	A7 10      	LDA [$10]          ; get bytes at $D2.... again
+C1/A266:	29 00 80   	AND #$8000         ; isolate bit 15 (reverse bytes)
+C1/A269:	D0 39      	BNE $A2A4          ; branch if set (why not BMI?)
+
+C1/A26B:	7B         	TDC                ; A = 0000
+C1/A26C:	A8         	TAY                ; Y = 0000
+C1/A26D:	A7 22      	LDA [$22]          ; value at $D3/$D4....
+C1/A26F:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A272:	97 26      	STA [$26],Y        ; move to new destination
 C1/A274:	A5 22      	LDA $22
 C1/A276:	18         	CLC
-C1/A277:	69 02 00   	ADC #$0002
-C1/A27A:	85 22      	STA $22
+C1/A277:	69 02 00   	ADC #$0002         ; get next 2 bytes' source
+C1/A27A:	85 22      	STA $22            ; why not INC $22 : INC $22 ?
 C1/A27C:	A5 24      	LDA $24
-C1/A27E:	69 00 00   	ADC #$0000
+C1/A27E:	69 00 00   	ADC #$0000         ; another add zero for no reason
 C1/A281:	85 24      	STA $24
 C1/A283:	C8         	INY
-C1/A284:	C8         	INY
-C1/A285:	C0 10 00   	CPY #$0010
-C1/A288:	D0 E3      	BNE $A26D
-C1/A28A:	A7 22      	LDA [$22]
-C1/A28C:	20 70 A4   	JSR $A470
-C1/A28F:	29 FF 00   	AND #$00FF
-C1/A292:	97 26      	STA [$26],Y
-C1/A294:	E6 22      	INC $22
-C1/A296:	D0 02      	BNE $A29A
-C1/A298:	E6 24      	INC $24
+C1/A284:	C8         	INY                ; increment destination offset
+C1/A285:	C0 10 00   	CPY #$0010         ; move 16 bytes total
+C1/A288:	D0 E3      	BNE $A26D          ; loop till finished
+
+C1/A28A:	A7 22      	LDA [$22]          ; next 2 bytes ($D3/$D4.... + $10)
+C1/A28C:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A28F:	29 FF 00   	AND #$00FF         ; isolate low byte
+C1/A292:	97 26      	STA [$26],Y        ; move to new destination
+C1/A294:	E6 22      	INC $22            ; increment source by 1
+C1/A296:	D0 02      	BNE $A29A          ; branch if not at end of bank
+C1/A298:	E6 24      	INC $24            ; else, wrap to next bank
 C1/A29A:	C8         	INY
-C1/A29B:	C8         	INY
-C1/A29C:	C0 20 00   	CPY #$0020
-C1/A29F:	D0 E9      	BNE $A28A
+C1/A29B:	C8         	INY                ; increment destination offset
+C1/A29C:	C0 20 00   	CPY #$0020         ; move (8 + 8 zero) bytes total
+C1/A29F:	D0 E9      	BNE $A28A          ; loop till finished
 C1/A2A1:	4C DE A2   	JMP $A2DE
 
-C1/A2A4:	A0 0E 00   	LDY #$000E
-C1/A2A7:	A7 22      	LDA [$22]
-C1/A2A9:	20 70 A4   	JSR $A470
-C1/A2AC:	97 26      	STA [$26],Y
+C1/A2A4:	A0 0E 00   	LDY #$000E         ; Y = 14
+C1/A2A7:	A7 22      	LDA [$22]          ; get next 2 bytes at source
+C1/A2A9:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A2AC:	97 26      	STA [$26],Y        ; move to destination (reversed)
 C1/A2AE:	A5 22      	LDA $22
 C1/A2B0:	18         	CLC
-C1/A2B1:	69 02 00   	ADC #$0002
+C1/A2B1:	69 02 00   	ADC #$0002         ; increment source offset by 2
 C1/A2B4:	85 22      	STA $22
 C1/A2B6:	A5 24      	LDA $24
 C1/A2B8:	69 00 00   	ADC #$0000
-C1/A2BB:	85 24      	STA $24
+C1/A2BB:	85 24      	STA $24            ; another add zero for no reason
 C1/A2BD:	88         	DEY
-C1/A2BE:	88         	DEY
-C1/A2BF:	C0 FE FF   	CPY #$FFFE
-C1/A2C2:	D0 E3      	BNE $A2A7
-C1/A2C4:	A0 1E 00   	LDY #$001E
-C1/A2C7:	A7 22      	LDA [$22]
-C1/A2C9:	20 70 A4   	JSR $A470
-C1/A2CC:	29 FF 00   	AND #$00FF
-C1/A2CF:	97 26      	STA [$26],Y
-C1/A2D1:	E6 22      	INC $22
-C1/A2D3:	D0 02      	BNE $A2D7
-C1/A2D5:	E6 24      	INC $24
+C1/A2BE:	88         	DEY                ; decrement destination offset
+C1/A2BF:	C0 FE FF   	CPY #$FFFE         ; move 16 bytes total
+C1/A2C2:	D0 E3      	BNE $A2A7          ; loop till finished
+C1/A2C4:	A0 1E 00   	LDY #$001E         ; Y = 30 (end of 32 byte block)
+C1/A2C7:	A7 22      	LDA [$22]          ; next 2 source bytes
+C1/A2C9:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A2CC:	29 FF 00   	AND #$00FF         ; isolate low byte
+C1/A2CF:	97 26      	STA [$26],Y        ; move to destination (reversed)
+C1/A2D1:	E6 22      	INC $22            ; increment source offset
+C1/A2D3:	D0 02      	BNE $A2D7          ; branch if not at end of bank
+C1/A2D5:	E6 24      	INC $24            ; else, increment bank
 C1/A2D7:	88         	DEY
-C1/A2D8:	88         	DEY
-C1/A2D9:	C0 0E 00   	CPY #$000E
-C1/A2DC:	D0 E9      	BNE $A2C7
-C1/A2DE:	A5 26      	LDA $26
+C1/A2D8:	88         	DEY                ; get next (lower) destination offset
+C1/A2D9:	C0 0E 00   	CPY #$000E         ; move (8 + 8 zero) bytes total
+C1/A2DC:	D0 E9      	BNE $A2C7          ; loop till finished
+
+C1/A2DE:	A5 26      	LDA $26            ; destination offset
 C1/A2E0:	18         	CLC
-C1/A2E1:	69 20 00   	ADC #$0020
+C1/A2E1:	69 20 00   	ADC #$0020         ; add 16 bytes (now at end of move)
 C1/A2E4:	85 26      	STA $26
 C1/A2E6:	E6 10      	INC $10
-C1/A2E8:	E6 10      	INC $10
-C1/A2EA:	C6 16      	DEC $16
-C1/A2EC:	F0 03      	BEQ $A2F1
-C1/A2EE:	4C 31 A2   	JMP $A231
+C1/A2E8:	E6 10      	INC $10            ; get next pointer to move instructions
+C1/A2EA:	C6 16      	DEC $16            ; decremental total block moves
+C1/A2EC:	F0 03      	BEQ $A2F1          ; branch if all blocks moved
+C1/A2EE:	4C 31 A2   	JMP $A231          ; else, move next 32-byte block
 
-C1/A2F1:	68         	PLA
+C1/A2F1:	68         	PLA                ; get original number of blocks
 C1/A2F2:	0A         	ASL A
 C1/A2F3:	0A         	ASL A
 C1/A2F4:	0A         	ASL A
 C1/A2F5:	0A         	ASL A
-C1/A2F6:	0A         	ASL A
-C1/A2F7:	85 10      	STA $10
-C1/A2F9:	7B         	TDC
-C1/A2FA:	E2 20      	SEP #$20
-C1/A2FC:	A2 00 E4   	LDX #$E400
-C1/A2FF:	A9 7F      	LDA #$7F
-C1/A301:	A4 1A      	LDY $1A
-C1/A303:	4C 8D 19   	JMP $198D
+C1/A2F6:	0A         	ASL A              ; x32
+C1/A2F7:	85 10      	STA $10            ; store total number of bytes moved
+C1/A2F9:	7B         	TDC                ; A = 0000
+C1/A2FA:	E2 20      	SEP #$20           ; 8-bit A
+C1/A2FC:	A2 00 E4   	LDX #$E400         ; original destination offset (now VRAM source)
+C1/A2FF:	A9 7F      	LDA #$7F           ; original destination bank (now VRAM source)
+C1/A301:	A4 1A      	LDY $1A            ; VRAM destination offset
+C1/A303:	4C 8D 19   	JMP $198D          ; execute VRAM DMA transfer
 
 C1/A306:	85 11      	STA $11
 C1/A308:	A5 10      	LDA $10
@@ -20955,7 +20971,7 @@ C1/A359:	D0 21      	BNE $A37C
 C1/A35B:	7B         	TDC
 C1/A35C:	A8         	TAY
 C1/A35D:	A7 22      	LDA [$22]
-C1/A35F:	20 70 A4   	JSR $A470
+C1/A35F:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
 C1/A362:	97 26      	STA [$26],Y
 C1/A364:	E6 22      	INC $22
 C1/A366:	E6 22      	INC $22
@@ -20973,7 +20989,7 @@ C1/A379:	4C A0 A3   	JMP $A3A0
 
 C1/A37C:	A0 0E 00   	LDY #$000E
 C1/A37F:	A7 22      	LDA [$22]
-C1/A381:	20 70 A4   	JSR $A470
+C1/A381:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
 C1/A384:	97 26      	STA [$26],Y
 C1/A386:	E6 22      	INC $22
 C1/A388:	E6 22      	INC $22
@@ -21066,7 +21082,7 @@ C1/A41B:	D0 17      	BNE $A434
 C1/A41D:	7B         	TDC
 C1/A41E:	A8         	TAY
 C1/A41F:	A7 22      	LDA [$22]
-C1/A421:	20 70 A4   	JSR $A470
+C1/A421:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
 C1/A424:	97 26      	STA [$26],Y
 C1/A426:	E6 22      	INC $22
 C1/A428:	E6 22      	INC $22
@@ -21078,7 +21094,7 @@ C1/A431:	4C 49 A4   	JMP $A449
 
 C1/A434:	A0 0E 00   	LDY #$000E
 C1/A437:	A7 22      	LDA [$22]
-C1/A439:	20 70 A4   	JSR $A470
+C1/A439:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
 C1/A43C:	97 26      	STA [$26],Y
 C1/A43E:	E6 22      	INC $22
 C1/A440:	E6 22      	INC $22
@@ -21109,22 +21125,25 @@ C1/A469:	A9 7F      	LDA #$7F
 C1/A46B:	A4 1A      	LDY $1A
 C1/A46D:	4C 8D 19   	JMP $198D
 
-C1/A470:	48         	PHA
-C1/A471:	A5 14      	LDA $14
-C1/A473:	F0 10      	BEQ $A485
-C1/A475:	68         	PLA
-C1/A476:	EB         	XBA
-C1/A477:	85 18      	STA $18
-C1/A479:	DA         	PHX
-C1/A47A:	A2 10 00   	LDX #$0010
-C1/A47D:	06 18      	ASL $18
-C1/A47F:	6A         	ROR A
-C1/A480:	CA         	DEX
-C1/A481:	D0 FA      	BNE $A47D
-C1/A483:	FA         	PLX
+; If $14 is set, reverse bit order within low and high bytes
+; FEDCBA98 76543210 --> 89ABCDEF 01234567
+
+C1/A470:	48         	PHA               ; store address on stack
+C1/A471:	A5 14      	LDA $14           ; flag from bit 14 of instructions
+C1/A473:	F0 10      	BEQ $A485         ; exit if not set
+C1/A475:	68         	PLA               ; restore address
+C1/A476:	EB         	XBA               ; swap 
+C1/A477:	85 18      	STA $18           ; temporary store
+C1/A479:	DA         	PHX               ; store X
+C1/A47A:	A2 10 00   	LDX #$0010        ; 16 bit shifts
+C1/A47D:	06 18      	ASL $18           ; shift top bit into carry
+C1/A47F:	6A         	ROR A             ; and shift into top of A
+C1/A480:	CA         	DEX               ; proceed to next bit
+C1/A481:	D0 FA      	BNE $A47D         ; shift all 16 bits
+C1/A483:	FA         	PLX               ; restore X
 C1/A484:	60         	RTS
 
-C1/A485:	68         	PLA
+C1/A485:	68         	PLA               ; restore address
 C1/A486:	60         	RTS
 
 
@@ -22033,13 +22052,13 @@ C1/AB5E:	20 67 AB   	JSR $AB67
 C1/AB61:	20 A2 9A   	JSR $9AA2
 C1/AB64:	4C 43 AB   	JMP $AB43
 
-; Move/save character and monster target bytes (not blocked?)
+; Move/save original character and monster target bytes
 C1/AB67:	A0 02 00   	LDY #$0002
 C1/AB6A:	B1 78      	LDA ($78),Y     ; A = character targets
-C1/AB6C:	8D 3D 61   	STA $613D       ; save character targets (not blocked?)
+C1/AB6C:	8D 3D 61   	STA $613D       ; save character targets
 C1/AB6F:	C8         	INY
 C1/AB70:	B1 78      	LDA ($78),Y
-C1/AB72:	8D 3E 61   	STA $613E       ; save monster targets (not blocked?)
+C1/AB72:	8D 3E 61   	STA $613E       ; save monster targets
 C1/AB75:	60         	RTS
 
 C1/AB76:	A0 01 00   	LDY #$0001
@@ -23819,19 +23838,21 @@ C1/B9BE:	20 5B AC   	JSR $AC5B
 C1/B9C1:	20 03 95   	JSR $9503
 C1/B9C4:	60         	RTS
 
-C1/B9C5:	20 35 BC   	JSR $BC35
-C1/B9C8:	A0 02 00   	LDY #$0002
-C1/B9CB:	B1 76      	LDA ($76),Y
-C1/B9CD:	1A         	INC A
-C1/B9CE:	AA         	TAX
-C1/B9CF:	BF 40 00 D1	LDA $D10040,X
-C1/B9D3:	10 0A      	BPL $B9DF
-C1/B9D5:	7B         	TDC
-C1/B9D6:	91 76      	STA ($76),Y
-C1/B9D8:	8A         	TXA
-C1/B9D9:	C8         	INY
-C1/B9DA:	91 76      	STA ($76),Y
-C1/B9DC:	4C CD BE   	JMP $BECD
+; Throw animation
+
+C1/B9C5:	20 35 BC   	JSR $BC35         ; initialize attack animation
+C1/B9C8:	A0 02 00   	LDY #$0002        ; animation command arg #2
+C1/B9CB:	B1 76      	LDA ($76),Y       ; item/weapon id
+C1/B9CD:	1A         	INC A             ; item/weapon id + 1
+C1/B9CE:	AA         	TAX               ; use as lookup index
+C1/B9CF:	BF 40 00 D1	LDA $D10040,X     ; animation data for item
+C1/B9D3:	10 0A      	BPL $B9DF         ; branch if not a throwing star
+C1/B9D5:	7B         	TDC               ; A = 0000
+C1/B9D6:	91 76      	STA ($76),Y       ; zero command arg #2 (item id)
+C1/B9D8:	8A         	TXA               ; get item id
+C1/B9D9:	C8         	INY               ; command arg #3
+C1/B9DA:	91 76      	STA ($76),Y       ; set arg #3 to item id
+C1/B9DC:	4C CD BE   	JMP $BECD         ; execute fight animation
 
 C1/B9DF:	29 0F      	AND #$0F
 C1/B9E1:	18         	CLC
@@ -24494,34 +24515,34 @@ C1/BECA:	68         	PLA
 C1/BECB:	FA         	PLX
 C1/BECC:	60         	RTS
 
-C1/BECD:	B2 78      	LDA ($78)
-C1/BECF:	29 01      	AND #$01
-C1/BED1:	8D 8A 61   	STA $618A
-C1/BED4:	8D BB EC   	STA $ECBB
-C1/BED7:	20 F4 94   	JSR $94F4
-C1/BEDA:	20 67 AB   	JSR $AB67
-C1/BEDD:	20 A2 9A   	JSR $9AA2
-C1/BEE0:	B2 78      	LDA ($78)
-C1/BEE2:	29 20      	AND #$20
-C1/BEE4:	8D 96 61   	STA $6196
-C1/BEE7:	A2 00 04   	LDX #$0400
-C1/BEEA:	86 10      	STX $10
-C1/BEEC:	A2 00 B4   	LDX #$B400
-C1/BEEF:	A9 7F      	LDA #$7F
-C1/BEF1:	A0 00 24   	LDY #$2400
-C1/BEF4:	20 8D 19   	JSR $198D
-C1/BEF7:	AD 8A 61   	LDA $618A
-C1/BEFA:	D0 03      	BNE $BEFF
+C1/BECD:	B2 78      	LDA ($78)          ; attack animation flags
+C1/BECF:	29 01      	AND #$01           ; monster weapon attack flag [?]
+C1/BED1:	8D 8A 61   	STA $618A          ; monster weapon attack flag [?]
+C1/BED4:	8D BB EC   	STA $ECBB          ; enable panned sound effect [?]
+C1/BED7:	20 F4 94   	JSR $94F4          ; copy monster data to $810B (again)
+C1/BEDA:	20 67 AB   	JSR $AB67          ; copy targets into $613D (again)
+C1/BEDD:	20 A2 9A   	JSR $9AA2          ; run initial attack animation
+C1/BEE0:	B2 78      	LDA ($78)          ; attack animation flags
+C1/BEE2:	29 20      	AND #$20           ; flash screen (critical)
+C1/BEE4:	8D 96 61   	STA $6196          ; flash screen byte
+C1/BEE7:	A2 00 04   	LDX #$0400         ; size of data block
+C1/BEEA:	86 10      	STX $10            ; save it
+C1/BEEC:	A2 00 B4   	LDX #$B400         ; data source address
+C1/BEEF:	A9 7F      	LDA #$7F           ; data source bank
+C1/BEF1:	A0 00 24   	LDY #$2400         ; data destination address
+C1/BEF4:	20 8D 19   	JSR $198D          ; move animation data
+C1/BEF7:	AD 8A 61   	LDA $618A          ; monster weapon attack flag [?]
+C1/BEFA:	D0 03      	BNE $BEFF          ; branch if monster weapon attack [?]
 C1/BEFC:	20 6B B8   	JSR $B86B
-C1/BEFF:	A0 02 00   	LDY #$0002
-C1/BF02:	B1 76      	LDA ($76),Y
-C1/BF04:	29 80      	AND #$80
-C1/BF06:	8D F4 7A   	STA $7AF4
-C1/BF09:	C8         	INY
-C1/BF0A:	B1 76      	LDA ($76),Y
-C1/BF0C:	8D F5 7A   	STA $7AF5
-C1/BF0F:	20 89 BC   	JSR $BC89
-C1/BF12:	AD F5 7A   	LDA $7AF5
+C1/BEFF:	A0 02 00   	LDY #$0002         ; animation command arg #2
+C1/BF02:	B1 76      	LDA ($76),Y        ; attack type / flags [?]
+C1/BF04:	29 80      	AND #$80           ; "Left hand attack"
+C1/BF06:	8D F4 7A   	STA $7AF4          ; set left-handed flag
+C1/BF09:	C8         	INY                ; animation command arg #3
+C1/BF0A:	B1 76      	LDA ($76),Y        ; animation (weapon) id
+C1/BF0C:	8D F5 7A   	STA $7AF5          ; attack (weapon) animation id
+C1/BF0F:	20 89 BC   	JSR $BC89          ; set attacker index in $10
+C1/BF12:	AD F5 7A   	LDA $7AF5          ; attack (weapon) animation id
 C1/BF15:	20 95 9D   	JSR $9D95
 C1/BF18:	AD 71 62   	LDA $6271
 C1/BF1B:	8D E7 E9   	STA $E9E7
