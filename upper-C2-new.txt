@@ -8144,19 +8144,21 @@ C2/CE82:	E0D4D6  	; Kefka
 C2/CE85:	40EAD6  	; Gestahl
 C2/CE88:	C03CD6  	; Imperial Soldier
 
-; Some kind of 16-bit data.
-C2/CE8B:	0000
-C2/CE8D:	8000
-C2/CE8F:	0001
-C2/CE91:	8001
-C2/CE93:	0002
-C2/CE95:	8002
-C2/CE97:	0003
-C2/CE99:	8003
-C2/CE9B:	0004
-C2/CE9D:	8004
-C2/CE9F:	0005
-C2/CEA1:	8005
+; Multiplication lookup (x128)
+; Used for battlefield entity data offsets
+
+C2/CE8B:	00 00     ; 0 x 128 = 0
+C2/CE8D:	80 00     ; 1 x 128 = 128
+C2/CE8F:	00 01     ; 2 x 128 = 256
+C2/CE91:	80 01     ; 3 x 128 = 384
+C2/CE93:	00 02     ; 4 x 128 = 512
+C2/CE95:	80 02
+C2/CE97:	00 03
+C2/CE99:	80 03
+C2/CE9B:	00 04
+C2/CE9D:	80 04
+C2/CE9F:	00 05
+C2/CEA1:	80 05
 
 ; 32-bit data, used in the animation of character sprites.
 C2/CEA3:	00F80000

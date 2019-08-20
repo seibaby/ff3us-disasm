@@ -4815,7 +4815,7 @@ C1/25F0:	98         	TYA
 C1/25F1:	0A         	ASL A
 C1/25F2:	AA         	TAX
 C1/25F3:	C2 20      	REP #$20
-C1/25F5:	BF 8B CE C2	LDA $C2CE8B,X
+C1/25F5:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/25F9:	AA         	TAX
 C1/25FA:	7B         	TDC
 C1/25FB:	E2 20      	SEP #$20
@@ -4866,7 +4866,7 @@ C1/2651:	98         	TYA
 C1/2652:	0A         	ASL A
 C1/2653:	AA         	TAX
 C1/2654:	C2 20      	REP #$20
-C1/2656:	BF 8B CE C2	LDA $C2CE8B,X
+C1/2656:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/265A:	AA         	TAX
 C1/265B:	7B         	TDC
 C1/265C:	E2 20      	SEP #$20
@@ -5224,7 +5224,7 @@ C1/292C:	29 03      	AND #$03
 C1/292E:	0A         	ASL A
 C1/292F:	AA         	TAX
 C1/2930:	C2 20      	REP #$20
-C1/2932:	BF 8B CE C2	LDA $C2CE8B,X
+C1/2932:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/2936:	AA         	TAX
 C1/2937:	7B         	TDC
 C1/2938:	E2 20      	SEP #$20
@@ -19933,59 +19933,63 @@ C1/9BC2:	D0 F2      	BNE $9BB6
 C1/9BC4:	60         	RTS
 
 ; Zero 32 bytes (color palettes?) [?]
-C1/9BC5:	7B         	TDC            ; A = 0000
-C1/9BC6:	AA         	TAX            ; X = 0000
-C1/9BC7:	9E 60 7F   	STZ $7F60,X    ; zero a byte (color palette?)
+C1/9BC5:	7B         	TDC               ; A = 0000
+C1/9BC6:	AA         	TAX               ; X = 0000
+C1/9BC7:	9E 60 7F   	STZ $7F60,X       ; zero a byte (color palette?)
 C1/9BCA:	E8         	INX
 C1/9BCB:	E0 20 00   	CPX #$0020
-C1/9BCE:	D0 F7      	BNE $9BC7      ; zero 32 bytes total (color palettes?)
+C1/9BCE:	D0 F7      	BNE $9BC7         ; zero 32 bytes total (color palettes?)
 C1/9BD0:	A2 FF FF   	LDX #$FFFF
-C1/9BD3:	8E 62 7F   	STX $7F62      ; re-zero 3rd and 4th bytes (why?)
+C1/9BD3:	8E 62 7F   	STX $7F62         ; re-zero 3rd and 4th bytes (why?)
 C1/9BD6:	60         	RTS
 
-C1/9BD7:	C2 20      	REP #$20
+; Load palette data
+
+C1/9BD7:	C2 20      	REP #$20          ; 16-bit A
 C1/9BD9:	0A         	ASL A
 C1/9BDA:	0A         	ASL A
 C1/9BDB:	0A         	ASL A
-C1/9BDC:	0A         	ASL A
-C1/9BDD:	AA         	TAX
-C1/9BDE:	7B         	TDC
-C1/9BDF:	A8         	TAY
-C1/9BE0:	BF 00 60 D2	LDA $D26000,X
-C1/9BE4:	99 60 7F   	STA $7F60,Y
-C1/9BE7:	99 60 7D   	STA $7D60,Y
-C1/9BEA:	99 70 7F   	STA $7F70,Y
-C1/9BED:	99 70 7D   	STA $7D70,Y
+C1/9BDC:	0A         	ASL A             ; palette index (x16)
+C1/9BDD:	AA         	TAX               ; index it
+C1/9BDE:	7B         	TDC               ; A = 0000
+C1/9BDF:	A8         	TAY               ; Y = 0000
+
+C1/9BE0:	BF 00 60 D2	LDA $D26000,X     ; load next palette bytes
+C1/9BE4:	99 60 7F   	STA $7F60,Y       ; spell animation palette 1
+C1/9BE7:	99 60 7D   	STA $7D60,Y       ; spell animation palette 1 (unaltered) [?]
+C1/9BEA:	99 70 7F   	STA $7F70,Y       ; spell animation palette 1, part 2
+C1/9BED:	99 70 7D   	STA $7D70,Y       ; spell animation palette 1, part 2 (unaltered) [?]
 C1/9BF0:	E8         	INX
-C1/9BF1:	E8         	INX
+C1/9BF1:	E8         	INX               ; increment source offset
 C1/9BF2:	C8         	INY
-C1/9BF3:	C8         	INY
-C1/9BF4:	C0 10 00   	CPY #$0010
-C1/9BF7:	D0 E7      	BNE $9BE0
-C1/9BF9:	7B         	TDC
-C1/9BFA:	E2 20      	SEP #$20
-C1/9BFC:	AD 8A 62   	LDA $628A
-C1/9BFF:	F0 0E      	BEQ $9C0F
+C1/9BF3:	C8         	INY               ; increment destination offset
+C1/9BF4:	C0 10 00   	CPY #$0010        ; copy 16 bytes total
+C1/9BF7:	D0 E7      	BNE $9BE0         ; loop till finished
+
+C1/9BF9:	7B         	TDC               ; A = 0000
+C1/9BFA:	E2 20      	SEP #$20          ; 8-bit A
+C1/9BFC:	AD 8A 62   	LDA $628A         ; flashback mode
+C1/9BFF:	F0 0E      	BEQ $9C0F         ; exit if not in flashback
 C1/9C01:	A2 60 01    LDX #$0160
 C1/9C04:	86 18       STX $18
 C1/9C06:	A2 80 01    LDX #$0180
 C1/9C09:	86 1A       STX $1A
-C1/9C0B:	22 42 B4 C2 JSL $C2B442
+C1/9C0B:	22 42 B4 C2 JSL $C2B442       ; transform palette [?]
 C1/9C0F:	60         	RTS
 
 C1/9C10:	0A         	ASL A
 C1/9C11:	0A         	ASL A
 C1/9C12:	0A         	ASL A
-C1/9C13:	0A         	ASL A
-C1/9C14:	AA         	TAX
-C1/9C15:	7B         	TDC
-C1/9C16:	A8         	TAY
-C1/9C17:	BF 7D B0 C2	LDA $C2B07D,X
-C1/9C1B:	99 70 7F   	STA $7F70,Y
-C1/9C1E:	C8         	INY
-C1/9C1F:	E8         	INX
-C1/9C20:	C0 10 00   	CPY #$0010
-C1/9C23:	D0 F2      	BNE $9C17
+C1/9C13:	0A         	ASL A             ; x16 (source offset)
+C1/9C14:	AA         	TAX               ; index it
+C1/9C15:	7B         	TDC               ; A = 0000
+C1/9C16:	A8         	TAY               ; Y = 0000
+C1/9C17:	BF 7D B0 C2	LDA $C2B07D,X     ; animation palette data
+C1/9C1B:	99 70 7F   	STA $7F70,Y       ; spell animation palette 1, part 2 [?]
+C1/9C1E:	C8         	INY               ; increment destination index
+C1/9C1F:	E8         	INX               ; increment source index
+C1/9C20:	C0 10 00   	CPY #$0010        ; move 16 bytes total
+C1/9C23:	D0 F2      	BNE $9C17         ; loop till finished
 C1/9C25:	60         	RTS
 
 C1/9C26:	C2 20      	REP #$20
@@ -20091,7 +20095,7 @@ C1/9CDE:	20 9E 9C   	JSR $9C9E        (Clears a bootyload of RAM)
 C1/9CE1:	AE 73 62   	LDX $6273      (Spell's "Graphic 1" (bytes 1 & 2) -- courtesy Mnrogar)
 C1/9CE4:	E0 FF FF   	CPX #$FFFF
 C1/9CE7:	F0 17      	BEQ $9D00
-C1/9CE9:	20 8B A1   	JSR $A18B
+C1/9CE9:	20 8B A1   	JSR $A18B          ; 6-byte animation data in $7AEA (based on X)
 C1/9CEC:	AE EE 7A   	LDX $7AEE
 C1/9CEF:	8E 35 7B   	STX $7B35
 C1/9CF2:	AE EA 7A   	LDX $7AEA
@@ -20104,7 +20108,7 @@ C1/9D00:	20 17 99   	JSR $9917
 C1/9D03:	AE 75 62   	LDX $6275
 C1/9D06:	E0 FF FF   	CPX #$FFFF
 C1/9D09:	F0 3D      	BEQ $9D48
-C1/9D0B:	20 8B A1   	JSR $A18B
+C1/9D0B:	20 8B A1   	JSR $A18B          ; 6-byte animation data in $7AEA (based on X)
 C1/9D0E:	AE EE 7A   	LDX $7AEE
 C1/9D11:	8E 31 7B   	STX $7B31
 C1/9D14:	AE EA 7A   	LDX $7AEA
@@ -20132,7 +20136,7 @@ C1/9D45:	20 3A 9E   	JSR $9E3A
 C1/9D48:	AE 77 62   	LDX $6277
 C1/9D4B:	E0 FF FF   	CPX #$FFFF
 C1/9D4E:	F0 1A      	BEQ $9D6A
-C1/9D50:	20 8B A1   	JSR $A18B
+C1/9D50:	20 8B A1   	JSR $A18B          ; 6-byte animation data in $7AEA (based on X)
 C1/9D53:	AE EE 7A   	LDX $7AEE
 C1/9D56:	8E 33 7B   	STX $7B33
 C1/9D59:	AE EA 7A   	LDX $7AEA
@@ -20145,19 +20149,19 @@ C1/9D67:	20 80 9E   	JSR $9E80
 C1/9D6A:	AE 7E 62   	LDX $627E
 C1/9D6D:	E0 FF FF   	CPX #$FFFF
 C1/9D70:	F0 09      	BEQ $9D7B
-C1/9D72:	20 8B A1   	JSR $A18B
+C1/9D72:	20 8B A1   	JSR $A18B          ; 6-byte animation data in $7AEA (based on X)
 C1/9D75:	AE EE 7A   	LDX $7AEE
 C1/9D78:	8E 37 7B   	STX $7B37
 
 C1/9D7B:	20 AC A0   	JSR $A0AC
 C1/9D7E:	AD 79 62   	LDA $6279
-C1/9D81:	20 D7 9B   	JSR $9BD7
+C1/9D81:	20 D7 9B   	JSR $9BD7          ; load palette data
 C1/9D84:	7B         	TDC
 C1/9D85:	AD 7A 62   	LDA $627A
 C1/9D88:	8D 67 61   	STA $6167
 C1/9D8B:	AD 7B 62   	LDA $627B
 C1/9D8E:	20 6B 9C   	JSR $9C6B
-C1/9D91:	20 71 A7   	JSR $A771
+C1/9D91:	20 71 A7   	JSR $A771          ; set character blockers bitmask
 C1/9D94:	60         	RTS
 
 ; Fight/Throw animation subroutine [?]
@@ -20174,6 +20178,9 @@ C1/9DA0:	7B         	TDC                ; A = 0000 (again?)
 C1/9DA1:	E2 20      	SEP #$20           ; 8-bit A
 C1/9DA3:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
 C1/9DA6:	F0 10      	BEQ $9DB8          ; branch if not ^
+
+; Lookup and set full animation data
+; ($626B $626C $626D $626E $626F $6270 $6271 $6272)
 
 C1/9DA8:	BF E8 E6 EC	LDA $ECE6E8,X      ; data byte (monster animations) [?]
 C1/9DAC:	99 6B 62   	STA $626B,Y        ; move data
@@ -20200,45 +20207,46 @@ C1/9DD0:	29 01      	AND #$01           ; isolate "left-hand" bit
 C1/9DD2:	5D 10 7B   	EOR $7B10,X        ; toggle if character facing right
 C1/9DD5:	29 01      	AND #$01           ; isolate "left-hand" bit (again)
 C1/9DD7:	AA         	TAX                ; X = 0 or 1
-C1/9DD8:	BD 6B 62   	LDA $626B,X        ; weapon animation data (first byte)
+C1/9DD8:	BD 6B 62   	LDA $626B,X        ; weapon animation script (left or right hand)
 C1/9DDB:	AA         	TAX                ; index it
-C1/9DDC:	20 8B A1   	JSR $A18B          ; move 6 bytes graphics data to $7AEA
-C1/9DDF:	AC EE 7A   	LDY $7AEE          ; Y = graphics bytes 5-6
-C1/9DE2:	8C 2D 7B   	STY $7B2D          ; set graphics frame width/height [?]
-C1/9DE5:	AE EA 7A   	LDX $7AEA          ; X = graphics bytes 1-2
-C1/9DE8:	20 C0 A1   	JSR $A1C0
-C1/9DEB:	20 B5 A0   	JSR $A0B5
-C1/9DEE:	AD 8A 61   	LDA $618A
-C1/9DF1:	F0 13      	BEQ $9E06
-C1/9DF3:	AD 6E 62   	LDA $626E
-C1/9DF6:	C9 60      	CMP #$60
-C1/9DF8:	90 0C      	BCC $9E06
-C1/9DFA:	C2 20      	REP #$20
-C1/9DFC:	18         	CLC
-C1/9DFD:	69 00 02   	ADC #$0200
-C1/9E00:	AA         	TAX
-C1/9E01:	7B         	TDC
-C1/9E02:	E2 20      	SEP #$20
-C1/9E04:	80 04      	BRA $9E0A
-C1/9E06:	AD 6E 62   	LDA $626E
-C1/9E09:	AA         	TAX
+C1/9DDC:	20 8B A1   	JSR $A18B          ; 6-byte animation data in $7AEA (based on X)
+C1/9DDF:	AC EE 7A   	LDY $7AEE          ; weapon animation data 5-6
+C1/9DE2:	8C 2D 7B   	STY $7B2D          ; set weapon graphics frame width/height
+C1/9DE5:	AE EA 7A   	LDX $7AEA          ; instructions for tile VRAM move
+C1/9DE8:	20 C0 A1   	JSR $A1C0          ; move 96 tiles into VRAM
+C1/9DEB:	20 B5 A0   	JSR $A0B5          ; ??????????
+C1/9DEE:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
+C1/9DF1:	F0 13      	BEQ $9E06          ; branch if not ^
+C1/9DF3:	AD 6E 62   	LDA $626E          ; hit animation script
+C1/9DF6:	C9 60      	CMP #$60           ; 96
+C1/9DF8:	90 0C      	BCC $9E06          ; skip adding offset if less than 96
+C1/9DFA:	C2 20      	REP #$20           ; 16-bit A
+C1/9DFC:	18         	CLC                ; prepare add
+C1/9DFD:	69 00 02   	ADC #$0200         ; add animation script offset
+C1/9E00:	AA         	TAX                ; index it
+C1/9E01:	7B         	TDC                ; A = 0000
+C1/9E02:	E2 20      	SEP #$20           ; 8-bit A
+C1/9E04:	80 04      	BRA $9E0A          ; continue
 
-C1/9E0A:	20 8B A1   	JSR $A18B
-C1/9E0D:	AC EE 7A   	LDY $7AEE
-C1/9E10:	8C 2F 7B   	STY $7B2F
-C1/9E13:	8C 31 7B   	STY $7B31
-C1/9E16:	AE EA 7A   	LDX $7AEA
-C1/9E19:	20 E0 A1   	JSR $A1E0
-C1/9E1C:	20 1C 9F   	JSR $9F1C
+C1/9E06:	AD 6E 62   	LDA $626E          ; hit animation script
+C1/9E09:	AA         	TAX                ; index it
+
+C1/9E0A:	20 8B A1   	JSR $A18B          ; 6-byte animation data in $7AEA (based on X)
+C1/9E0D:	AC EE 7A   	LDY $7AEE          ; hit animation data 5-6
+C1/9E10:	8C 2F 7B   	STY $7B2F          ; set hit graphics frame width/height
+C1/9E13:	8C 31 7B   	STY $7B31          ; BG1 animation frame width/height
+C1/9E16:	AE EA 7A   	LDX $7AEA          ; instructions for tile VRAM move
+C1/9E19:	20 E0 A1   	JSR $A1E0          ; move 160 tiles into VRAM
+C1/9E1C:	20 1C 9F   	JSR $9F1C          ; ??????????
 C1/9E1F:	A9 2C      	LDA #$2C
-C1/9E21:	20 61 9F   	JSR $9F61
-C1/9E24:	20 3A 9E   	JSR $9E3A
-C1/9E27:	AD 6D 62   	LDA $626D
-C1/9E2A:	20 D7 9B   	JSR $9BD7
-C1/9E2D:	AD 6F 62   	LDA $626F
-C1/9E30:	8D 67 61   	STA $6167
-C1/9E33:	20 4B A0   	JSR $A04B
-C1/9E36:	20 71 A7   	JSR $A771
+C1/9E21:	20 61 9F   	JSR $9F61          ; ??????????
+C1/9E24:	20 3A 9E   	JSR $9E3A          ; ??????????
+C1/9E27:	AD 6D 62   	LDA $626D          ; weapon palette
+C1/9E2A:	20 D7 9B   	JSR $9BD7          ; load palette data
+C1/9E2D:	AD 6F 62   	LDA $626F          ; hit palette
+C1/9E30:	8D 67 61   	STA $6167          ; animation BG1 palette [?]
+C1/9E33:	20 4B A0   	JSR $A04B          ; load some fixed animation data [?]
+C1/9E36:	20 71 A7   	JSR $A771          ; set character blockers bitmask
 C1/9E39:	60         	RTS
 
 C1/9E3A:	A5 28      	LDA $28
@@ -20366,6 +20374,7 @@ C1/9F12:	20 89 BC   	JSR $BC89
 C1/9F15:	20 A6 BC   	JSR $BCA6
 C1/9F18:	A5 12      	LDA $12
 C1/9F1A:	80 05      	BRA $9F21
+
 C1/9F1C:	20 89 BC   	JSR $BC89
 C1/9F1F:	A5 10      	LDA $10
 
@@ -20403,6 +20412,7 @@ C1/9F58:	A9 30      	LDA #$30
 C1/9F5A:	85 2A      	STA $2A
 C1/9F5C:	A2 00 E4   	LDX #$E400
 C1/9F5F:	80 12      	BRA $9F73
+
 C1/9F61:	48         	PHA
 C1/9F62:	20 CA 9E   	JSR $9ECA
 C1/9F65:	A9 D1      	LDA #$D1
@@ -20549,11 +20559,12 @@ C1/A047:	7B         	TDC
 C1/A048:	E2 20      	SEP #$20
 C1/A04A:	60         	RTS
 
-C1/A04B:	A9 01      	LDA #$01
-C1/A04D:	20 80 A0   	JSR $A080
-C1/A050:	1A         	INC A
-C1/A051:	C9 07      	CMP #$07
-C1/A053:	D0 F8      	BNE $A04D
+; Load animations 2-7 below
+C1/A04B:	A9 01      	LDA #$01           ; start at second animation below
+C1/A04D:	20 80 A0   	JSR $A080          ; load the animation data
+C1/A050:	1A         	INC A              ; increment animation index
+C1/A051:	C9 07      	CMP #$07           ; load 6 animations total
+C1/A053:	D0 F8      	BNE $A04D          ; loop till done
 C1/A055:	60         	RTS
 
 C1/A056:	42 00 C3 D7 43 E2
@@ -20564,30 +20575,31 @@ C1/A06E:	46 00 1B D7 9B E1
 C1/A074:	47 00 6F D7 EF E1
 C1/A07A:	48 00 17 D8 97 E2
 
-C1/A080:	48         	PHA
-C1/A081:	0A         	ASL A
-C1/A082:	85 12      	STA $12
-C1/A084:	0A         	ASL A
-C1/A085:	18         	CLC
-C1/A086:	65 12      	ADC $12
-C1/A088:	AA         	TAX
-C1/A089:	C2 20      	REP #$20
-C1/A08B:	BF 56 A0 C1	LDA $C1A056,X    ; Data
-C1/A08F:	48         	PHA
-C1/A090:	BF 58 A0 C1	LDA $C1A058,X    ; Data
-C1/A094:	85 14      	STA $14
-C1/A096:	BF 5A A0 C1	LDA $C1A05A,X    ; Data
-C1/A09A:	85 1C      	STA $1C
-C1/A09C:	FA         	PLX
-C1/A09D:	7B         	TDC
-C1/A09E:	E2 20      	SEP #$20
-C1/A0A0:	20 8B A1   	JSR $A18B
-C1/A0A3:	A9 D1      	LDA #$D1
-C1/A0A5:	85 12      	STA $12
+C1/A080:	48         	PHA                ; store A
+C1/A081:	0A         	ASL A              ; x2
+C1/A082:	85 12      	STA $12            ; save for math
+C1/A084:	0A         	ASL A              ; x4
+C1/A085:	18         	CLC                ; prepare add
+C1/A086:	65 12      	ADC $12            ; x4 + x2 = x6
+C1/A088:	AA         	TAX                ; index it
+C1/A089:	C2 20      	REP #$20           ; 16-bit A
+C1/A08B:	BF 56 A0 C1	LDA $C1A056,X      ; bytes 1-2
+C1/A08F:	48         	PHA                ; store on stack
+C1/A090:	BF 58 A0 C1	LDA $C1A058,X      ; bytes 3-4
+C1/A094:	85 14      	STA $14            ; store
+C1/A096:	BF 5A A0 C1	LDA $C1A05A,X      ; bytes 5-6
+C1/A09A:	85 1C      	STA $1C            ; save
+C1/A09C:	FA         	PLX                ; bytes 1-2
+C1/A09D:	7B         	TDC                ; A = 0000
+C1/A09E:	E2 20      	SEP #$20           ; 8-bit A
+C1/A0A0:	20 8B A1   	JSR $A18B          ; 6-byte animation data in $7AEA (based on X)
+C1/A0A3:	A9 D1      	LDA #$D1           ; source bank $D1....
+C1/A0A5:	85 12      	STA $12            ; set source bank
 C1/A0A7:	20 C6 A0   	JSR $A0C6
-C1/A0AA:	68         	PLA
+C1/A0AA:	68         	PLA                ; restore A
 C1/A0AB:	60         	RTS
 
+; Load animation above (1st and 7th)
 C1/A0AC:	7B         	TDC
 C1/A0AD:	20 80 A0   	JSR $A080
 C1/A0B0:	A9 06      	LDA #$06
@@ -20600,6 +20612,7 @@ C1/A0BC:	A2 3F CE   	LDX #$CE3F
 C1/A0BF:	86 14      	STX $14
 C1/A0C1:	A2 BF D8   	LDX #$D8BF
 C1/A0C4:	86 1C      	STX $1C
+
 C1/A0C6:	AD EA 7A   	LDA $7AEA
 C1/A0C9:	29 3F      	AND #$3F
 C1/A0CB:	8D EA 7A   	STA $7AEA
@@ -20711,6 +20724,8 @@ C1/A187:	4C DE A0   	JMP $A0DE
 
 C1/A18A:	60         	RTS
 
+; Move 6-byte animation data (based on X index) to $7AEA
+
 C1/A18B:	C2 20      	REP #$20           ; 16-bit A
 C1/A18D:	8A         	TXA
 C1/A18E:	29 FF 7F   	AND #$7FFF         ; mask dirty bit (15 bits left)
@@ -20722,7 +20737,6 @@ C1/A197:	6D EA 7A   	ADC $7AEA          ; x4 + x2 = x6
 C1/A19A:	AA         	TAX                ; index to 6-byte data block
 C1/A19B:	7B         	TDC                ; A = 0000
 C1/A19C:	A8         	TAY                ; Y = 0000
-
 C1/A19D:	BF 00 D0 D4	LDA $D4D000,X      ; animation graphics data byte
 C1/A1A1:	99 EA 7A   	STA $7AEA,Y        ; move to new location
 C1/A1A4:	E8         	INX
@@ -20735,45 +20749,55 @@ C1/A1AD:	7B         	TDC                ; A = 0000
 C1/A1AE:	E2 20      	SEP #$20           ; 8-bit A
 C1/A1B0:	60         	RTS
 
-C1/A1B1:	86 10      	STX $10
-C1/A1B3:	A2 80 00   	LDX #$0080
-C1/A1B6:	86 16      	STX $16
-C1/A1B8:	A2 00 24   	LDX #$2400
-C1/A1BB:	86 1A      	STX $1A
-C1/A1BD:	4C EF A1   	JMP $A1EF
+; Move 32-byte tiles from ROM to VRAM
 
-C1/A1C0:	86 10      	STX $10            ; store graphics bytes 1-2
-C1/A1C2:	A2 60 00   	LDX #$0060         ; number of 32-byte blocks to move
-C1/A1C5:	86 16      	STX $16            ; store it for later moves
-C1/A1C7:	A2 00 26   	LDX #$2600         ; end VRAM destination
-C1/A1CA:	86 1A      	STX $1A            ; store it for later VRAM move
-C1/A1CC:	4C EF A1   	JMP $A1EF
+; Move 128 tiles
+C1/A1B1:	86 10      	STX $10            ; store pointer to instructions
+C1/A1B3:	A2 80 00   	LDX #$0080         ; number of tiles to move
+C1/A1B6:	86 16      	STX $16            ; save it
+C1/A1B8:	A2 00 24   	LDX #$2400         ; ultimate VRAM destination
+C1/A1BB:	86 1A      	STX $1A            ; save it
+C1/A1BD:	4C EF A1   	JMP $A1EF          ; finish prepping VRAM move
 
-C1/A1CF:	86 10      	STX $10
-C1/A1D1:	A2 80 00   	LDX #$0080
-C1/A1D4:	86 16      	STX $16
-C1/A1D6:	A2 00 50   	LDX #$5000
-C1/A1D9:	86 1A      	STX $1A
+; Move 96 tiles
+C1/A1C0:	86 10      	STX $10            ; store pointer to instructions
+C1/A1C2:	A2 60 00   	LDX #$0060         ; number of tiles to move
+C1/A1C5:	86 16      	STX $16            ; save it
+C1/A1C7:	A2 00 26   	LDX #$2600         ; ultimate VRAM destination
+C1/A1CA:	86 1A      	STX $1A            ; save it
+C1/A1CC:	4C EF A1   	JMP $A1EF          ; finish prepping VRAM move
+
+; Move 128 tiles (different method) [?]
+C1/A1CF:	86 10      	STX $10            ; store pointer to instructions
+C1/A1D1:	A2 80 00   	LDX #$0080         ; number of tiles to move
+C1/A1D4:	86 16      	STX $16            ; save it
+C1/A1D6:	A2 00 50   	LDX #$5000         ; ultimate VRAM destination
+C1/A1D9:	86 1A      	STX $1A            ; save it
 C1/A1DB:	A5 11      	LDA $11
 C1/A1DD:	4C C8 A3   	JMP $A3C8
 
-C1/A1E0:	86 10      	STX $10
-C1/A1E2:	A2 A0 00   	LDX #$00A0
-C1/A1E5:	86 16      	STX $16
-C1/A1E7:	A2 00 00   	LDX #$0000
-C1/A1EA:	86 1A      	STX $1A
-C1/A1EC:	4C EF A1   	JMP $A1EF
+; Move 160 tiles
+C1/A1E0:	86 10      	STX $10            ; store pointer to instructions
+C1/A1E2:	A2 A0 00   	LDX #$00A0         ; number of tiles to move
+C1/A1E5:	86 16      	STX $16            ; save it
+C1/A1E7:	A2 00 00   	LDX #$0000         ; ultimate VRAM destination
+C1/A1EA:	86 1A      	STX $1A            ; save it
+C1/A1EC:	4C EF A1   	JMP $A1EF          ; finish prepping VRAM move (why JMP)
 
-C1/A1EF:	A5 10      	LDA $10            ; graphics byte 5
+C1/A1EF:	A5 10      	LDA $10            ; graphics byte 1
 C1/A1F1:	30 05      	BMI $A1F8          ; branch if bit 7 set
-C1/A1F3:	A5 11      	LDA $11            ; graphics byte 6
-C1/A1F5:	4C FD A1   	JMP $A1FD
+C1/A1F3:	A5 11      	LDA $11            ; graphics byte 2
+C1/A1F5:	4C FD A1   	JMP $A1FD          ; move tiles from ROM to RAM to VRAM
 
-C1/A1F8:	A5 11      	LDA $11            ; graphics byte 6
-C1/A1FA:	4C 06 A3   	JMP $A306          ; alternate animation data format?
+C1/A1F8:	A5 11      	LDA $11            ; graphics byte 2
+C1/A1FA:	4C 06 A3   	JMP $A306          ; alternate tile move procedure [?]
 
-C1/A1FD:	85 11      	STA $11            ; restore graphics byte 6
-C1/A1FF:	A5 10      	LDA $10            ; graphics byte 5
+; Multi-tile move (ROM --> RAM --> VRAM) procedure
+; Uses variable ROM offset for tile data, $D30000 - $D40000
+; Second 16-byte block alternates zeroes
+
+C1/A1FD:	85 11      	STA $11            ; restore graphics byte 2 (why?)
+C1/A1FF:	A5 10      	LDA $10            ; graphics byte 1
 C1/A201:	4A         	LSR A
 C1/A202:	4A         	LSR A
 C1/A203:	4A         	LSR A
@@ -20783,8 +20807,8 @@ C1/A206:	4A         	LSR A              ; move bit 6 into bit 0
 C1/A207:	29 01      	AND #$01           ; isolate bit 0 (unnecessary)
 C1/A209:	85 10      	STA $10            ; save it
 C1/A20B:	C2 20      	REP #$20           ; 16-bit A
-C1/A20D:	A5 10      	LDA $10            ; byte 5 bit 0 and byte 6
-C1/A20F:	EB         	XBA                ; swap -> [byte5(01), byte6]
+C1/A20D:	A5 10      	LDA $10            ; byte 1 bit 0 and byte 2
+C1/A20F:	EB         	XBA                ; swap -> [byte1(0), byte2]
 C1/A210:	0A         	ASL A              ; x2
 C1/A211:	0A         	ASL A              ; x4
 C1/A212:	0A         	ASL A              ; x8
@@ -20798,15 +20822,15 @@ C1/A21C:	7B         	TDC                ; A = 0000
 C1/A21D:	E2 20      	SEP #$20           ; 8-bit A
 C1/A21F:	A9 D2      	LDA #$D2           ; source bank (for address above)
 C1/A221:	85 12      	STA $12            ; save it
-C1/A223:	A9 7F      	LDA #$7F           ; destination bank
+C1/A223:	A9 7F      	LDA #$7F           ; RAM destination bank
 C1/A225:	85 28      	STA $28            ; save it
-C1/A227:	A2 00 E4   	LDX #$E400         ; destination offset
+C1/A227:	A2 00 E4   	LDX #$E400         ; RAM destination offset
 C1/A22A:	86 26      	STX $26            ; save it
 C1/A22C:	C2 20      	REP #$20           ; 16-bit A
-C1/A22E:	A5 16      	LDA $16            ; data block size
+C1/A22E:	A5 16      	LDA $16            ; number of tiles to move
 C1/A230:	48         	PHA                ; store on stack
 
-C1/A231:	64 24      	STZ $24            ; zero $24-$25
+C1/A231:	64 24      	STZ $24            ; clear source bank (updated below)
 C1/A233:	A7 10      	LDA [$10]          ; access bytes at $D2....
 C1/A235:	29 FF 3F   	AND #$3FFF         ; keep lower 14 bits
 C1/A238:	0A         	ASL A
@@ -20818,7 +20842,7 @@ C1/A23F:	0A         	ASL A              ; set carry to original bit 12
 C1/A240:	26 24      	ROL $24            ; move into bit 0 of $24
 C1/A242:	18         	CLC                ; unnecessary, since $24 was just zero
 C1/A243:	65 22      	ADC $22            ; possibly increment $22
-C1/A245:	85 22      	STA $22            ; why not just INC w/ a branch
+C1/A245:	85 22      	STA $22            ; why not just INC w/ a branch?
 C1/A247:	A5 24      	LDA $24            ; 0 or 1, based on bit 12
 C1/A249:	69 00 00   	ADC #$0000         ; add zero for no reason
 C1/A24C:	85 24      	STA $24            ; reset for no reason
@@ -20830,16 +20854,18 @@ C1/A256:	A5 24      	LDA $24
 C1/A258:	69 D3 00   	ADC #$00D3
 C1/A25B:	85 24      	STA $24            ; set source bank to $D3 or $D4
 C1/A25D:	A7 10      	LDA [$10]          ; get bytes at $D2.... again
-C1/A25F:	29 00 40   	AND #$4000         ; isolate bit 14
+C1/A25F:	29 00 40   	AND #$4000         ; "Flip tile horizontally"
 C1/A262:	85 14      	STA $14            ; save it
 C1/A264:	A7 10      	LDA [$10]          ; get bytes at $D2.... again
-C1/A266:	29 00 80   	AND #$8000         ; isolate bit 15 (reverse bytes)
-C1/A269:	D0 39      	BNE $A2A4          ; branch if set (why not BMI?)
+C1/A266:	29 00 80   	AND #$8000         ; "Flip tile vertically"
+C1/A269:	D0 39      	BNE $A2A4          ; branch if ^ (why not BMI?)
+
+; Transfer upright tile to RAM
 
 C1/A26B:	7B         	TDC                ; A = 0000
 C1/A26C:	A8         	TAY                ; Y = 0000
 C1/A26D:	A7 22      	LDA [$22]          ; value at $D3/$D4....
-C1/A26F:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A26F:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
 C1/A272:	97 26      	STA [$26],Y        ; move to new destination
 C1/A274:	A5 22      	LDA $22
 C1/A276:	18         	CLC
@@ -20854,7 +20880,7 @@ C1/A285:	C0 10 00   	CPY #$0010         ; move 16 bytes total
 C1/A288:	D0 E3      	BNE $A26D          ; loop till finished
 
 C1/A28A:	A7 22      	LDA [$22]          ; next 2 bytes ($D3/$D4.... + $10)
-C1/A28C:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A28C:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
 C1/A28F:	29 FF 00   	AND #$00FF         ; isolate low byte
 C1/A292:	97 26      	STA [$26],Y        ; move to new destination
 C1/A294:	E6 22      	INC $22            ; increment source by 1
@@ -20866,9 +20892,11 @@ C1/A29C:	C0 20 00   	CPY #$0020         ; move (8 + 8 zero) bytes total
 C1/A29F:	D0 E9      	BNE $A28A          ; loop till finished
 C1/A2A1:	4C DE A2   	JMP $A2DE
 
+; Transfer vertically flipped tile to RAM
+
 C1/A2A4:	A0 0E 00   	LDY #$000E         ; Y = 14
 C1/A2A7:	A7 22      	LDA [$22]          ; get next 2 bytes at source
-C1/A2A9:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A2A9:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
 C1/A2AC:	97 26      	STA [$26],Y        ; move to destination (reversed)
 C1/A2AE:	A5 22      	LDA $22
 C1/A2B0:	18         	CLC
@@ -20883,7 +20911,7 @@ C1/A2BF:	C0 FE FF   	CPY #$FFFE         ; move 16 bytes total
 C1/A2C2:	D0 E3      	BNE $A2A7          ; loop till finished
 C1/A2C4:	A0 1E 00   	LDY #$001E         ; Y = 30 (end of 32 byte block)
 C1/A2C7:	A7 22      	LDA [$22]          ; next 2 source bytes
-C1/A2C9:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A2C9:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
 C1/A2CC:	29 FF 00   	AND #$00FF         ; isolate low byte
 C1/A2CF:	97 26      	STA [$26],Y        ; move to destination (reversed)
 C1/A2D1:	E6 22      	INC $22            ; increment source offset
@@ -20893,6 +20921,8 @@ C1/A2D7:	88         	DEY
 C1/A2D8:	88         	DEY                ; get next (lower) destination offset
 C1/A2D9:	C0 0E 00   	CPY #$000E         ; move (8 + 8 zero) bytes total
 C1/A2DC:	D0 E9      	BNE $A2C7          ; loop till finished
+
+; Transfer RAM to VRAM
 
 C1/A2DE:	A5 26      	LDA $26            ; destination offset
 C1/A2E0:	18         	CLC
@@ -20904,7 +20934,10 @@ C1/A2EA:	C6 16      	DEC $16            ; decremental total block moves
 C1/A2EC:	F0 03      	BEQ $A2F1          ; branch if all blocks moved
 C1/A2EE:	4C 31 A2   	JMP $A231          ; else, move next 32-byte block
 
-C1/A2F1:	68         	PLA                ; get original number of blocks
+; Prepare RAM to VRAM transfer
+; Duplicates $C1A3B3
+
+C1/A2F1:	68         	PLA                ; get original number of tiles
 C1/A2F2:	0A         	ASL A
 C1/A2F3:	0A         	ASL A
 C1/A2F4:	0A         	ASL A
@@ -20913,121 +20946,139 @@ C1/A2F6:	0A         	ASL A              ; x32
 C1/A2F7:	85 10      	STA $10            ; store total number of bytes moved
 C1/A2F9:	7B         	TDC                ; A = 0000
 C1/A2FA:	E2 20      	SEP #$20           ; 8-bit A
-C1/A2FC:	A2 00 E4   	LDX #$E400         ; original destination offset (now VRAM source)
-C1/A2FF:	A9 7F      	LDA #$7F           ; original destination bank (now VRAM source)
+C1/A2FC:	A2 00 E4   	LDX #$E400         ; original RAM destination offset (now VRAM source)
+C1/A2FF:	A9 7F      	LDA #$7F           ; original RAM destination bank (now VRAM source)
 C1/A301:	A4 1A      	LDY $1A            ; VRAM destination offset
 C1/A303:	4C 8D 19   	JMP $198D          ; execute VRAM DMA transfer
 
-C1/A306:	85 11      	STA $11
-C1/A308:	A5 10      	LDA $10
+; Alternate tile move (ROM --> RAM --> VRAM) procedure
+; Uses fixed ROM offset for tile data, $D87000, and
+; second 16-byte block is always zeroed (simpler palette?)
+
+C1/A306:	85 11      	STA $11            ; restore graphics byte 2 (why?)
+C1/A308:	A5 10      	LDA $10            ; graphics byte 1
 C1/A30A:	4A         	LSR A
 C1/A30B:	4A         	LSR A
 C1/A30C:	4A         	LSR A
 C1/A30D:	4A         	LSR A
 C1/A30E:	4A         	LSR A
-C1/A30F:	4A         	LSR A
-C1/A310:	29 01      	AND #$01
-C1/A312:	85 10      	STA $10
-C1/A314:	C2 20      	REP #$20
-C1/A316:	A5 10      	LDA $10
-C1/A318:	EB         	XBA
+C1/A30F:	4A         	LSR A              ; move bit 6 into bit 0
+C1/A310:	29 01      	AND #$01           ; isolate bit 0
+C1/A312:	85 10      	STA $10            ; save it
+C1/A314:	C2 20      	REP #$20           ; 16-bit A
+C1/A316:	A5 10      	LDA $10            ; byte1-0 and byte2
+C1/A318:	EB         	XBA                ; swap --> [byte1(0), byte2]
 C1/A319:	0A         	ASL A
 C1/A31A:	0A         	ASL A
 C1/A31B:	0A         	ASL A
 C1/A31C:	0A         	ASL A
 C1/A31D:	0A         	ASL A
-C1/A31E:	0A         	ASL A
-C1/A31F:	18         	CLC
-C1/A320:	69 00 C0   	ADC #$C000
-C1/A323:	85 10      	STA $10
-C1/A325:	7B         	TDC
-C1/A326:	E2 20      	SEP #$20
-C1/A328:	A9 D2      	LDA #$D2
-C1/A32A:	85 12      	STA $12
-C1/A32C:	A9 D8      	LDA #$D8
-C1/A32E:	85 24      	STA $24
-C1/A330:	A9 7F      	LDA #$7F
-C1/A332:	85 28      	STA $28
-C1/A334:	A2 00 E4   	LDX #$E400
-C1/A337:	86 26      	STX $26
-C1/A339:	C2 20      	REP #$20
-C1/A33B:	A5 16      	LDA $16
-C1/A33D:	48         	PHA
-C1/A33E:	A7 10      	LDA [$10]
-C1/A340:	29 FF 3F   	AND #$3FFF
+C1/A31E:	0A         	ASL A              ; x64
+C1/A31F:	18         	CLC                ; prepare add
+C1/A320:	69 00 C0   	ADC #$C000         ; add additional offset
+C1/A323:	85 10      	STA $10            ; save this address
+C1/A325:	7B         	TDC                ; A = 0000
+C1/A326:	E2 20      	SEP #$20           ; 8-bit A
+C1/A328:	A9 D2      	LDA #$D2           ; source bank (for address above)
+C1/A32A:	85 12      	STA $12            ; save it
+C1/A32C:	A9 D8      	LDA #$D8           ; tile source bank
+C1/A32E:	85 24      	STA $24            ; set tile source bank
+C1/A330:	A9 7F      	LDA #$7F           ; RAM destination bank
+C1/A332:	85 28      	STA $28            ; save it
+C1/A334:	A2 00 E4   	LDX #$E400         ; RAM destination offset
+C1/A337:	86 26      	STX $26            ; save it
+C1/A339:	C2 20      	REP #$20           ; 16-bit A
+C1/A33B:	A5 16      	LDA $16            ; number of tiles to move
+C1/A33D:	48         	PHA                ; store on stack
+
+C1/A33E:	A7 10      	LDA [$10]          ; get instructions at $D2....
+C1/A340:	29 FF 3F   	AND #$3FFF         ; keep lower 14 bits
 C1/A343:	0A         	ASL A
 C1/A344:	0A         	ASL A
 C1/A345:	0A         	ASL A
-C1/A346:	0A         	ASL A
-C1/A347:	18         	CLC
-C1/A348:	69 00 70   	ADC #$7000
-C1/A34B:	85 22      	STA $22
-C1/A34D:	A7 10      	LDA [$10]
-C1/A34F:	29 00 40   	AND #$4000
-C1/A352:	85 14      	STA $14
-C1/A354:	A7 10      	LDA [$10]
-C1/A356:	29 00 80   	AND #$8000
-C1/A359:	D0 21      	BNE $A37C
-C1/A35B:	7B         	TDC
-C1/A35C:	A8         	TAY
-C1/A35D:	A7 22      	LDA [$22]
-C1/A35F:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
-C1/A362:	97 26      	STA [$26],Y
+C1/A346:	0A         	ASL A              ; x16
+C1/A347:	18         	CLC                ; prepare add
+C1/A348:	69 00 70   	ADC #$7000         ; add offset for tile data
+C1/A34B:	85 22      	STA $22            ; save source offset
+C1/A34D:	A7 10      	LDA [$10]          ; get instructions at $D2....
+C1/A34F:	29 00 40   	AND #$4000         ; "Flip tile horizontally"
+C1/A352:	85 14      	STA $14            ; save for later
+C1/A354:	A7 10      	LDA [$10]          ; get instructions at $D2....
+C1/A356:	29 00 80   	AND #$8000         ; "Flip tile vertically"
+C1/A359:	D0 21      	BNE $A37C          ; branch if ^
+
+; Transfer upright tile to RAM
+
+C1/A35B:	7B         	TDC                ; A = 0000
+C1/A35C:	A8         	TAY                ; Y = 0000
+C1/A35D:	A7 22      	LDA [$22]          ; tile data at $D87000 + offset
+C1/A35F:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
+C1/A362:	97 26      	STA [$26],Y        ; move to temporary RAM location
 C1/A364:	E6 22      	INC $22
-C1/A366:	E6 22      	INC $22
+C1/A366:	E6 22      	INC $22            ; increment source offset by 2
 C1/A368:	C8         	INY
-C1/A369:	C8         	INY
-C1/A36A:	C0 10 00   	CPY #$0010
-C1/A36D:	D0 EE      	BNE $A35D
-C1/A36F:	7B         	TDC
-C1/A370:	97 26      	STA [$26],Y
+C1/A369:	C8         	INY                ; increment destination by 2
+C1/A36A:	C0 10 00   	CPY #$0010         ; move 16 bytes total
+C1/A36D:	D0 EE      	BNE $A35D          ; loop until finished
+
+C1/A36F:	7B         	TDC                ; A = 0000
+C1/A370:	97 26      	STA [$26],Y        ; zero destination RAM bytes
 C1/A372:	C8         	INY
-C1/A373:	C8         	INY
-C1/A374:	C0 20 00   	CPY #$0020
-C1/A377:	D0 F7      	BNE $A370
-C1/A379:	4C A0 A3   	JMP $A3A0
+C1/A373:	C8         	INY                ; increment destination by 2
+C1/A374:	C0 20 00   	CPY #$0020         ; zero 16 trailing RAM bytes total
+C1/A377:	D0 F7      	BNE $A370          ; loop till finished
+C1/A379:	4C A0 A3   	JMP $A3A0          ; continue to next tile
 
-C1/A37C:	A0 0E 00   	LDY #$000E
-C1/A37F:	A7 22      	LDA [$22]
-C1/A381:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
-C1/A384:	97 26      	STA [$26],Y
-C1/A386:	E6 22      	INC $22
-C1/A388:	E6 22      	INC $22
+; Transfer vertically flipped tile to RAM (reverse)
+
+C1/A37C:	A0 0E 00   	LDY #$000E         ; last index of 16-byte block
+C1/A37F:	A7 22      	LDA [$22]          ; tile data at $D87000 + offset
+C1/A381:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
+C1/A384:	97 26      	STA [$26],Y        ; move to temporary RAM location
+C1/A386:	E6 22      	INC $22            
+C1/A388:	E6 22      	INC $22            ; increment source offset by 2
 C1/A38A:	88         	DEY
-C1/A38B:	88         	DEY
-C1/A38C:	C0 FE FF   	CPY #$FFFE
-C1/A38F:	D0 EE      	BNE $A37F
-C1/A391:	A0 1E 00   	LDY #$001E
-C1/A394:	7B         	TDC
-C1/A395:	97 26      	STA [$26],Y
-C1/A397:	E6 22      	INC $22
-C1/A399:	88         	DEY
-C1/A39A:	88         	DEY
-C1/A39B:	C0 0E 00   	CPY #$000E
-C1/A39E:	D0 F5      	BNE $A395
-C1/A3A0:	A5 26      	LDA $26
-C1/A3A2:	18         	CLC
-C1/A3A3:	69 20 00   	ADC #$0020
-C1/A3A6:	85 26      	STA $26
-C1/A3A8:	E6 10      	INC $10
-C1/A3AA:	E6 10      	INC $10
-C1/A3AC:	C6 16      	DEC $16
-C1/A3AE:	F0 03      	BEQ $A3B3
-C1/A3B0:	4C 3E A3   	JMP $A33E
+C1/A38B:	88         	DEY                ; decrement destination by 2
+C1/A38C:	C0 FE FF   	CPY #$FFFE         ; move 16 bytes total
+C1/A38F:	D0 EE      	BNE $A37F          ; loop until finished
 
-C1/A3B3:	68         	PLA
+C1/A391:	A0 1E 00   	LDY #$001E         ; last index of next 16-byte block
+C1/A394:	7B         	TDC                ; A = 0000
+C1/A395:	97 26      	STA [$26],Y        ; zero destination RAM bytes
+C1/A397:	E6 22      	INC $22            ; increment source offset (why?)
+C1/A399:	88         	DEY
+C1/A39A:	88         	DEY                ; decrement destination by 2
+C1/A39B:	C0 0E 00   	CPY #$000E         ; zero 16 trailing RAM bytes total
+C1/A39E:	D0 F5      	BNE $A395          ; loop till finished
+
+; Prepare loop to move next tile
+
+C1/A3A0:	A5 26      	LDA $26            ; RAM destination offset
+C1/A3A2:	18         	CLC
+C1/A3A3:	69 20 00   	ADC #$0020         ; add 32
+C1/A3A6:	85 26      	STA $26            ; save new RAM offset
+C1/A3A8:	E6 10      	INC $10
+C1/A3AA:	E6 10      	INC $10            ; point to next tile's instructions
+C1/A3AC:	C6 16      	DEC $16            ; decrement remaining tiles
+C1/A3AE:	F0 03      	BEQ $A3B3          ; continue to VRAM transfer if done
+C1/A3B0:	4C 3E A3   	JMP $A33E          ; else, loop to next tile move
+
+; Prepare RAM to VRAM transfer
+; Duplicates $C1A2F1
+
+C1/A3B3:	68         	PLA                ; restore original number of tiles
 C1/A3B4:	0A         	ASL A
 C1/A3B5:	0A         	ASL A
 C1/A3B6:	0A         	ASL A
 C1/A3B7:	0A         	ASL A
-C1/A3B8:	0A         	ASL A
-C1/A3B9:	85 10      	STA $10
-C1/A3BB:	7B         	TDC
-C1/A3BC:	E2 20      	SEP #$20
-C1/A3BE:	A2 00 E4   	LDX #$E400
-C1/A3C1:	A9 7F      	LDA #$7F
-C1/A3C3:	A4 1A      	LDY $1A
-C1/A3C5:	4C 8D 19   	JMP $198D
+C1/A3B8:	0A         	ASL A              ; x32
+C1/A3B9:	85 10      	STA $10            ; store total data size
+C1/A3BB:	7B         	TDC                ; A = 0000
+C1/A3BC:	E2 20      	SEP #$20           ; 8-bit A
+C1/A3BE:	A2 00 E4   	LDX #$E400         ; original RAM destination offset (now VRAM source)
+C1/A3C1:	A9 7F      	LDA #$7F           ; original RAM destination bank (now VRAM source)
+C1/A3C3:	A4 1A      	LDY $1A            ; VRAM destination offset
+C1/A3C5:	4C 8D 19   	JMP $198D          ; execute VRAM DMA transfer
 
 C1/A3C8:	85 11      	STA $11
 C1/A3CA:	A5 10      	LDA $10
@@ -21082,7 +21133,7 @@ C1/A41B:	D0 17      	BNE $A434
 C1/A41D:	7B         	TDC
 C1/A41E:	A8         	TAY
 C1/A41F:	A7 22      	LDA [$22]
-C1/A421:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A421:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
 C1/A424:	97 26      	STA [$26],Y
 C1/A426:	E6 22      	INC $22
 C1/A428:	E6 22      	INC $22
@@ -21094,7 +21145,7 @@ C1/A431:	4C 49 A4   	JMP $A449
 
 C1/A434:	A0 0E 00   	LDY #$000E
 C1/A437:	A7 22      	LDA [$22]
-C1/A439:	20 70 A4   	JSR $A470          ; reverse bit order if $14 set
+C1/A439:	20 70 A4   	JSR $A470          ; flip tile horizontally if $14 set
 C1/A43C:	97 26      	STA [$26],Y
 C1/A43E:	E6 22      	INC $22
 C1/A440:	E6 22      	INC $22
@@ -21126,7 +21177,7 @@ C1/A46B:	A4 1A      	LDY $1A
 C1/A46D:	4C 8D 19   	JMP $198D
 
 ; If $14 is set, reverse bit order within low and high bytes
-; FEDCBA98 76543210 --> 89ABCDEF 01234567
+; FEDCBA98 76543210 --> 89ABCDEF 01234567 (Flips tile horizontally)
 
 C1/A470:	48         	PHA               ; store address on stack
 C1/A471:	A5 14      	LDA $14           ; flag from bit 14 of instructions
@@ -21570,26 +21621,30 @@ C1/A76B:	0008
 C1/A76D:	0010
 C1/A76F:	0020
 
-C1/A771:	5A         	PHY
-C1/A772:	64 10      	STZ $10
-C1/A774:	A0 0A 00   	LDY #$000A
-C1/A777:	AD C0 62   	LDA $62C0
-C1/A77A:	F0 03      	BEQ $A77F
-C1/A77C:	7B         	TDC
-C1/A77D:	80 14      	BRA $A793
-C1/A77F:	B1 78      	LDA ($78),Y
-C1/A781:	F0 06      	BEQ $A789
+; Set blockers bitmask in $6082
+
+C1/A771:	5A         	PHY                 ; store Y
+C1/A772:	64 10      	STZ $10             ; clear $10
+C1/A774:	A0 0A 00   	LDY #$000A          ; prepare loop
+C1/A777:	AD C0 62   	LDA $62C0           ; ignore block animations
+C1/A77A:	F0 03      	BEQ $A77F           ; branch if not ^
+C1/A77C:	7B         	TDC                 ; A = 0000
+C1/A77D:	80 14      	BRA $A793           ; skip to end
+
+C1/A77F:	B1 78      	LDA ($78),Y         ; block type (0-7) for character
+C1/A781:	F0 06      	BEQ $A789           ; branch if no block animation
 C1/A783:	A5 10      	LDA $10
 C1/A785:	09 10      	ORA #$10
-C1/A787:	85 10      	STA $10
-C1/A789:	46 10      	LSR $10
-C1/A78B:	C8         	INY
-C1/A78C:	C0 0E 00   	CPY #$000E
-C1/A78F:	D0 EE      	BNE $A77F
-C1/A791:	A5 10      	LDA $10
-C1/A793:	8D 82 60   	STA $6082
-C1/A796:	9C 83 60   	STZ $6083
-C1/A799:	7A         	PLY
+C1/A787:	85 10      	STA $10             ; flag character as blocking
+C1/A789:	46 10      	LSR $10             ; shift bits down
+C1/A78B:	C8         	INY                 ; next character block index
+C1/A78C:	C0 0E 00   	CPY #$000E          ; check 4 characters
+C1/A78F:	D0 EE      	BNE $A77F           ; loop until finished
+C1/A791:	A5 10      	LDA $10             ; blockers bitmask
+
+C1/A793:	8D 82 60   	STA $6082           ; save blockers bitmask
+C1/A796:	9C 83 60   	STZ $6083           ; clear enemy blockers
+C1/A799:	7A         	PLY                 ; restore Y
 C1/A79A:	60         	RTS
 
 C1/A79B:	20 F4 94   	JSR $94F4
@@ -21689,7 +21744,7 @@ C1/A85C:	29 0F      	AND #$0F
 C1/A85E:	C2 20      	REP #$20
 C1/A860:	0A         	ASL A
 C1/A861:	AA         	TAX
-C1/A862:	BF 8B CE C2	LDA $C2CE8B,X
+C1/A862:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/A866:	AA         	TAX
 C1/A867:	7B         	TDC
 C1/A868:	E2 20      	SEP #$20
@@ -21796,7 +21851,7 @@ C1/A94D:	29 0F      	AND #$0F
 C1/A94F:	C2 20      	REP #$20
 C1/A951:	0A         	ASL A
 C1/A952:	AA         	TAX
-C1/A953:	BF 8B CE C2	LDA $C2CE8B,X
+C1/A953:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/A957:	AA         	TAX
 C1/A958:	7B         	TDC
 C1/A959:	E2 20      	SEP #$20
@@ -21901,7 +21956,7 @@ C1/AA2E:	29 0F      	AND #$0F
 C1/AA30:	C2 20      	REP #$20
 C1/AA32:	0A         	ASL A
 C1/AA33:	AA         	TAX
-C1/AA34:	BF 8B CE C2	LDA $C2CE8B,X
+C1/AA34:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/AA38:	AA         	TAX
 C1/AA39:	7B         	TDC
 C1/AA3A:	E2 20      	SEP #$20
@@ -22272,7 +22327,7 @@ C1/AD00:	29 0F      	AND #$0F
 C1/AD02:	C2 20      	REP #$20
 C1/AD04:	0A         	ASL A
 C1/AD05:	AA         	TAX
-C1/AD06:	BF 8B CE C2	LDA $C2CE8B,X
+C1/AD06:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/AD0A:	AA         	TAX
 C1/AD0B:	7B         	TDC
 C1/AD0C:	E2 20      	SEP #$20
@@ -22340,7 +22395,7 @@ C1/AD96:	29 0F      	AND #$0F
 C1/AD98:	C2 20      	REP #$20
 C1/AD9A:	0A         	ASL A
 C1/AD9B:	AA         	TAX
-C1/AD9C:	BF 8B CE C2	LDA $C2CE8B,X
+C1/AD9C:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/ADA0:	AA         	TAX
 C1/ADA1:	7B         	TDC
 C1/ADA2:	E2 20      	SEP #$20
@@ -23497,6 +23552,8 @@ C1/B746:	E0 18      	CPX #$18
 C1/B748:	D0 C2      	BNE $B70C
 C1/B74A:	60         	RTS
 
+; Block animation script ids
+
 C1/B74B:	45
 C1/B74C:	46
 C1/B74D:	48
@@ -23505,6 +23562,8 @@ C1/B74F:	40
 C1/B750:	44
 C1/B751:	43
 
+; Block animation palettes
+
 C1/B752:	02
 C1/B753:	02
 C1/B754:	01
@@ -23512,6 +23571,8 @@ C1/B755:	00
 C1/B756:	00
 C1/B757:	01
 C1/B758:	03
+
+; Block animation sound effects (why all the same?)
 
 C1/B759:	A0
 C1/B75A:	A0
@@ -24210,7 +24271,7 @@ C1/BC8C:	F0 05      	BEQ $BC93     ; A = first index of character/monster for so
 C1/BC8E:	20 AD AA   	JSR $AAAD
 C1/BC91:	80 0E      	BRA $BCA1
 
-C1/BC93:	A2 6E 2C   	LDX #$2C6E    ; $10 points to beginning of animation data buffer (why not use $78?
+C1/BC93:	A2 6E 2C   	LDX #$2C6E    ; $10 points to beginning of animation data buffer (why not use $78?)
 C1/BC96:	86 10      	STX $10
 C1/BC98:	A0 01 00   	LDY #$0001    ; A = first data byte, animation flags
 C1/BC9B:	B2 10      	LDA ($10)     ; isolate "attacker is monster" bit
@@ -24235,48 +24296,54 @@ C1/BCB9:	20 0F 1A   	JSR $1A0F     ; A = index of first character target
 C1/BCBC:	85 12      	STA $12       ; save it
 C1/BCBE:	60         	RTS
 
-C1/BCBF:	7B         	TDC
-C1/BCC0:	AA         	TAX
-C1/BCC1:	A8         	TAY
-C1/BCC2:	C2 20      	REP #$20
-C1/BCC4:	BD B7 61   	LDA $61B7,X
-C1/BCC7:	99 3B 81   	STA $813B,Y
-C1/BCCA:	BD B9 61   	LDA $61B9,X
-C1/BCCD:	99 3D 81   	STA $813D,Y
+; Copy all character and monster position data
+; in preparation of animations
+
+C1/BCBF:	7B         	TDC           ; A = 0000
+C1/BCC0:	AA         	TAX           ; X = 0000
+C1/BCC1:	A8         	TAY           ; Y = 0000
+C1/BCC2:	C2 20      	REP #$20      ; 16-bit A
+
+C1/BCC4:	BD B7 61   	LDA $61B7,X   ; character left X position
+C1/BCC7:	99 3B 81   	STA $813B,Y   ; character left X position (temp)
+C1/BCCA:	BD B9 61   	LDA $61B9,X   ; character top Y position
+C1/BCCD:	99 3D 81   	STA $813D,Y   ; character top Y position (temp)
 C1/BCD0:	C8         	INY
 C1/BCD1:	C8         	INY
 C1/BCD2:	C8         	INY
-C1/BCD3:	C8         	INY
+C1/BCD3:	C8         	INY           ; get next character position index
 C1/BCD4:	8A         	TXA
 C1/BCD5:	18         	CLC
 C1/BCD6:	69 20 00   	ADC #$0020
-C1/BCD9:	AA         	TAX
-C1/BCDA:	E0 80 00   	CPX #$0080
-C1/BCDD:	D0 E5      	BNE $BCC4
-C1/BCDF:	7B         	TDC
-C1/BCE0:	AA         	TAX
-C1/BCE1:	BD C3 80   	LDA $80C3,X
-C1/BCE4:	99 3B 81   	STA $813B,Y
-C1/BCE7:	BD CF 80   	LDA $80CF,X
-C1/BCEA:	99 3D 81   	STA $813D,Y
+C1/BCD9:	AA         	TAX           ; increment source offset by 32
+C1/BCDA:	E0 80 00   	CPX #$0080    ; process all 4 characters
+C1/BCDD:	D0 E5      	BNE $BCC4     ; loop until all XY positions set
+C1/BCDF:	7B         	TDC           ; A = 0000
+C1/BCE0:	AA         	TAX           ; X = 0000
+
+C1/BCE1:	BD C3 80   	LDA $80C3,X   ; monster left X position
+C1/BCE4:	99 3B 81   	STA $813B,Y   ; monster left X position (temp)
+C1/BCE7:	BD CF 80   	LDA $80CF,X   ; monster top Y position
+C1/BCEA:	99 3D 81   	STA $813D,Y   ; monster top Y position (temp)
 C1/BCED:	C8         	INY
 C1/BCEE:	C8         	INY
 C1/BCEF:	C8         	INY
-C1/BCF0:	C8         	INY
+C1/BCF0:	C8         	INY           ; get next monster position index
 C1/BCF1:	E8         	INX
-C1/BCF2:	E8         	INX
-C1/BCF3:	E0 0C 00   	CPX #$000C
-C1/BCF6:	D0 E9      	BNE $BCE1
-C1/BCF8:	7B         	TDC
-C1/BCF9:	AA         	TAX
-C1/BCFA:	BD 0F 80   	LDA $800F,X
-C1/BCFD:	9D 6B 81   	STA $816B,X
+C1/BCF2:	E8         	INX           ; increment source offset by 2
+C1/BCF3:	E0 0C 00   	CPX #$000C    ; process all 6 monsters
+C1/BCF6:	D0 E9      	BNE $BCE1     ; loop until finished
+C1/BCF8:	7B         	TDC           ; A = 0000
+C1/BCF9:	AA         	TAX           ; X = 0000
+
+C1/BCFA:	BD 0F 80   	LDA $800F,X   ; additional position data
+C1/BCFD:	9D 6B 81   	STA $816B,X   ; copy to temporary position data
 C1/BD00:	E8         	INX
-C1/BD01:	E8         	INX
-C1/BD02:	E0 3C 00   	CPX #$003C
-C1/BD05:	D0 F3      	BNE $BCFA
-C1/BD07:	7B         	TDC
-C1/BD08:	E2 20      	SEP #$20
+C1/BD01:	E8         	INX           ; get next position bytes index
+C1/BD02:	E0 3C 00   	CPX #$003C    ; 6 monsters, 4 characters, center X, center Y, bottom Y
+C1/BD05:	D0 F3      	BNE $BCFA     ; loop till all copied
+C1/BD07:	7B         	TDC           ; A = 0000
+C1/BD08:	E2 20      	SEP #$20      ; 8-bit A
 C1/BD0A:	60         	RTS
 
 C1/BD0B:	7B         	TDC
@@ -24324,196 +24391,205 @@ C1/BD54:	E2 20      	SEP #$20
 C1/BD56:	20 7C 95   	JSR $957C
 C1/BD59:	60         	RTS
 
-C1/BD5A:	A0 08 00   	LDY #$0008
-C1/BD5D:	B1 78      	LDA ($78),Y
-C1/BD5F:	C9 04      	CMP #$04
-C1/BD61:	B0 37      	BCS $BD9A
-C1/BD63:	A8         	TAY
-C1/BD64:	0A         	ASL A
-C1/BD65:	AA         	TAX
-C1/BD66:	DA         	PHX
+; Handle covering targets
+
+C1/BD5A:	A0 08 00   	LDY #$0008       ; animation argument #8
+C1/BD5D:	B1 78      	LDA ($78),Y      ; intended (covered) target's id
+C1/BD5F:	C9 04      	CMP #$04         ; is it a character?
+C1/BD61:	B0 37      	BCS $BD9A        ; branch if not
+
+; Cover character target
+
+C1/BD63:	A8         	TAY              ; intended target id
+C1/BD64:	0A         	ASL A            ; intended target index
+C1/BD65:	AA         	TAX              ; index it
+C1/BD66:	DA         	PHX              ; store it
 C1/BD67:	0A         	ASL A
 C1/BD68:	0A         	ASL A
 C1/BD69:	0A         	ASL A
-C1/BD6A:	0A         	ASL A
-C1/BD6B:	AA         	TAX
-C1/BD6C:	C2 20      	REP #$20
-C1/BD6E:	BD B7 61   	LDA $61B7,X
-C1/BD71:	85 14      	STA $14
-C1/BD73:	BD B9 61   	LDA $61B9,X
-C1/BD76:	85 16      	STA $16
-C1/BD78:	FA         	PLX
-C1/BD79:	BD 33 80   	LDA $8033,X
-C1/BD7C:	85 24      	STA $24
-C1/BD7E:	BD 3B 80   	LDA $803B,X
-C1/BD81:	85 26      	STA $26
-C1/BD83:	BD 43 80   	LDA $8043,X
-C1/BD86:	85 28      	STA $28
-C1/BD88:	7B         	TDC
-C1/BD89:	E2 20      	SEP #$20
-C1/BD8B:	B9 10 7B   	LDA $7B10,Y
-C1/BD8E:	F0 05      	BEQ $BD95
-C1/BD90:	A2 0C 00   	LDX #$000C
-C1/BD93:	80 3C      	BRA $BDD1
-C1/BD95:	A2 00 00   	LDX #$0000
-C1/BD98:	80 37      	BRA $BDD1
-C1/BD9A:	29 7F      	AND #$7F
-C1/BD9C:	38         	SEC
-C1/BD9D:	E9 04      	SBC #$04
-C1/BD9F:	0A         	ASL A
-C1/BDA0:	AA         	TAX
-C1/BDA1:	C2 20      	REP #$20
-C1/BDA3:	BD 0F 80   	LDA $800F,X
-C1/BDA6:	85 14      	STA $14
-C1/BDA8:	BD 27 80   	LDA $8027,X
-C1/BDAB:	85 16      	STA $16
-C1/BDAD:	BD 0F 80   	LDA $800F,X
-C1/BDB0:	85 24      	STA $24
-C1/BDB2:	BD 1B 80   	LDA $801B,X
-C1/BDB5:	85 26      	STA $26
-C1/BDB7:	BD 27 80   	LDA $8027,X
-C1/BDBA:	85 28      	STA $28
-C1/BDBC:	7B         	TDC
-C1/BDBD:	E2 20      	SEP #$20
-C1/BDBF:	BD F3 80   	LDA $80F3,X
-C1/BDC2:	5D 7E 61   	EOR $617E,X
-C1/BDC5:	29 01      	AND #$01
-C1/BDC7:	D0 05      	BNE $BDCE
-C1/BDC9:	A2 0C 00   	LDX #$000C
-C1/BDCC:	80 03      	BRA $BDD1
-C1/BDCE:	A2 00 00   	LDX #$0000
-C1/BDD1:	DA         	PHX
-C1/BDD2:	86 22      	STX $22
-C1/BDD4:	A0 06 00   	LDY #$0006
-C1/BDD7:	B1 78      	LDA ($78),Y
-C1/BDD9:	85 18      	STA $18
-C1/BDDB:	64 1A      	STZ $1A
-C1/BDDD:	46 18      	LSR $18
-C1/BDDF:	90 52      	BCC $BE33
-C1/BDE1:	A5 22      	LDA $22
-C1/BDE3:	AA         	TAX
-C1/BDE4:	C2 20      	REP #$20
-C1/BDE6:	BF A1 BE C1	LDA $C1BEA1,X    ; Data
-C1/BDEA:	85 10      	STA $10
-C1/BDEC:	BF A3 BE C1	LDA $C1BEA3,X    ; Data
-C1/BDF0:	85 12      	STA $12
-C1/BDF2:	A5 22      	LDA $22
-C1/BDF4:	18         	CLC
-C1/BDF5:	69 04 00   	ADC #$0004
-C1/BDF8:	85 22      	STA $22
-C1/BDFA:	7B         	TDC
-C1/BDFB:	E2 20      	SEP #$20
-C1/BDFD:	A5 1A      	LDA $1A
-C1/BDFF:	0A         	ASL A
-C1/BE00:	A8         	TAY
+C1/BD6A:	0A         	ASL A            ; x32 total
+C1/BD6B:	AA         	TAX              ; index it
+C1/BD6C:	C2 20      	REP #$20         ; 16-bit A
+C1/BD6E:	BD B7 61   	LDA $61B7,X      ; intended character left X position
+C1/BD71:	85 14      	STA $14          ; save it
+C1/BD73:	BD B9 61   	LDA $61B9,X      ; intended character top Y position
+C1/BD76:	85 16      	STA $16          ; save it
+C1/BD78:	FA         	PLX              ; restore character index
+C1/BD79:	BD 33 80   	LDA $8033,X      ; intended character center X coord
+C1/BD7C:	85 24      	STA $24          ; save it
+C1/BD7E:	BD 3B 80   	LDA $803B,X      ; intended character center Y coord
+C1/BD81:	85 26      	STA $26          ; save it
+C1/BD83:	BD 43 80   	LDA $8043,X      ; intended character bottom Y coord
+C1/BD86:	85 28      	STA $28          ; save it
+C1/BD88:	7B         	TDC              ; A = 0000
+C1/BD89:	E2 20      	SEP #$20         ; 8-bit A
+C1/BD8B:	B9 10 7B   	LDA $7B10,Y      ; intended character facing right
+C1/BD8E:	F0 05      	BEQ $BD95        ; branch if not
+C1/BD90:	A2 0C 00   	LDX #$000C       ; offset to coordinate offset data
+C1/BD93:	80 3C      	BRA $BDD1        ; skip monster target handling
+C1/BD95:	A2 00 00   	LDX #$0000       ; offset to coordinate offset data
+C1/BD98:	80 37      	BRA $BDD1        ; skip monster target handling
+
+; Cover monster target
+
+C1/BD9A:	29 7F      	AND #$7F         ; mask top bit (why?)
+C1/BD9C:	38         	SEC              ; prepare subtraction
+C1/BD9D:	E9 04      	SBC #$04         ; get monster id 0-6
+C1/BD9F:	0A         	ASL A            ; monster index
+C1/BDA0:	AA         	TAX              ; index it
+C1/BDA1:	C2 20      	REP #$20         ; 16-bit A
+C1/BDA3:	BD 0F 80   	LDA $800F,X      ; intended monster center X [BUG?] [?]
+C1/BDA6:	85 14      	STA $14          ; save it
+C1/BDA8:	BD 27 80   	LDA $8027,X      ; intended monster bottom Y [BUG?] [?]
+C1/BDAB:	85 16      	STA $16          ; save it
+C1/BDAD:	BD 0F 80   	LDA $800F,X      ; intended monster center X
+C1/BDB0:	85 24      	STA $24          ; save it
+C1/BDB2:	BD 1B 80   	LDA $801B,X      ; intended monster center Y
+C1/BDB5:	85 26      	STA $26          ; save it
+C1/BDB7:	BD 27 80   	LDA $8027,X      ; intended monster bottom Y
+C1/BDBA:	85 28      	STA $28          ; save it
+C1/BDBC:	7B         	TDC              ; A = 0000
+C1/BDBD:	E2 20      	SEP #$20         ; 8-bit A
+C1/BDBF:	BD F3 80   	LDA $80F3,X      ; monster sprite flipped [?]
+C1/BDC2:	5D 7E 61   	EOR $617E,X      ; toggle with other flipped byte [?]
+C1/BDC5:	29 01      	AND #$01         ; "Horizontally flipped"
+C1/BDC7:	D0 05      	BNE $BDCE        ; branch if ^
+C1/BDC9:	A2 0C 00   	LDX #$000C       ; offset to coordinate offset data
+C1/BDCC:	80 03      	BRA $BDD1        ; continue handling
+C1/BDCE:	A2 00 00   	LDX #$0000       ; offset to coordinate offset data
+
+; Process character bodyguards, update coords
+
+C1/BDD1:	DA         	PHX              ; store offset to cover offsets
+C1/BDD2:	86 22      	STX $22          ; save offset to cover offsets
+C1/BDD4:	A0 06 00   	LDY #$0006       ; animation arg #6
+C1/BDD7:	B1 78      	LDA ($78),Y      ; character bodyguards bitmask
+C1/BDD9:	85 18      	STA $18          ; save bodyguard bit
+C1/BDDB:	64 1A      	STZ $1A          ; bodyguard id (start at 0)
+
+C1/BDDD:	46 18      	LSR $18          ; check leftmost bit
+C1/BDDF:	90 52      	BCC $BE33        ; branch if not the bodyguard's bit
+C1/BDE1:	A5 22      	LDA $22          ; offset to cover offsets
+C1/BDE3:	AA         	TAX              ; index it
+C1/BDE4:	C2 20      	REP #$20         ; 16-bit A
+C1/BDE6:	BF A1 BE C1	LDA $C1BEA1,X    ; cover offsets 1-2
+C1/BDEA:	85 10      	STA $10          ; save them
+C1/BDEC:	BF A3 BE C1	LDA $C1BEA3,X    ; cover offsets 3-4
+C1/BDF0:	85 12      	STA $12          ; save them
+C1/BDF2:	A5 22      	LDA $22          ; offset to cover offsets
+C1/BDF4:	18         	CLC              ; prepare add
+C1/BDF5:	69 04 00   	ADC #$0004       ; increment by 4
+C1/BDF8:	85 22      	STA $22          ; save new offset (for next bodyguard)
+C1/BDFA:	7B         	TDC              ; A = 0000
+C1/BDFB:	E2 20      	SEP #$20         ; 8-bit A
+C1/BDFD:	A5 1A      	LDA $1A          ; bodyguard id
+C1/BDFF:	0A         	ASL A            ; x2
+C1/BE00:	A8         	TAY              ; index it
 C1/BE01:	0A         	ASL A
 C1/BE02:	0A         	ASL A
 C1/BE03:	0A         	ASL A
-C1/BE04:	0A         	ASL A
-C1/BE05:	AA         	TAX
-C1/BE06:	C2 20      	REP #$20
-C1/BE08:	A5 14      	LDA $14
-C1/BE0A:	18         	CLC
-C1/BE0B:	65 10      	ADC $10
-C1/BE0D:	9D B7 61   	STA $61B7,X
-C1/BE10:	A5 16      	LDA $16
-C1/BE12:	18         	CLC
-C1/BE13:	65 12      	ADC $12
-C1/BE15:	9D B9 61   	STA $61B9,X
-C1/BE18:	A5 24      	LDA $24
-C1/BE1A:	18         	CLC
-C1/BE1B:	65 10      	ADC $10
-C1/BE1D:	99 33 80   	STA $8033,Y
-C1/BE20:	A5 26      	LDA $26
-C1/BE22:	18         	CLC
-C1/BE23:	65 12      	ADC $12
-C1/BE25:	99 3B 80   	STA $803B,Y
-C1/BE28:	A5 28      	LDA $28
-C1/BE2A:	18         	CLC
-C1/BE2B:	65 12      	ADC $12
-C1/BE2D:	99 43 80   	STA $8043,Y
-C1/BE30:	7B         	TDC
-C1/BE31:	E2 20      	SEP #$20
-C1/BE33:	E6 1A      	INC $1A
-C1/BE35:	A5 1A      	LDA $1A
-C1/BE37:	C9 04      	CMP #$04
-C1/BE39:	D0 A2      	BNE $BDDD
-C1/BE3B:	FA         	PLX
-C1/BE3C:	86 22      	STX $22
-C1/BE3E:	A0 07 00   	LDY #$0007
-C1/BE41:	B1 78      	LDA ($78),Y
-C1/BE43:	85 18      	STA $18
-C1/BE45:	64 1A      	STZ $1A
-C1/BE47:	46 18      	LSR $18
-C1/BE49:	90 4D      	BCC $BE98
-C1/BE4B:	A5 22      	LDA $22
-C1/BE4D:	AA         	TAX
-C1/BE4E:	C2 20      	REP #$20
-C1/BE50:	BF A1 BE C1	LDA $C1BEA1,X    ; Data
-C1/BE54:	85 10      	STA $10
-C1/BE56:	BF A3 BE C1	LDA $C1BEA3,X    ; Data
-C1/BE5A:	85 12      	STA $12
-C1/BE5C:	A5 22      	LDA $22
-C1/BE5E:	18         	CLC
-C1/BE5F:	69 04 00   	ADC #$0004
-C1/BE62:	85 22      	STA $22
-C1/BE64:	7B         	TDC
-C1/BE65:	E2 20      	SEP #$20
-C1/BE67:	A5 1A      	LDA $1A
-C1/BE69:	0A         	ASL A
-C1/BE6A:	AA         	TAX
-C1/BE6B:	C2 20      	REP #$20
-C1/BE6D:	A5 14      	LDA $14
-C1/BE6F:	18         	CLC
-C1/BE70:	65 10      	ADC $10
-C1/BE72:	9D C3 80   	STA $80C3,X
-C1/BE75:	A5 16      	LDA $16
-C1/BE77:	18         	CLC
-C1/BE78:	65 12      	ADC $12
-C1/BE7A:	9D CF 80   	STA $80CF,X
-C1/BE7D:	A5 24      	LDA $24
-C1/BE7F:	18         	CLC
-C1/BE80:	65 10      	ADC $10
-C1/BE82:	9D 0F 80   	STA $800F,X
-C1/BE85:	A5 26      	LDA $26
-C1/BE87:	18         	CLC
-C1/BE88:	65 12      	ADC $12
-C1/BE8A:	9D 1B 80   	STA $801B,X
-C1/BE8D:	A5 28      	LDA $28
-C1/BE8F:	18         	CLC
-C1/BE90:	65 12      	ADC $12
-C1/BE92:	9D 27 80   	STA $8027,X
-C1/BE95:	7B         	TDC
-C1/BE96:	E2 20      	SEP #$20
-C1/BE98:	E6 1A      	INC $1A
-C1/BE9A:	A5 1A      	LDA $1A
-C1/BE9C:	C9 06      	CMP #$06
-C1/BE9E:	D0 A7      	BNE $BE47
+C1/BE04:	0A         	ASL A            ; x32
+C1/BE05:	AA         	TAX              ; index it
+C1/BE06:	C2 20      	REP #$20         ; 16-bit A
+C1/BE08:	A5 14      	LDA $14          ; intended target left X position [?]
+C1/BE0A:	18         	CLC              ; prepare add
+C1/BE0B:	65 10      	ADC $10          ; add offset from cover data (if facing right, eg)
+C1/BE0D:	9D B7 61   	STA $61B7,X      ; update bodyguard's left X coord
+C1/BE10:	A5 16      	LDA $16          ; intended target top Y position [?]
+C1/BE12:	18         	CLC              ; prepare add
+C1/BE13:	65 12      	ADC $12          ; add offset from cover data
+C1/BE15:	9D B9 61   	STA $61B9,X      ; update bodyguard's top Y coord
+C1/BE18:	A5 24      	LDA $24          ; intended target center X position
+C1/BE1A:	18         	CLC              ; prepare add
+C1/BE1B:	65 10      	ADC $10          ; add offset from cover data (if facing right, eg)
+C1/BE1D:	99 33 80   	STA $8033,Y      ; update bodyguard's center X coord
+C1/BE20:	A5 26      	LDA $26          ; intended target center Y coord
+C1/BE22:	18         	CLC              ; prepare add
+C1/BE23:	65 12      	ADC $12          ; add offset from cover data
+C1/BE25:	99 3B 80   	STA $803B,Y      ; update bodyguard's center Y coord
+C1/BE28:	A5 28      	LDA $28          ; intended target bottom Y coord
+C1/BE2A:	18         	CLC              ; prepare add
+C1/BE2B:	65 12      	ADC $12          ; add offset from cover data
+C1/BE2D:	99 43 80   	STA $8043,Y      ; update bodyguard's bottom Y coord
+C1/BE30:	7B         	TDC              ; A = 0000
+C1/BE31:	E2 20      	SEP #$20         ; 8-bit A
+C1/BE33:	E6 1A      	INC $1A          ; increment bodyguard id
+C1/BE35:	A5 1A      	LDA $1A          ; bodyguard id
+C1/BE37:	C9 04      	CMP #$04         ; check all characters
+C1/BE39:	D0 A2      	BNE $BDDD        ; loop until all bodyguards checked
+
+; Process monster bodyguards, update coords
+
+C1/BE3B:	FA         	PLX              ; restore offset to cover offsets
+C1/BE3C:	86 22      	STX $22          ; offset to cover offsets
+C1/BE3E:	A0 07 00   	LDY #$0007       ; animation arg #7 ($A7)
+C1/BE41:	B1 78      	LDA ($78),Y      ; monster bodyguards bitmask
+C1/BE43:	85 18      	STA $18          ; save bitmask
+C1/BE45:	64 1A      	STZ $1A          ; bodyguard id (start at 0)
+
+C1/BE47:	46 18      	LSR $18          ; left rightmost bit to carry
+C1/BE49:	90 4D      	BCC $BE98        ; branch if not a bodyguard
+C1/BE4B:	A5 22      	LDA $22          ; offset to cover offsets
+C1/BE4D:	AA         	TAX              ; index it
+C1/BE4E:	C2 20      	REP #$20         ; 16-bit A
+C1/BE50:	BF A1 BE C1	LDA $C1BEA1,X    ; cover offsets 1-2
+C1/BE54:	85 10      	STA $10          ; save them
+C1/BE56:	BF A3 BE C1	LDA $C1BEA3,X    ; cover offsets 3-4
+C1/BE5A:	85 12      	STA $12          ; save them
+C1/BE5C:	A5 22      	LDA $22          ; offset to cover offsets
+C1/BE5E:	18         	CLC              ; prepare add
+C1/BE5F:	69 04 00   	ADC #$0004       ; increment offset by 4
+C1/BE62:	85 22      	STA $22          ; save offset for next bodyguard
+C1/BE64:	7B         	TDC              ; A = 0000
+C1/BE65:	E2 20      	SEP #$20         ; 8-bit A
+C1/BE67:	A5 1A      	LDA $1A          ; bodyguard id
+C1/BE69:	0A         	ASL A            ; x2
+C1/BE6A:	AA         	TAX              ; index it
+C1/BE6B:	C2 20      	REP #$20         ; 16-bit A
+C1/BE6D:	A5 14      	LDA $14          ; intended target left X position [?]
+C1/BE6F:	18         	CLC              ; prepare add
+C1/BE70:	65 10      	ADC $10          ; add cover animation offset
+C1/BE72:	9D C3 80   	STA $80C3,X      ; update monster bodyguard left X coord
+C1/BE75:	A5 16      	LDA $16          ; intended target top Y position [?]
+C1/BE77:	18         	CLC              ; prepare add
+C1/BE78:	65 12      	ADC $12          ; add cover animation offset
+C1/BE7A:	9D CF 80   	STA $80CF,X      ; update monster bodyguard top Y coord
+C1/BE7D:	A5 24      	LDA $24          ; intended target center X position
+C1/BE7F:	18         	CLC              ; prepare add
+C1/BE80:	65 10      	ADC $10          ; add cover animation offset
+C1/BE82:	9D 0F 80   	STA $800F,X      ; update monster bodyguard center X coord
+C1/BE85:	A5 26      	LDA $26          ; intended target center Y position
+C1/BE87:	18         	CLC              ; prepare add
+C1/BE88:	65 12      	ADC $12          ; add cover animation offset
+C1/BE8A:	9D 1B 80   	STA $801B,X      ; update monster bodyguard center Y coord
+C1/BE8D:	A5 28      	LDA $28          ; intended target bottom Y position
+C1/BE8F:	18         	CLC              ; prepare add
+C1/BE90:	65 12      	ADC $12          ; add cover animation offset
+C1/BE92:	9D 27 80   	STA $8027,X      ; update monster bodyguard bottom Y coord
+C1/BE95:	7B         	TDC              ; A = 0000
+C1/BE96:	E2 20      	SEP #$20         ; 8-bit A
+C1/BE98:	E6 1A      	INC $1A          ; increment bodyguard id
+C1/BE9A:	A5 1A      	LDA $1A          ; bodyguard id
+C1/BE9C:	C9 06      	CMP #$06         ; check all 6 monsters
+C1/BE9E:	D0 A7      	BNE $BE47        ; loop till finished
 C1/BEA0:	60         	RTS
 
-C1/BEA1:	F0FF
-C1/BEA3:	0000
-C1/BEA5:	F8FF
-C1/BEA7:	0800
-C1/BEA9:	F8FF
-C1/BEAB:	F8FF
-C1/BEAD:	1000
-C1/BEAF:	0000
-C1/BEB1:	0800
-C1/BEB3:	0800
-C1/BEB5:	0800
-C1/BEB8:	F8FF
+; Cover animation offsets
+C1/BEA1:	F0 FF 00 00 F8 FF 08 00 F8 FF F8 FF
+C1/BEAD:	10 00 00 00 08 00 08 00 08 00 F8 FF
 
-C1/BEB9:	DA         	PHX
-C1/BEBA:	48         	PHA
-C1/BEBB:	AA         	TAX
-C1/BEBC:	BF 59 B7 C1	LDA $C1B759,X
-C1/BEC0:	8D E7 E9   	STA $E9E7
-C1/BEC3:	BF 52 B7 C1	LDA $C1B752,X
-C1/BEC7:	20 10 9C   	JSR $9C10
-C1/BECA:	68         	PLA
-C1/BECB:	FA         	PLX
+C1/BEB9:	DA         	PHX              ; store X
+C1/BEBA:	48         	PHA              ; block animation id (0-indexed)
+C1/BEBB:	AA         	TAX              ; index it
+C1/BEBC:	BF 59 B7 C1	LDA $C1B759,X    ; get block animation sound effect
+C1/BEC0:	8D E7 E9   	STA $E9E7        ; animation sound effect (always $A0)
+C1/BEC3:	BF 52 B7 C1	LDA $C1B752,X    ; get block animation palette id
+C1/BEC7:	20 10 9C   	JSR $9C10        ; save palette data to $7F70-7F7F
+C1/BECA:	68         	PLA              ; restore block animation id (0-indexed)
+C1/BECB:	FA         	PLX              ; restore X
 C1/BECC:	60         	RTS
+
+; Execute Fight/Throw animation [?]
 
 C1/BECD:	B2 78      	LDA ($78)          ; attack animation flags
 C1/BECF:	29 01      	AND #$01           ; monster weapon attack flag [?]
@@ -24533,7 +24609,7 @@ C1/BEF1:	A0 00 24   	LDY #$2400         ; data destination address
 C1/BEF4:	20 8D 19   	JSR $198D          ; move animation data
 C1/BEF7:	AD 8A 61   	LDA $618A          ; monster weapon attack flag [?]
 C1/BEFA:	D0 03      	BNE $BEFF          ; branch if monster weapon attack [?]
-C1/BEFC:	20 6B B8   	JSR $B86B
+C1/BEFC:	20 6B B8   	JSR $B86B          ; ??????????
 C1/BEFF:	A0 02 00   	LDY #$0002         ; animation command arg #2
 C1/BF02:	B1 76      	LDA ($76),Y        ; attack type / flags [?]
 C1/BF04:	29 80      	AND #$80           ; "Left hand attack"
@@ -24543,82 +24619,84 @@ C1/BF0A:	B1 76      	LDA ($76),Y        ; animation (weapon) id
 C1/BF0C:	8D F5 7A   	STA $7AF5          ; attack (weapon) animation id
 C1/BF0F:	20 89 BC   	JSR $BC89          ; set attacker index in $10
 C1/BF12:	AD F5 7A   	LDA $7AF5          ; attack (weapon) animation id
-C1/BF15:	20 95 9D   	JSR $9D95
-C1/BF18:	AD 71 62   	LDA $6271
-C1/BF1B:	8D E7 E9   	STA $E9E7
-C1/BF1E:	20 BF BC   	JSR $BCBF
-C1/BF21:	20 5A BD   	JSR $BD5A
-C1/BF24:	20 89 BC   	JSR $BC89
-C1/BF27:	20 A6 BC   	JSR $BCA6
-C1/BF2A:	A5 10      	LDA $10
-C1/BF2C:	29 7F      	AND #$7F
-C1/BF2E:	0A         	ASL A
-C1/BF2F:	AA         	TAX
-C1/BF30:	C2 20      	REP #$20
-C1/BF32:	BF 8B CE C2	LDA $C2CE8B,X
-C1/BF36:	AA         	TAX
-C1/BF37:	7B         	TDC
-C1/BF38:	E2 20      	SEP #$20
-C1/BF3A:	AD 2D 7B   	LDA $7B2D
-C1/BF3D:	9D 2F 6A   	STA $6A2F,X
-C1/BF40:	AD 2E 7B   	LDA $7B2E
-C1/BF43:	9D 30 6A   	STA $6A30,X
-C1/BF46:	A9 06      	LDA #$06
-C1/BF48:	9D D5 74   	STA $74D5,X
-C1/BF4B:	A5 10      	LDA $10
-C1/BF4D:	29 03      	AND #$03
-C1/BF4F:	A8         	TAY
-C1/BF50:	AD F4 7A   	LDA $7AF4
+C1/BF15:	20 95 9D   	JSR $9D95          ; ????????????
+C1/BF18:	AD 71 62   	LDA $6271          ; sound effect
+C1/BF1B:	8D E7 E9   	STA $E9E7          ; default sound effect
+C1/BF1E:	20 BF BC   	JSR $BCBF          ; get character and monster positions
+C1/BF21:	20 5A BD   	JSR $BD5A          ; update bodyguard coordinates
+C1/BF24:	20 89 BC   	JSR $BC89          ; set attacker index in $10
+C1/BF27:	20 A6 BC   	JSR $BCA6          ; set first target index in $12
+C1/BF2A:	A5 10      	LDA $10            ; attacker index
+C1/BF2C:	29 7F      	AND #$7F           ; remove "is monster attacker" bit
+C1/BF2E:	0A         	ASL A              ; x2
+C1/BF2F:	AA         	TAX                ; index it
+C1/BF30:	C2 20      	REP #$20           ; 16-bit A
+C1/BF32:	BF 8B CE C2	LDA $C2CE8B,X      ; offset to attacker's sprite animation thread data (128 bytes)
+C1/BF36:	AA         	TAX                ; index it
+C1/BF37:	7B         	TDC                ; A = 0000
+C1/BF38:	E2 20      	SEP #$20           ; 8-bit A
+C1/BF3A:	AD 2D 7B   	LDA $7B2D          ; weapon graphics frame width
+C1/BF3D:	9D 2F 6A   	STA $6A2F,X        ; animation frame width
+C1/BF40:	AD 2E 7B   	LDA $7B2E          ; weapon graphics frame height
+C1/BF43:	9D 30 6A   	STA $6A30,X        ; animation frame height
+C1/BF46:	A9 06      	LDA #$06           ; [?]
+C1/BF48:	9D D5 74   	STA $74D5,X        ; animation palette index [?]
+C1/BF4B:	A5 10      	LDA $10            ; attacker index
+C1/BF4D:	29 03      	AND #$03           ; character id (0-3)
+C1/BF4F:	A8         	TAY                ; index it
+C1/BF50:	AD F4 7A   	LDA $7AF4          ; left-handed weapon
 C1/BF53:	0A         	ASL A
 C1/BF54:	2A         	ROL A
-C1/BF55:	29 01      	AND #$01
-C1/BF57:	59 10 7B   	EOR $7B10,Y
-C1/BF5A:	29 01      	AND #$01
-C1/BF5C:	A8         	TAY
-C1/BF5D:	A5 10      	LDA $10
-C1/BF5F:	10 04      	BPL $BF65
-C1/BF61:	A9 62      	LDA #$62
+C1/BF55:	29 01      	AND #$01           ; isolate left-handed flag in bit 0
+C1/BF57:	59 10 7B   	EOR $7B10,Y        ; toggle if character facing right
+C1/BF5A:	29 01      	AND #$01           ; isolate left-handed flag
+C1/BF5C:	A8         	TAY                ; index it
+C1/BF5D:	A5 10      	LDA $10            ; attacker index
+C1/BF5F:	10 04      	BPL $BF65          ; branch if character attacker
+C1/BF61:	A9 62      	LDA #$62           ; else use fixed animation id
 C1/BF63:	80 03      	BRA $BF68
-C1/BF65:	B9 6B 62   	LDA $626B,Y
-C1/BF68:	C2 20      	REP #$20
-C1/BF6A:	0A         	ASL A
-C1/BF6B:	DA         	PHX
-C1/BF6C:	AA         	TAX
-C1/BF6D:	BF D8 EA D1	LDA $D1EAD8,X
-C1/BF71:	FA         	PLX
-C1/BF72:	85 22      	STA $22
+
+C1/BF65:	B9 6B 62   	LDA $626B,Y        ; animation id for hand
+C1/BF68:	C2 20      	REP #$20           ; 16-bit A
+C1/BF6A:	0A         	ASL A              ; x2
+C1/BF6B:	DA         	PHX                ; store animation thread offset
+C1/BF6C:	AA         	TAX                ; index animation data address
+C1/BF6D:	BF D8 EA D1	LDA $D1EAD8,X      ; animation script pointer
+C1/BF71:	FA         	PLX                ; restore animation thread offset
+C1/BF72:	85 22      	STA $22            ; save animation data pointer
 C1/BF74:	1A         	INC A
-C1/BF75:	1A         	INC A
-C1/BF76:	9D 31 6A   	STA $6A31,X
-C1/BF79:	7B         	TDC
-C1/BF7A:	E2 20      	SEP #$20
-C1/BF7C:	A9 D0      	LDA #$D0
-C1/BF7E:	85 24      	STA $24
-C1/BF80:	9D 33 6A   	STA $6A33,X
-C1/BF83:	A7 22      	LDA [$22]
+C1/BF75:	1A         	INC A              ; animation data pointer + 2
+C1/BF76:	9D 31 6A   	STA $6A31,X        ; save animation script pointer
+C1/BF79:	7B         	TDC                ; A = 0000
+C1/BF7A:	E2 20      	SEP #$20           ; 8-bit A
+C1/BF7C:	A9 D0      	LDA #$D0           ; animation data bank $D0
+C1/BF7E:	85 24      	STA $24            ; set animation data bank
+C1/BF80:	9D 33 6A   	STA $6A33,X        ; set animation script bank
+C1/BF83:	A7 22      	LDA [$22]          ; animation data instructions byte 1
 C1/BF85:	4A         	LSR A
 C1/BF86:	4A         	LSR A
 C1/BF87:	4A         	LSR A
 C1/BF88:	4A         	LSR A
-C1/BF89:	1A         	INC A
-C1/BF8A:	9D 34 6A   	STA $6A34,X
-C1/BF8D:	9E E7 64   	STZ $64E7,X
+C1/BF89:	1A         	INC A              ; get top nibble + 1
+C1/BF8A:	9D 34 6A   	STA $6A34,X        ; animation speed
+C1/BF8D:	9E E7 64   	STZ $64E7,X        ; sprite layer priority (show in front)
 C1/BF90:	A9 01      	LDA #$01
-C1/BF92:	9D 35 6A   	STA $6A35,X
-C1/BF95:	9E 36 6A   	STZ $6A36,X
-C1/BF98:	A5 10      	LDA $10
-C1/BF9A:	10 11      	BPL $BFAD
-C1/BF9C:	29 0F      	AND #$0F
-C1/BF9E:	38         	SEC
-C1/BF9F:	E9 04      	SBC #$04
-C1/BFA1:	0A         	ASL A
-C1/BFA2:	A8         	TAY
-C1/BFA3:	B9 F3 80   	LDA $80F3,Y
-C1/BFA6:	59 7E 61   	EOR $617E,Y
-C1/BFA9:	49 01      	EOR #$01
+C1/BF92:	9D 35 6A   	STA $6A35,X        ; set animation frame counter to 1
+C1/BF95:	9E 36 6A   	STZ $6A36,X        ; set thread index to 0
+C1/BF98:	A5 10      	LDA $10            ; attacker index
+C1/BF9A:	10 11      	BPL $BFAD          ; branch if character attacker
+C1/BF9C:	29 0F      	AND #$0F           ; clear "attacker is monster" bit
+C1/BF9E:	38         	SEC                ; prepare subtraction
+C1/BF9F:	E9 04      	SBC #$04           ; get monster id 0-5
+C1/BFA1:	0A         	ASL A              ; x2
+C1/BFA2:	A8         	TAY                ; monster index
+C1/BFA3:	B9 F3 80   	LDA $80F3,Y        ; flipped currently
+C1/BFA6:	59 7E 61   	EOR $617E,Y        ; toggle with flipped permanently [?]
+C1/BFA9:	49 01      	EOR #$01           ; isolate "Horizontal Flip"
 C1/BFAB:	80 04      	BRA $BFB1
-C1/BFAD:	A8         	TAY
-C1/BFAE:	B9 10 7B   	LDA $7B10,Y
+
+C1/BFAD:	A8         	TAY                ; index character attacker index
+C1/BFAE:	B9 10 7B   	LDA $7B10,Y        ; character is facing right (bit 0)
 
 C1/BFB1:	0A         	ASL A
 C1/BFB2:	0A         	ASL A
@@ -24626,121 +24704,128 @@ C1/BFB3:	0A         	ASL A
 C1/BFB4:	0A         	ASL A
 C1/BFB5:	0A         	ASL A
 C1/BFB6:	0A         	ASL A
-C1/BFB7:	29 40      	AND #$40
-C1/BFB9:	9D 87 6F   	STA $6F87,X
-C1/BFBC:	DA         	PHX
-C1/BFBD:	AD F4 7A   	LDA $7AF4
+C1/BFB7:	29 40      	AND #$40           ; isolate "Horizontal Flip" in bit 6
+C1/BFB9:	9D 87 6F   	STA $6F87,X        ; set in animation thread flags
+C1/BFBC:	DA         	PHX                ; store animation thread data index
+C1/BFBD:	AD F4 7A   	LDA $7AF4          ; left-hand attack (bit 7)
 C1/BFC0:	0A         	ASL A
-C1/BFC1:	2A         	ROL A
-C1/BFC2:	29 01      	AND #$01
-C1/BFC4:	9D 88 6F   	STA $6F88,X
-C1/BFC7:	9E 8C 6F   	STZ $6F8C,X
-C1/BFCA:	9E D8 74   	STZ $74D8,X
+C1/BFC1:	2A         	ROL A              ; shift left-hand bit to bit 0
+C1/BFC2:	29 01      	AND #$01           ; isolate left-hand bit
+C1/BFC4:	9D 88 6F   	STA $6F88,X        ; set in animation thread flags
+C1/BFC7:	9E 8C 6F   	STZ $6F8C,X        ; zero frame offset (for loops)
+C1/BFCA:	9E D8 74   	STZ $74D8,X        ; zero vector movement speed [?]
 C1/BFCD:	A9 01      	LDA #$01
-C1/BFCF:	9D 8D 6F   	STA $6F8D,X
+C1/BFCF:	9D 8D 6F   	STA $6F8D,X        ; initialize frame offset counter to 1
 C1/BFD2:	A9 60      	LDA #$60
-C1/BFD4:	9D 37 6A   	STA $6A37,X
-C1/BFD7:	A5 10      	LDA $10
-C1/BFD9:	9D 38 6A   	STA $6A38,X
-C1/BFDC:	A5 12      	LDA $12
-C1/BFDE:	9D 39 6A   	STA $6A39,X
-C1/BFE1:	20 99 C4   	JSR $C499
-C1/BFE4:	C2 20      	REP #$20
+C1/BFD4:	9D 37 6A   	STA $6A37,X        ; initialize sprite tile index to 96
+C1/BFD7:	A5 10      	LDA $10            ; attacker index
+C1/BFD9:	9D 38 6A   	STA $6A38,X        ; set animation thread attacker index
+C1/BFDC:	A5 12      	LDA $12            ; target index
+C1/BFDE:	9D 39 6A   	STA $6A39,X        ; set animation thread target index
+C1/BFE1:	20 99 C4   	JSR $C499          ; ???????????
+C1/BFE4:	C2 20      	REP #$20           ; 16-bit A
 C1/BFE6:	A5 14      	LDA $14
-C1/BFE8:	9D 7E 6F   	STA $6F7E,X
-C1/BFEB:	9D 3A 6A   	STA $6A3A,X
+C1/BFE8:	9D 7E 6F   	STA $6F7E,X        ; attacker X position [?]
+C1/BFEB:	9D 3A 6A   	STA $6A3A,X        ; thread X position [?]
 C1/BFEE:	A5 16      	LDA $16
-C1/BFF0:	9D 80 6F   	STA $6F80,X
-C1/BFF3:	9D 3C 6A   	STA $6A3C,X
-C1/BFF6:	9E CE 74   	STZ $74CE,X
-C1/BFF9:	9E D0 74   	STZ $74D0,X
-C1/BFFC:	7B         	TDC
-C1/BFFD:	E2 20      	SEP #$20
-C1/BFFF:	20 8E C4   	JSR $C48E
-C1/C002:	C2 20      	REP #$20
+C1/BFF0:	9D 80 6F   	STA $6F80,X        ; attacker Y position [?]
+C1/BFF3:	9D 3C 6A   	STA $6A3C,X        ; thread Y position [?]
+C1/BFF6:	9E CE 74   	STZ $74CE,X        ; zero thread X offset [?]
+C1/BFF9:	9E D0 74   	STZ $74D0,X        ; zero thread Y offset [?]
+C1/BFFC:	7B         	TDC                ; A = 0000
+C1/BFFD:	E2 20      	SEP #$20           ; 8-bit A
+C1/BFFF:	20 8E C4   	JSR $C48E          ; ???????????
+C1/C002:	C2 20      	REP #$20           ; 16-bit A
 C1/C004:	A5 14      	LDA $14
-C1/C006:	9D 82 6F   	STA $6F82,X
+C1/C006:	9D 82 6F   	STA $6F82,X        ; target X position [?]
 C1/C009:	A5 16      	LDA $16
-C1/C00B:	9D 84 6F   	STA $6F84,X
-C1/C00E:	7B         	TDC
-C1/C00F:	E2 20      	SEP #$20
+C1/C00B:	9D 84 6F   	STA $6F84,X        ; target Y position [?]
+C1/C00E:	7B         	TDC                ; A = 0000
+C1/C00F:	E2 20      	SEP #$20           ; 8-bit A
 C1/C011:	A9 01      	LDA #$01
-C1/C013:	9D 2E 6A   	STA $6A2E,X
-C1/C016:	A5 10      	LDA $10
-C1/C018:	30 05      	BMI $C01F
+C1/C013:	9D 2E 6A   	STA $6A2E,X        ; set this thread to "active" [?]
+C1/C016:	A5 10      	LDA $10            ; attacker index
+C1/C018:	30 05      	BMI $C01F          ; branch if monster attacker
 C1/C01A:	A9 30      	LDA #$30
-C1/C01C:	9D 86 6F   	STA $6F86,X
-C1/C01F:	A5 12      	LDA $12
-C1/C021:	30 39      	BMI $C05C
-C1/C023:	18         	CLC
-C1/C024:	69 0A      	ADC #$0A
-C1/C026:	A8         	TAY
-C1/C027:	B1 78      	LDA ($78),Y
-C1/C029:	F0 31      	BEQ $C05C
-C1/C02B:	3A         	DEC A
-C1/C02C:	20 B9 BE   	JSR $BEB9
-C1/C02F:	48         	PHA
-C1/C030:	A5 10      	LDA $10
-C1/C032:	10 03      	BPL $C037
-C1/C034:	9E 2E 6A   	STZ $6A2E,X
-C1/C037:	68         	PLA
-C1/C038:	DA         	PHX
-C1/C039:	AA         	TAX
-C1/C03A:	BF 4B B7 C1	LDA $C1B74B,X    ; Data
-C1/C03E:	8D 6E 62   	STA $626E
-C1/C041:	9C 8A 61   	STZ $618A
-C1/C044:	FA         	PLX
+C1/C01C:	9D 86 6F   	STA $6F86,X        ; set highest sprite tile priority [?]
+
+C1/C01F:	A5 12      	LDA $12            ; target index
+C1/C021:	30 39      	BMI $C05C          ; branch if monster target
+C1/C023:	18         	CLC                ; prepare add
+C1/C024:	69 0A      	ADC #$0A           ; offset to block type(s)
+C1/C026:	A8         	TAY                ; index it
+C1/C027:	B1 78      	LDA ($78),Y        ; target's block animation type
+C1/C029:	F0 31      	BEQ $C05C          ; branch if no block animation
+C1/C02B:	3A         	DEC A              ; use 0-index for block animation ids
+C1/C02C:	20 B9 BE   	JSR $BEB9          ; load block palette and sound effect
+C1/C02F:	48         	PHA                ; store block animation id
+C1/C030:	A5 10      	LDA $10            ; attacker index
+C1/C032:	10 03      	BPL $C037          ; branch if character attacker
+C1/C034:	9E 2E 6A   	STZ $6A2E,X        ; else, set thread to "inactive" [?]
+
+C1/C037:	68         	PLA                ; restore block animation id
+C1/C038:	DA         	PHX                ; store animation thread offset
+C1/C039:	AA         	TAX                ; index block animation id
+C1/C03A:	BF 4B B7 C1	LDA $C1B74B,X      ; block animation script
+C1/C03E:	8D 6E 62   	STA $626E          ; set animation script id [?]
+C1/C041:	9C 8A 61   	STZ $618A          ; set "not monster weapon attack" [?]
+C1/C044:	FA         	PLX                ; restore animation thread offset
 C1/C045:	A9 40      	LDA #$40
-C1/C047:	85 14      	STA $14
-C1/C049:	AD 70 62   	LDA $6270
-C1/C04C:	29 7F      	AND #$7F
-C1/C04E:	C9 01      	CMP #$01
-C1/C050:	D0 13      	BNE $C065
-C1/C052:	AD 70 62   	LDA $6270
-C1/C055:	29 80      	AND #$80
-C1/C057:	8D 70 62   	STA $6270
+C1/C047:	85 14      	STA $14            ; [?]
+C1/C049:	AD 70 62   	LDA $6270          ; weapon animation init data [?]
+C1/C04C:	29 7F      	AND #$7F           ; mask "is thrown weapon" bit
+C1/C04E:	C9 01      	CMP #$01           ; "Star" or "Gambler" weapon
+C1/C050:	D0 13      	BNE $C065          ; branch if not ^
+C1/C052:	AD 70 62   	LDA $6270          ; weapon animation init data [?]
+C1/C055:	29 80      	AND #$80           ; only keep "thrown weapon" flag
+C1/C057:	8D 70 62   	STA $6270          ; reset weapon animation id to 0 [?]
 C1/C05A:	80 09      	BRA $C065
+
 C1/C05C:	A9 60      	LDA #$60
-C1/C05E:	85 14      	STA $14
-C1/C060:	AD 70 62   	LDA $6270
-C1/C063:	10 16      	BPL $C07B
-C1/C065:	A5 12      	LDA $12
-C1/C067:	29 7F      	AND #$7F
-C1/C069:	0A         	ASL A
-C1/C06A:	AA         	TAX
-C1/C06B:	C2 20      	REP #$20
-C1/C06D:	BF 8B CE C2	LDA $C2CE8B,X
-C1/C071:	18         	CLC
-C1/C072:	69 10 00   	ADC #$0010
-C1/C075:	AA         	TAX
-C1/C076:	7B         	TDC
-C1/C077:	E2 20      	SEP #$20
+C1/C05E:	85 14      	STA $14            ; [?]
+C1/C060:	AD 70 62   	LDA $6270          ; weapon animation init data [?]
+C1/C063:	10 16      	BPL $C07B          ; branch if not thrown weapon
+
+C1/C065:	A5 12      	LDA $12            ; target index
+C1/C067:	29 7F      	AND #$7F           ; mask "is a monster" bit
+C1/C069:	0A         	ASL A              ; x2
+C1/C06A:	AA         	TAX                ; index it
+C1/C06B:	C2 20      	REP #$20           ; 16-bit A
+C1/C06D:	BF 8B CE C2	LDA $C2CE8B,X      ; offset to target's sprite animation thread data [128 bytes]
+C1/C071:	18         	CLC                ; prepare add
+C1/C072:	69 10 00   	ADC #$0010         ; increment offset to sprite's next thread [?]
+C1/C075:	AA         	TAX                ; index it
+C1/C076:	7B         	TDC                ; A = 0000
+C1/C077:	E2 20      	SEP #$20           ; 8-bit A
 C1/C079:	80 09      	BRA $C084
+
 C1/C07B:	A9 60      	LDA #$60
 C1/C07D:	85 14      	STA $14
-C1/C07F:	A2 00 05   	LDX #$0500
-C1/C082:	A9 01      	LDA #$01
+C1/C07F:	A2 00 05   	LDX #$0500         ; use 11th thread block [?]
+C1/C082:	A9 01      	LDA #$01           ; set to BG1 layer
 
-C1/C084:	09 30      	ORA #$30
-C1/C086:	9D 86 6F   	STA $6F86,X
-C1/C089:	8E F6 7A   	STX $7AF6
-C1/C08C:	A5 12      	LDA $12
-C1/C08E:	30 0C      	BMI $C09C
-C1/C090:	A9 02      	LDA #$02
-C1/C092:	9D D2 74   	STA $74D2,X
-C1/C095:	A9 03      	LDA #$03
-C1/C097:	9D D3 74   	STA $74D3,X
+C1/C084:	09 30      	ORA #$30           ; set max sprite tile priority
+C1/C086:	9D 86 6F   	STA $6F86,X        ; update animation thread priority [?]
+C1/C089:	8E F6 7A   	STX $7AF6          ; pointer to animation thread data [?]
+C1/C08C:	A5 12      	LDA $12            ; target index
+C1/C08E:	30 0C      	BMI $C09C          ; branch if monster target
+C1/C090:	A9 02      	LDA #$02           ; character tile width = 2
+C1/C092:	9D D2 74   	STA $74D2,X        ; target tile width
+C1/C095:	A9 03      	LDA #$03           ; character tile height = 3
+C1/C097:	9D D3 74   	STA $74D3,X        ; target tile height
 C1/C09A:	80 13      	BRA $C0AF
 
-C1/C09C:	29 7F      	AND #$7F
-C1/C09E:	38         	SEC
-C1/C09F:	E9 04      	SBC #$04
-C1/C0A1:	0A         	ASL A
-C1/C0A2:	A8         	TAY
-C1/C0A3:	B9 2F 81   	LDA $812F,Y
-C1/C0A6:	9D D2 74   	STA $74D2,X
-C1/C0A9:	B9 30 81   	LDA $8130,Y
-C1/C0AC:	9D D3 74   	STA $74D3,X
+; Monster target
+C1/C09C:	29 7F      	AND #$7F           ; mask "is a monster" bit
+C1/C09E:	38         	SEC                ; prepare subtract
+C1/C09F:	E9 04      	SBC #$04           ; get 0-5 monster id
+C1/C0A1:	0A         	ASL A              ; x2
+C1/C0A2:	A8         	TAY                ; index it
+C1/C0A3:	B9 2F 81   	LDA $812F,Y        ; monster tile width
+C1/C0A6:	9D D2 74   	STA $74D2,X        ; target tile width
+C1/C0A9:	B9 30 81   	LDA $8130,Y        ; monster tile height
+C1/C0AC:	9D D3 74   	STA $74D3,X        ; target tile height
+
 C1/C0AF:	AD 2F 7B   	LDA $7B2F
 C1/C0B2:	9D 2F 6A   	STA $6A2F,X
 C1/C0B5:	AD 30 7B   	LDA $7B30
@@ -25023,7 +25108,7 @@ C1/C317:	29 7F      	AND #$7F
 C1/C319:	0A         	ASL A
 C1/C31A:	AA         	TAX
 C1/C31B:	C2 20      	REP #$20
-C1/C31D:	BF 8B CE C2	LDA $C2CE8B,X
+C1/C31D:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/C321:	AA         	TAX
 C1/C322:	DA         	PHX
 C1/C323:	A0 08 00   	LDY #$0008
@@ -25220,11 +25305,11 @@ C1/C47D:	7B         	TDC
 C1/C47E:	FA         	PLX
 C1/C47F:	60         	RTS
 
-C1/C480:	AD BA 64   	LDA $64BA
-C1/C483:	F0 05      	BEQ $C48A
+C1/C480:	AD BA 64   	LDA $64BA         ; magitek mode enabled [?]
+C1/C483:	F0 05      	BEQ $C48A         ; branch if not ^
 C1/C485:	A0 F4 FF   	LDY #$FFF4
 C1/C488:	80 01      	BRA $C48B
-C1/C48A:	A8         	TAY
+C1/C48A:	A8         	TAY               ; Y = 0000
 C1/C48B:	84 18      	STY $18
 C1/C48D:	60         	RTS
 
@@ -25233,51 +25318,60 @@ C1/C491:	A9 01      	LDA #$01
 C1/C493:	85 14      	STA $14
 C1/C495:	A5 12      	LDA $12
 C1/C497:	80 07      	BRA $C4A0
+
 C1/C499:	20 80 C4   	JSR $C480
 C1/C49C:	64 14      	STZ $14
-C1/C49E:	A5 10      	LDA $10
+C1/C49E:	A5 10      	LDA $10           ; attacker index
 C1/C4A0:	8D B1 EC   	STA $ECB1
-C1/C4A3:	10 03      	BPL $C4A8
-C1/C4A5:	4C 8F C5   	JMP $C58F
+C1/C4A3:	10 03      	BPL $C4A8         ; branch if character attacker
+C1/C4A5:	4C 8F C5   	JMP $C58F         ; else handle monster attacker
 
-C1/C4A8:	0A         	ASL A
-C1/C4A9:	A8         	TAY
-C1/C4AA:	5A         	PHY
+C1/C4A8:	0A         	ASL A             ; character attacker index
+C1/C4A9:	A8         	TAY               ; index it
+C1/C4AA:	5A         	PHY               ; store character attacker index
 C1/C4AB:	A0 01 00   	LDY #$0001
-C1/C4AE:	B7 22      	LDA [$22],Y
-C1/C4B0:	29 E0      	AND #$E0
-C1/C4B2:	F0 67      	BEQ $C51B
-C1/C4B4:	C9 20      	CMP #$20
-C1/C4B6:	F0 61      	BEQ $C519
-C1/C4B8:	C9 40      	CMP #$40
-C1/C4BA:	F0 2A      	BEQ $C4E6
-C1/C4BC:	C9 E0      	CMP #$E0
-C1/C4BE:	F0 21      	BEQ $C4E1
-C1/C4C0:	C9 80      	CMP #$80
-C1/C4C2:	F0 7C      	BEQ $C540
-C1/C4C4:	C9 C0      	CMP #$C0
-C1/C4C6:	F0 78      	BEQ $C540
-C1/C4C8:	C9 A0      	CMP #$A0
-C1/C4CA:	D0 18      	BNE $C4E4
+C1/C4AE:	B7 22      	LDA [$22],Y       ; load animation data byte #2
+C1/C4B0:	29 E0      	AND #$E0          ; isolate top 3 bits
+C1/C4B2:	F0 67      	BEQ $C51B         ; branch if none set
+C1/C4B4:	C9 20      	CMP #$20          ; is only bit 5 set?
+C1/C4B6:	F0 61      	BEQ $C519         ; branch if ^
+C1/C4B8:	C9 40      	CMP #$40          ; is only bit 6 set?
+C1/C4BA:	F0 2A      	BEQ $C4E6         ; branch if ^
+C1/C4BC:	C9 E0      	CMP #$E0          ; are bits 5,6,7 set?
+C1/C4BE:	F0 21      	BEQ $C4E1         ; branch if ^
+C1/C4C0:	C9 80      	CMP #$80          ; is only bit 7 set?
+C1/C4C2:	F0 7C      	BEQ $C540         ; branch if ^
+C1/C4C4:	C9 C0      	CMP #$C0          ; are bits 6,7 set?
+C1/C4C6:	F0 78      	BEQ $C540         ; branch if ^
+C1/C4C8:	C9 A0      	CMP #$A0          ; are bits 5,7 set?
+C1/C4CA:	D0 18      	BNE $C4E4         ; branch if 5,6 set
+
+; Only bits 5 and 7 set in 2nd animation data byte top 3 bits
 C1/C4CC:	A5 14      	LDA $14
 C1/C4CE:	F0 1E      	BEQ $C4EE
-C1/C4D0:	C2 20      	REP #$20
-C1/C4D2:	AD 22 7B   	LDA $7B22
+C1/C4D0:	C2 20      	REP #$20          ; 16-bit A
+C1/C4D2:	AD 22 7B   	LDA $7B22         ; BG3 animation X offset [?]
 C1/C4D5:	85 14      	STA $14
-C1/C4D7:	AD 24 7B   	LDA $7B24
+C1/C4D7:	AD 24 7B   	LDA $7B24         ; BG3 animation Y offset [?]
 C1/C4DA:	85 16      	STA $16
-C1/C4DC:	7B         	TDC
-C1/C4DD:	E2 20      	SEP #$20
-C1/C4DF:	7A         	PLY
+C1/C4DC:	7B         	TDC               ; A = 0000
+C1/C4DD:	E2 20      	SEP #$20          ; 8-bit A
+C1/C4DF:	7A         	PLY               ; restore character attacker index
 C1/C4E0:	60         	RTS
 
+; All top three bits of 2nd animation data byte
 C1/C4E1:	4C 73 C5   	JMP $C573
 
+; Only bit 5 and 6 set in 2nd animation data byte top 3 bits
 C1/C4E4:	80 08      	BRA $C4EE
+
+; Only bit 6 in 2nd animation data byte top 3 bits
 C1/C4E6:	A9 10      	LDA #$10
 C1/C4E8:	85 16      	STA $16
 C1/C4EA:	64 17      	STZ $17
 C1/C4EC:	80 37      	BRA $C525
+
+; Only bit 5 and 6 set in 2nd animation data byte top 3 bits
 C1/C4EE:	9C B1 EC   	STZ $ECB1
 C1/C4F1:	9C B2 EC   	STZ $ECB2
 C1/C4F4:	7A         	PLY
@@ -25300,14 +25394,17 @@ C1/C515:	7B         	TDC
 C1/C516:	E2 20      	SEP #$20
 C1/C518:	60         	RTS
 
+; Only bit 5 in 2nd animation data byte top 3 bits
 C1/C519:	80 44      	BRA $C55F
+
+; No 5,6,7 bits in 2nd animation data byte top 3 bits
 C1/C51B:	BD 30 6A   	LDA $6A30,X
 C1/C51E:	0A         	ASL A
 C1/C51F:	0A         	ASL A
 C1/C520:	0A         	ASL A
 C1/C521:	85 16      	STA $16
 C1/C523:	64 17      	STZ $17
-C1/C525:	7A         	PLY
+C1/C525:	7A         	PLY              ; <--- only bit 6 enters here
 C1/C526:	C2 20      	REP #$20
 C1/C528:	B9 33 80   	LDA $8033,Y
 C1/C52B:	85 14      	STA $14
@@ -25323,6 +25420,7 @@ C1/C53C:	7B         	TDC
 C1/C53D:	E2 20      	SEP #$20
 C1/C53F:	60         	RTS
 
+; Either only bit 7 or both 6/7 set in 2nd animation byte top 3 bits
 C1/C540:	DA         	PHX
 C1/C541:	A5 10      	LDA $10
 C1/C543:	29 03      	AND #$03
@@ -25350,6 +25448,7 @@ C1/C56F:	7B         	TDC
 C1/C570:	E2 20      	SEP #$20
 C1/C572:	60         	RTS
 
+; All top three bits of 2nd animation data byte set
 C1/C573:	7A         	PLY
 C1/C574:	C2 20      	REP #$20
 C1/C576:	B9 33 80   	LDA $8033,Y
@@ -26711,7 +26810,7 @@ C1/CF7F:	20 5B 18   	JSR $185B
 C1/CF82:	29 07      	AND #$07
 C1/CF84:	AA         	TAX
 C1/CF85:	BF 77 CF C1	LDA $C1CF77,X    ; Data
-C1/CF89:	20 D7 9B   	JSR $9BD7
+C1/CF89:	20 D7 9B   	JSR $9BD7          ; load palette data
 C1/CF8C:	60         	RTS
 
 C1/CF8D:	AE F6 7A   	LDX $7AF6
@@ -27387,7 +27486,7 @@ C1/D446:	20 6B 9C   	JSR $9C6B
 C1/D449:	4C C6 CF   	JMP $CFC6
 
 C1/D44C:	B7 5B      	LDA [$5B],Y
-C1/D44E:	20 D7 9B   	JSR $9BD7
+C1/D44E:	20 D7 9B   	JSR $9BD7          ; load palette data
 C1/D451:	4C C6 CF   	JMP $CFC6
 
 C1/D454:	B7 5B      	LDA [$5B],Y
@@ -32029,7 +32128,7 @@ C1/F8BA:	29 7F      	AND #$7F
 C1/F8BC:	0A         	ASL A
 C1/F8BD:	AA         	TAX
 C1/F8BE:	C2 20      	REP #$20
-C1/F8C0:	BF 8B CE C2	LDA $C2CE8B,X
+C1/F8C0:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/F8C4:	A8         	TAY
 C1/F8C5:	AE F6 7A   	LDX $7AF6
 C1/F8C8:	B9 7E 6F   	LDA $6F7E,Y
