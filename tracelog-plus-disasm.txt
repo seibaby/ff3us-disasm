@@ -19054,7 +19054,7 @@ C1/9518:	86 76      	STX $76        (Now $76 holds the start of the battle dynam
 C1/951A:	A2 6E 2C   	LDX #$2C6E     	
 C1/951D:	86 78      	STX $78         ; this is where data for attack animations is stored (targe
 C1/951F:	9C AE 60   	STZ $60AE       ; animation script index? specifically for swdtech?
-C1/9522:	9C A4 62   	STZ $62A4       ; on/off, not sure what for
+C1/9522:	9C A4 62   	STZ $62A4       ; passive self-dmg (regen, etc)
 C1/9525:	A9 17      	LDA #$17
 C1/9527:	8D 8D 89   	STA $898D       ; main screen designation? (23)
 C1/952A:	9C 3D 7B   	STZ $7B3D       ; ?
@@ -19796,7 +19796,7 @@ C1/9AB7:	AA         	TAX            ; X = character index * 32
 C1/9AB8:	AD 3D 61   	LDA $613D      ; character targets
 C1/9ABB:	0D 3E 61   	ORA $613E      ; monster targets
 C1/9ABE:	F0 59      	BEQ $9B19      ; if no targets, finish
-C1/9AC0:	AD A4 62   	LDA $62A4      ; only set for Regen/Sap/Poison (self-dmg?)
+C1/9AC0:	AD A4 62   	LDA $62A4      ; passive self-damage attack (regen, etc)
 C1/9AC3:	D0 54      	BNE $9B19      ; also finish if this set
 C1/9AC5:	1A         	INC A          ; A = #01
 C1/9AC6:	99 A0 62   	STA $62A0,Y    ; mark this character as doing something?
@@ -22191,7 +22191,7 @@ C1/ABD2:	A5 10      	LDA $10
 C1/ABD4:	30 0B      	BMI $ABE1
 C1/ABD6:	29 03      	AND #$03
 C1/ABD8:	AA         	TAX
-C1/ABD9:	AD A4 62   	LDA $62A4
+C1/ABD9:	AD A4 62   	LDA $62A4          ; passive self-dmg (regen, etc)
 C1/ABDC:	D0 03      	BNE $ABE1
 C1/ABDE:	FE AE 61   	INC $61AE,X
 C1/ABE1:	9C C0 62   	STZ $62C0
@@ -23644,7 +23644,7 @@ C1/B7B1:	88BC    	; RTS
 C1/B7B3:	88BC    	; RTS
 C1/B7B5:	0ABB
 C1/B7B7:	F1B7
-C1/B7B9:	E9B7
+C1/B7B9:	E9B7      ; $22 ($B7E9) - Self-damage command (regen, sap, etc)
 C1/B7BB:	8EBA
 C1/B7BD:	5FBA
 C1/B7BF:	B7BA
@@ -23657,7 +23657,7 @@ C1/B7CA:	90 0B       BCC $B7D7
 C1/B7CC:	A9 2A       LDA #$2A
 C1/B7CE:	20 A4 B8    JSR $B8A4
 C1/B7D1:	20 EB AB    JSR $ABEB
-C1/B7D4:	4C 6B B8    JMP $B86B
+C1/B7D4:	4C 6B B8    JMP $B86B          ; disable stepping forward for regen, etc
 
 C1/B7D7:	A0 04 00    LDY #$0004
 C1/B7DA:	B1 78       LDA ($78),Y
@@ -23668,7 +23668,9 @@ C1/B7E1:	A9 2A       LDA #$2A
 C1/B7E3:	4C A4 B8    JMP $B8A4
 C1/B7E6:	4C EB AB    JMP $ABEB
 
-C1/B7E9:	EE A4 62   	INC $62A4
+; Self Damage (Regen, Sap, etc)
+
+C1/B7E9:	EE A4 62   	INC $62A4      ; flag passive self-dmg (regen, etc)
 C1/B7EC:	A9 29      	LDA #$29
 C1/B7EE:	4C A4 B8   	JMP $B8A4
 
@@ -23741,17 +23743,16 @@ C1/B864:	99 C0 61   	STA $61C0,Y
 C1/B867:	20 2A 02   	JSR $022A
 C1/B86A:	60         	RTS
 
-C1/B86B:	20 89 BC   	JSR $BC89
-C1/B86E:	A5 10      	LDA $10
-C1/B870:	30 0D      	BMI $B87F
-C1/B872:	29 03      	AND #$03
-C1/B874:	DA         	PHX
-C1/B875:	AA         	TAX
-C1/B876:	AD A4 62   	LDA $62A4
-C1/B879:	D0 03      	BNE $B87E
-C1/B87B:	FE AE 61   	INC $61AE,X
-
-C1/B87E:	FA         	PLX
+C1/B86B:	20 89 BC   	JSR $BC89          ; set attacker index in $10
+C1/B86E:	A5 10      	LDA $10            ; attacker index
+C1/B870:	30 0D      	BMI $B87F          ; exit if monster
+C1/B872:	29 03      	AND #$03           ; character id 0-3
+C1/B874:	DA         	PHX                ; store X
+C1/B875:	AA         	TAX                ; character index
+C1/B876:	AD A4 62   	LDA $62A4          ; passive self-dmg (regen, sap, etc)
+C1/B879:	D0 03      	BNE $B87E          ; exit if ^
+C1/B87B:	FE AE 61   	INC $61AE,X        ; disable character stepping forward
+C1/B87E:	FA         	PLX                ; restore X
 C1/B87F:	60         	RTS
 
 C1/B880:	20 84 B8   	JSR $B884
@@ -23829,7 +23830,7 @@ C1/B909:	B2 78      	LDA ($78)
 C1/B90B:	30 0C      	BMI $B919
 C1/B90D:	20 EB AB   	JSR $ABEB
 C1/B910:	20 35 AC   	JSR $AC35
-C1/B913:	20 6B B8   	JSR $B86B
+C1/B913:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/B916:	20 03 95   	JSR $9503
 C1/B919:	60         	RTS
 
@@ -23845,7 +23846,7 @@ C1/B92F:	B1 76      	LDA ($76),Y
 C1/B931:	20 B3 9C   	JSR $9CB3
 C1/B934:	20 5B AC   	JSR $AC5B
 C1/B937:	20 03 95   	JSR $9503
-C1/B93A:	20 6B B8   	JSR $B86B
+C1/B93A:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/B93D:	20 8B AB   	JSR $AB8B
 C1/B940:	60         	RTS
 
@@ -23942,7 +23943,7 @@ C1/B9E8:	EE BB EC   	INC $ECBB
 C1/B9EB:	20 35 BC   	JSR $BC35
 C1/B9EE:	A9 25      	LDA #$25
 C1/B9F0:	20 90 B8   	JSR $B890
-C1/B9F3:	20 6B B8   	JSR $B86B
+C1/B9F3:	20 6B B8   	JSR $B86B         ; disable stepping forward for regen, etc
 C1/B9F6:	60         	RTS
 
 C1/B9F7:	B2 78      	LDA ($78)
@@ -24037,7 +24038,7 @@ C1/BA9C:	20 F7 BB   	JSR $BBF7
 C1/BA9F:	90 08      	BCC $BAA9
 C1/BAA1:	A9 34      	LDA #$34
 C1/BAA3:	20 90 B8   	JSR $B890
-C1/BAA6:	20 6B B8   	JSR $B86B
+C1/BAA6:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/BAA9:	60         	RTS
 
 C1/BAAA:	20 35 BC   	JSR $BC35
@@ -24132,7 +24133,7 @@ C1/BB54:	20 F7 BB   	JSR $BBF7
 C1/BB57:	90 08      	BCC $BB61
 C1/BB59:	A9 39      	LDA #$39
 C1/BB5B:	20 90 B8   	JSR $B890
-C1/BB5E:	20 6B B8   	JSR $B86B
+C1/BB5E:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/BB61:	60         	RTS
 
 C1/BB62:	20 F7 BB   	JSR $BBF7
@@ -24149,7 +24150,7 @@ C1/BB79:	20 F7 BB   	JSR $BBF7
 C1/BB7C:	90 08      	BCC $BB86
 C1/BB7E:	A9 26      	LDA #$26
 C1/BB80:	20 90 B8   	JSR $B890
-C1/BB83:	20 6B B8   	JSR $B86B
+C1/BB83:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/BB86:	60         	RTS
 
 C1/BB87:	20 35 BC   	JSR $BC35
@@ -24176,7 +24177,7 @@ C1/BBB4:	A5 10      	LDA $10
 C1/BBB6:	29 03      	AND #$03
 C1/BBB8:	AA         	TAX
 C1/BBB9:	DA         	PHX
-C1/BBBA:	AD A4 62   	LDA $62A4
+C1/BBBA:	AD A4 62   	LDA $62A4          ; passive self-dmg (regen, etc)
 C1/BBBD:	D0 03      	BNE $BBC2
 C1/BBBF:	FE AE 61   	INC $61AE,X
 C1/BBC2:	A9 0E      	LDA #$0E
@@ -24185,7 +24186,7 @@ C1/BBC7:	20 CD BE   	JSR $BECD
 C1/BBCA:	A9 0F      	LDA #$0F
 C1/BBCC:	20 A4 B8   	JSR $B8A4
 C1/BBCF:	FA         	PLX
-C1/BBD0:	AD A4 62   	LDA $62A4
+C1/BBD0:	AD A4 62   	LDA $62A4          ; passive self-dmg (regen, etc)
 C1/BBD3:	D0 03      	BNE $BBD8
 C1/BBD5:	9E AE 61   	STZ $61AE,X
 
@@ -24195,7 +24196,7 @@ C1/BBDB:	60         	RTS
 C1/BBDC:	20 35 BC   	JSR $BC35
 C1/BBDF:	A9 01      	LDA #$01
 C1/BBE1:	20 A4 B8   	JSR $B8A4
-C1/BBE4:	4C 6B B8   	JMP $B86B
+C1/BBE4:	4C 6B B8   	JMP $B86B          ; disable stepping forward for regen, etc
 
 C1/BBE7:	20 35 BC   	JSR $BC35
 C1/BBEA:	7B         	TDC
@@ -24214,7 +24215,7 @@ C1/BBFF:	B2 78      	LDA ($78)      ; A = attack data flags
 C1/BC01:	30 0E      	BMI $BC11      ; exit if attacker is a monster (w/ carry)
 C1/BC03:	A2 6C 0F   	LDX #$0F6C
 C1/BC06:	20 F5 B7   	JSR $B7F5
-C1/BC09:	20 6B B8   	JSR $B86B
+C1/BC09:	20 6B B8   	JSR $B86B      ; disable stepping forward for regen, etc
 C1/BC0C:	20 03 95   	JSR $9503
 C1/BC0F:	18         	CLC
 C1/BC10:	60         	RTS
@@ -24234,7 +24235,7 @@ C1/BC26:	B1 76      	LDA ($76),Y    ; A = spell index (0-8 for tools)
 C1/BC28:	20 B3 9C   	JSR $9CB3      ; load graphic data for spell animation
 C1/BC2B:	20 5B AC   	JSR $AC5B
 C1/BC2E:	20 03 95   	JSR $9503
-C1/BC31:	20 6B B8   	JSR $B86B
+C1/BC31:	20 6B B8   	JSR $B86B      ; disable stepping forward for regen, etc
 C1/BC34:	60         	RTS
 
 ; Called at the beginning of most (all?) command animations
@@ -24248,7 +24249,7 @@ C1/BC44:	B2 78      	LDA ($78)
 C1/BC46:	30 09      	BMI $BC51
 C1/BC48:	A2 6C 0F   	LDX #$0F6C
 C1/BC4B:	20 F5 B7   	JSR $B7F5
-C1/BC4E:	20 6B B8   	JSR $B86B
+C1/BC4E:	20 6B B8   	JSR $B86B      ; disable stepping forward for regen, etc
 
 C1/BC51:	20 41 B9   	JSR $B941
 C1/BC54:	90 2F      	BCC $BC85
@@ -24316,96 +24317,100 @@ C1/BCBE:	60         	RTS
 ; Copy all character and monster position data
 ; in preparation of animations
 
-C1/BCBF:	7B         	TDC           ; A = 0000
-C1/BCC0:	AA         	TAX           ; X = 0000
-C1/BCC1:	A8         	TAY           ; Y = 0000
-C1/BCC2:	C2 20      	REP #$20      ; 16-bit A
+C1/BCBF:	7B         	TDC             ; A = 0000
+C1/BCC0:	AA         	TAX             ; X = 0000
+C1/BCC1:	A8         	TAY             ; Y = 0000
+C1/BCC2:	C2 20      	REP #$20        ; 16-bit A
 
-C1/BCC4:	BD B7 61   	LDA $61B7,X   ; character left X position
-C1/BCC7:	99 3B 81   	STA $813B,Y   ; character left X position (temp)
-C1/BCCA:	BD B9 61   	LDA $61B9,X   ; character top Y position
-C1/BCCD:	99 3D 81   	STA $813D,Y   ; character top Y position (temp)
+C1/BCC4:	BD B7 61   	LDA $61B7,X     ; character left X position
+C1/BCC7:	99 3B 81   	STA $813B,Y     ; character left X position (temp)
+C1/BCCA:	BD B9 61   	LDA $61B9,X     ; character top Y position
+C1/BCCD:	99 3D 81   	STA $813D,Y     ; character top Y position (temp)
 C1/BCD0:	C8         	INY
 C1/BCD1:	C8         	INY
 C1/BCD2:	C8         	INY
-C1/BCD3:	C8         	INY           ; get next character position index
+C1/BCD3:	C8         	INY             ; get next character position index
 C1/BCD4:	8A         	TXA
 C1/BCD5:	18         	CLC
 C1/BCD6:	69 20 00   	ADC #$0020
-C1/BCD9:	AA         	TAX           ; increment source offset by 32
-C1/BCDA:	E0 80 00   	CPX #$0080    ; process all 4 characters
-C1/BCDD:	D0 E5      	BNE $BCC4     ; loop until all XY positions set
-C1/BCDF:	7B         	TDC           ; A = 0000
-C1/BCE0:	AA         	TAX           ; X = 0000
+C1/BCD9:	AA         	TAX             ; increment source offset by 32
+C1/BCDA:	E0 80 00   	CPX #$0080      ; process all 4 characters
+C1/BCDD:	D0 E5      	BNE $BCC4       ; loop until all XY positions set
+C1/BCDF:	7B         	TDC             ; A = 0000
+C1/BCE0:	AA         	TAX             ; X = 0000
 
-C1/BCE1:	BD C3 80   	LDA $80C3,X   ; monster left X position
-C1/BCE4:	99 3B 81   	STA $813B,Y   ; monster left X position (temp)
-C1/BCE7:	BD CF 80   	LDA $80CF,X   ; monster top Y position
-C1/BCEA:	99 3D 81   	STA $813D,Y   ; monster top Y position (temp)
+C1/BCE1:	BD C3 80   	LDA $80C3,X     ; monster left X position
+C1/BCE4:	99 3B 81   	STA $813B,Y     ; monster left X position (temp)
+C1/BCE7:	BD CF 80   	LDA $80CF,X     ; monster top Y position
+C1/BCEA:	99 3D 81   	STA $813D,Y     ; monster top Y position (temp)
 C1/BCED:	C8         	INY
 C1/BCEE:	C8         	INY
 C1/BCEF:	C8         	INY
-C1/BCF0:	C8         	INY           ; get next monster position index
+C1/BCF0:	C8         	INY             ; get next monster position index
 C1/BCF1:	E8         	INX
-C1/BCF2:	E8         	INX           ; increment source offset by 2
-C1/BCF3:	E0 0C 00   	CPX #$000C    ; process all 6 monsters
-C1/BCF6:	D0 E9      	BNE $BCE1     ; loop until finished
-C1/BCF8:	7B         	TDC           ; A = 0000
-C1/BCF9:	AA         	TAX           ; X = 0000
+C1/BCF2:	E8         	INX             ; increment source offset by 2
+C1/BCF3:	E0 0C 00   	CPX #$000C      ; process all 6 monsters
+C1/BCF6:	D0 E9      	BNE $BCE1       ; loop until finished
+C1/BCF8:	7B         	TDC             ; A = 0000
+C1/BCF9:	AA         	TAX             ; X = 0000
 
-C1/BCFA:	BD 0F 80   	LDA $800F,X   ; additional position data
-C1/BCFD:	9D 6B 81   	STA $816B,X   ; copy to temporary position data
+C1/BCFA:	BD 0F 80   	LDA $800F,X     ; additional position data
+C1/BCFD:	9D 6B 81   	STA $816B,X     ; copy to temporary position data
 C1/BD00:	E8         	INX
-C1/BD01:	E8         	INX           ; get next position bytes index
-C1/BD02:	E0 3C 00   	CPX #$003C    ; 6 monsters, 4 characters, center X, center Y, bottom Y
-C1/BD05:	D0 F3      	BNE $BCFA     ; loop till all copied
-C1/BD07:	7B         	TDC           ; A = 0000
-C1/BD08:	E2 20      	SEP #$20      ; 8-bit A
+C1/BD01:	E8         	INX             ; get next position bytes index
+C1/BD02:	E0 3C 00   	CPX #$003C      ; 6 monsters, 4 characters, center X, center Y, bottom Y
+C1/BD05:	D0 F3      	BNE $BCFA       ; loop till all copied
+C1/BD07:	7B         	TDC             ; A = 0000
+C1/BD08:	E2 20      	SEP #$20        ; 8-bit A
 C1/BD0A:	60         	RTS
 
-C1/BD0B:	7B         	TDC
-C1/BD0C:	AA         	TAX
-C1/BD0D:	A8         	TAY
-C1/BD0E:	C2 20      	REP #$20
-C1/BD10:	B9 3B 81   	LDA $813B,Y
-C1/BD13:	9D B7 61   	STA $61B7,X
-C1/BD16:	B9 3D 81   	LDA $813D,Y
-C1/BD19:	9D B9 61   	STA $61B9,X
+; Update permanent character/monster position data after animation
+
+C1/BD0B:	7B         	TDC             ; A = 0000
+C1/BD0C:	AA         	TAX             ; X = 0000
+C1/BD0D:	A8         	TAY             ; Y = 0000
+C1/BD0E:	C2 20      	REP #$20        ; 16-bit A
+C1/BD10:	B9 3B 81   	LDA $813B,Y     ; character X position (temp) [?]
+C1/BD13:	9D B7 61   	STA $61B7,X     ; character X position
+C1/BD16:	B9 3D 81   	LDA $813D,Y     ; character Y position (temp) [?]
+C1/BD19:	9D B9 61   	STA $61B9,X     ; character Y position
 C1/BD1C:	C8         	INY
 C1/BD1D:	C8         	INY
 C1/BD1E:	C8         	INY
-C1/BD1F:	C8         	INY
+C1/BD1F:	C8         	INY             ; next character source index
 C1/BD20:	8A         	TXA
 C1/BD21:	18         	CLC
-C1/BD22:	69 20 00   	ADC #$0020
+C1/BD22:	69 20 00   	ADC #$0020      ; next character destination index
 C1/BD25:	AA         	TAX
-C1/BD26:	E0 80 00   	CPX #$0080
-C1/BD29:	D0 E5      	BNE $BD10
-C1/BD2B:	7B         	TDC
-C1/BD2C:	AA         	TAX
-C1/BD2D:	B9 3B 81   	LDA $813B,Y
-C1/BD30:	9D C3 80   	STA $80C3,X
-C1/BD33:	B9 3D 81   	LDA $813D,Y
-C1/BD36:	9D CF 80   	STA $80CF,X
+C1/BD26:	E0 80 00   	CPX #$0080      ; loop 4 times
+C1/BD29:	D0 E5      	BNE $BD10       ; continue loop
+
+C1/BD2B:	7B         	TDC             ; A = 0000
+C1/BD2C:	AA         	TAX             ; X = 0000
+C1/BD2D:	B9 3B 81   	LDA $813B,Y     ; monster X position (temp) [?]
+C1/BD30:	9D C3 80   	STA $80C3,X     ; monster X position
+C1/BD33:	B9 3D 81   	LDA $813D,Y     ; monster Y position (temp) [?]
+C1/BD36:	9D CF 80   	STA $80CF,X     ; monster Y position
 C1/BD39:	C8         	INY
 C1/BD3A:	C8         	INY
 C1/BD3B:	C8         	INY
-C1/BD3C:	C8         	INY
+C1/BD3C:	C8         	INY             ; next monster source index
 C1/BD3D:	E8         	INX
-C1/BD3E:	E8         	INX
-C1/BD3F:	E0 0C 00   	CPX #$000C
-C1/BD42:	D0 E9      	BNE $BD2D
-C1/BD44:	7B         	TDC
-C1/BD45:	AA         	TAX
-C1/BD46:	BD 6B 81   	LDA $816B,X
-C1/BD49:	9D 0F 80   	STA $800F,X
+C1/BD3E:	E8         	INX             ; next monster destination index
+C1/BD3F:	E0 0C 00   	CPX #$000C      ; loop 6 times
+C1/BD42:	D0 E9      	BNE $BD2D       ; continue loop
+
+C1/BD44:	7B         	TDC             ; A = 0000
+C1/BD45:	AA         	TAX             ; X = 0000
+C1/BD46:	BD 6B 81   	LDA $816B,X     ; monster graphics/position data
+C1/BD49:	9D 0F 80   	STA $800F,X     ; monster graphics/position data
 C1/BD4C:	E8         	INX
-C1/BD4D:	E8         	INX
-C1/BD4E:	E0 3C 00   	CPX #$003C
-C1/BD51:	D0 F3      	BNE $BD46
-C1/BD53:	7B         	TDC
-C1/BD54:	E2 20      	SEP #$20           ; 8-bit A
-C1/BD56:	20 7C 95   	JSR $957C          ; update sprite priority (buffer)
+C1/BD4D:	E8         	INX             ; next monster index
+C1/BD4E:	E0 3C 00   	CPX #$003C      ; loop through full data block
+C1/BD51:	D0 F3      	BNE $BD46       ; continue loop
+C1/BD53:	7B         	TDC             ; A = 0000
+C1/BD54:	E2 20      	SEP #$20        ; 8-bit A
+C1/BD56:	20 7C 95   	JSR $957C       ; update sprite priority (buffer)
 C1/BD59:	60         	RTS
 
 ; Handle covering targets
@@ -24606,7 +24611,7 @@ C1/BECA:	68         	PLA              ; restore block animation id (0-indexed)
 C1/BECB:	FA         	PLX              ; restore X
 C1/BECC:	60         	RTS
 
-; Execute Fight/Throw animation [?]
+; Execute Fight/Throw animation
 
 C1/BECD:	B2 78      	LDA ($78)          ; attack animation flags
 C1/BECF:	29 01      	AND #$01           ; monster weapon attack flag [?]
@@ -24626,7 +24631,7 @@ C1/BEF1:	A0 00 24   	LDY #$2400         ; data destination address
 C1/BEF4:	20 8D 19   	JSR $198D          ; move animation data
 C1/BEF7:	AD 8A 61   	LDA $618A          ; monster weapon attack flag [?]
 C1/BEFA:	D0 03      	BNE $BEFF          ; branch if monster weapon attack [?]
-C1/BEFC:	20 6B B8   	JSR $B86B          ; ??????????
+C1/BEFC:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/BEFF:	A0 02 00   	LDY #$0002         ; animation command arg #2
 C1/BF02:	B1 76      	LDA ($76),Y        ; attack type / flags [?]
 C1/BF04:	29 80      	AND #$80           ; "Left hand attack"
@@ -24992,37 +24997,41 @@ C1/C1E3:	20 8A C3   	JSR $C38A          ; set max sprite priority for all entiti
 C1/C1E6:	20 A6 BC   	JSR $BCA6          ; set first target index in $12
 C1/C1E9:	20 F5 C3   	JSR $C3F5          ; reduce priority of target sprite
 C1/C1EC:	20 53 C6   	JSR $C653
-C1/C1EF:	A0 04 00   	LDY #$0004
-C1/C1F2:	B1 78      	LDA ($78),Y
-C1/C1F4:	D0 0B      	BNE $C201
+C1/C1EF:	A0 04 00   	LDY #$0004         ; command function arg #4-5
+C1/C1F2:	B1 78      	LDA ($78),Y        ; targets not missed
+C1/C1F4:	D0 0B      	BNE $C201          ; branch if some exist
 C1/C1F6:	C8         	INY
-C1/C1F7:	C8         	INY
-C1/C1F8:	B1 78      	LDA ($78),Y
-C1/C1FA:	F0 05      	BEQ $C201
-C1/C1FC:	A9 20      	LDA #$20
-C1/C1FE:	20 B6 9B   	JSR $9BB6
-C1/C201:	20 0B BD   	JSR $BD0B
+C1/C1F7:	C8         	INY                ; command function arg #6-7
+C1/C1F8:	B1 78      	LDA ($78),Y        ; reflectors
+C1/C1FA:	F0 05      	BEQ $C201          ; branch if none ^
+C1/C1FC:	A9 20      	LDA #$20           ; else, no targets and no reflection
+C1/C1FE:	20 B6 9B   	JSR $9BB6          ; wait 32 frames (to fill time [?])
+
+C1/C201:	20 0B BD   	JSR $BD0B          ; update sprite/position data for all entities
 C1/C204:	20 59 1E   	JSR $1E59
 C1/C207:	20 8A C3   	JSR $C38A          ; set max sprite priority for all entities
-C1/C20A:	AD 6F 89   	LDA $896F
-C1/C20D:	29 AF      	AND #$AF
+C1/C20A:	AD 6F 89   	LDA $896F          ; screen mode (battlefield) [?]
+C1/C20D:	29 AF      	AND #$AF           ; clear bits 4 and 6 [?]
 C1/C20F:	8D 6F 89   	STA $896F
-C1/C212:	7B         	TDC
-C1/C213:	AA         	TAX
-C1/C214:	8E B4 64   	STX $64B4
-C1/C217:	8E B6 64   	STX $64B6
-C1/C21A:	A9 01      	LDA #$01
-C1/C21C:	8D 0E 7B   	STA $7B0E
-C1/C21F:	8D 0F 7B   	STA $7B0F
-C1/C222:	AD 8A 61   	LDA $618A
-C1/C225:	F0 0B      	BEQ $C232
-C1/C227:	20 6B B8   	JSR $B86B
+C1/C212:	7B         	TDC                ; A = 0000
+C1/C213:	AA         	TAX                ; X = 0000
+C1/C214:	8E B4 64   	STX $64B4          ; zero BG1 horizontal scroll
+C1/C217:	8E B6 64   	STX $64B6          ; zero BG1 vertical scroll
+C1/C21A:	A9 01      	LDA #$01           ; 1 animation thread to update
+C1/C21C:	8D 0E 7B   	STA $7B0E          ; monster animation threads to update
+C1/C21F:	8D 0F 7B   	STA $7B0F          ; character animation threads to update
+C1/C222:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
+C1/C225:	F0 0B      	BEQ $C232          ; branch if not ^
+C1/C227:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/C22A:	80 06      	BRA $C232
-C1/C22C:	20 0B BD   	JSR $BD0B
+
+; Do these two ops ever run?
+C1/C22C:	20 0B BD   	JSR $BD0B          ; update sprite/position data for all entities
 C1/C22F:	20 03 95   	JSR $9503
-C1/C232:	20 8B AB   	JSR $AB8B
-C1/C235:	9C 96 61   	STZ $6196
-C1/C238:	9C 8A 61   	STZ $618A
+
+C1/C232:	20 8B AB   	JSR $AB8B          ; clear attacker's graphic action [?]
+C1/C235:	9C 96 61   	STZ $6196          ; clear "Flash Screen" flag
+C1/C238:	9C 8A 61   	STZ $618A          ; clear "Monster Weapon" flag [?]
 C1/C23B:	60         	RTS
 
 ;
