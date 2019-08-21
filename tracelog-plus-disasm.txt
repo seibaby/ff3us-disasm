@@ -20188,13 +20188,13 @@ C1/9D9E:	7B         	TDC                ; A = 0000
 C1/9D9F:	A8         	TAY                ; Y = 0000
 C1/9DA0:	7B         	TDC                ; A = 0000 (again?)
 C1/9DA1:	E2 20      	SEP #$20           ; 8-bit A
-C1/9DA3:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
+C1/9DA3:	AD 8A 61   	LDA $618A          ; monster special attack
 C1/9DA6:	F0 10      	BEQ $9DB8          ; branch if not ^
 
 ; Lookup and set full animation data
 ; ($626B $626C $626D $626E $626F $6270 $6271 $6272)
 
-C1/9DA8:	BF E8 E6 EC	LDA $ECE6E8,X      ; data byte (monster animations) [?]
+C1/9DA8:	BF E8 E6 EC	LDA $ECE6E8,X      ; data byte (monster specials) [?]
 C1/9DAC:	99 6B 62   	STA $626B,Y        ; move data
 C1/9DAF:	E8         	INX                ; next source offset
 C1/9DB0:	C8         	INY                ; next destination offset
@@ -20227,7 +20227,7 @@ C1/9DE2:	8C 2D 7B   	STY $7B2D          ; set weapon graphics frame width/height
 C1/9DE5:	AE EA 7A   	LDX $7AEA          ; instructions for tile VRAM move
 C1/9DE8:	20 C0 A1   	JSR $A1C0          ; move 96 tiles into VRAM
 C1/9DEB:	20 B5 A0   	JSR $A0B5          ; ??????????
-C1/9DEE:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
+C1/9DEE:	AD 8A 61   	LDA $618A          ; monster special attack
 C1/9DF1:	F0 13      	BEQ $9E06          ; branch if not ^
 C1/9DF3:	AD 6E 62   	LDA $626E          ; hit animation script
 C1/9DF6:	C9 60      	CMP #$60           ; 96
@@ -24614,8 +24614,8 @@ C1/BECC:	60         	RTS
 ; Execute Fight/Throw animation
 
 C1/BECD:	B2 78      	LDA ($78)          ; attack animation flags
-C1/BECF:	29 01      	AND #$01           ; monster weapon attack flag [?]
-C1/BED1:	8D 8A 61   	STA $618A          ; monster weapon attack flag [?]
+C1/BECF:	29 01      	AND #$01           ; "Monster Special Attack" flag
+C1/BED1:	8D 8A 61   	STA $618A          ; set monster special flag
 C1/BED4:	8D BB EC   	STA $ECBB          ; enable panned sound effect [?]
 C1/BED7:	20 F4 94   	JSR $94F4          ; copy monster data to $810B (again)
 C1/BEDA:	20 67 AB   	JSR $AB67          ; copy targets into $613D (again)
@@ -24629,8 +24629,8 @@ C1/BEEC:	A2 00 B4   	LDX #$B400         ; data source address
 C1/BEEF:	A9 7F      	LDA #$7F           ; data source bank
 C1/BEF1:	A0 00 24   	LDY #$2400         ; data destination address
 C1/BEF4:	20 8D 19   	JSR $198D          ; move animation data
-C1/BEF7:	AD 8A 61   	LDA $618A          ; monster weapon attack flag [?]
-C1/BEFA:	D0 03      	BNE $BEFF          ; branch if monster weapon attack [?]
+C1/BEF7:	AD 8A 61   	LDA $618A          ; monster special attack
+C1/BEFA:	D0 03      	BNE $BEFF          ; branch if ^
 C1/BEFC:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/BEFF:	A0 02 00   	LDY #$0002         ; animation command arg #2
 C1/BF02:	B1 76      	LDA ($76),Y        ; attack type / flags [?]
@@ -24790,7 +24790,7 @@ C1/C038:	DA         	PHX                ; store animation thread offset
 C1/C039:	AA         	TAX                ; index block animation id
 C1/C03A:	BF 4B B7 C1	LDA $C1B74B,X      ; block animation script
 C1/C03E:	8D 6E 62   	STA $626E          ; set animation script id [?]
-C1/C041:	9C 8A 61   	STZ $618A          ; set "not monster weapon attack" [?]
+C1/C041:	9C 8A 61   	STZ $618A          ; clear "monster special attack" flag
 C1/C044:	FA         	PLX                ; restore animation thread offset
 C1/C045:	A9 40      	LDA #$40
 C1/C047:	85 14      	STA $14            ; [?]
@@ -24856,7 +24856,7 @@ C1/C0BB:	A9 06      	LDA #$06
 C1/C0BD:	9D D5 74   	STA $74D5,X        ; thread palette index
 C1/C0C0:	64 22      	STZ $22            ; clear animation data pointer
 C1/C0C2:	64 23      	STZ $23            ; clear animation data pointer
-C1/C0C4:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
+C1/C0C4:	AD 8A 61   	LDA $618A          ; monster special attack
 C1/C0C7:	F0 0E      	BEQ $C0D7          ; branch if not ^
 
 C1/C0C9:	AD 6E 62   	LDA $626E          ; hit animation script id
@@ -25020,7 +25020,7 @@ C1/C217:	8E B6 64   	STX $64B6          ; zero BG1 vertical scroll
 C1/C21A:	A9 01      	LDA #$01           ; 1 animation thread to update
 C1/C21C:	8D 0E 7B   	STA $7B0E          ; monster animation threads to update
 C1/C21F:	8D 0F 7B   	STA $7B0F          ; character animation threads to update
-C1/C222:	AD 8A 61   	LDA $618A          ; monster weapon attack [?]
+C1/C222:	AD 8A 61   	LDA $618A          ; monster special attack
 C1/C225:	F0 0B      	BEQ $C232          ; branch if not ^
 C1/C227:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/C22A:	80 06      	BRA $C232
@@ -25031,7 +25031,7 @@ C1/C22F:	20 03 95   	JSR $9503
 
 C1/C232:	20 8B AB   	JSR $AB8B          ; clear attacker's graphic action [?]
 C1/C235:	9C 96 61   	STZ $6196          ; clear "Flash Screen" flag
-C1/C238:	9C 8A 61   	STZ $618A          ; clear "Monster Weapon" flag [?]
+C1/C238:	9C 8A 61   	STZ $618A          ; clear "monster special attack" flag
 C1/C23B:	60         	RTS
 
 ;
