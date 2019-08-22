@@ -10967,7 +10967,7 @@ C1/557A:	057E ; 27
 C1/557C:	8359 ; 28
 C1/557E:	1657 ; 29
 C1/5580:	2586 ; 2A
-C1/5582:	7558 ; 2B
+C1/5582:	7558 ; 2B: ($5875)
 C1/5584:	E056 ; 2C
 C1/5586:	B586 ; 2D
 C1/5588:	B158 ; 2E
@@ -11263,18 +11263,18 @@ C1/57D9:	60         	RTS
 ; scrolling?
 
 ; Throw pointers
-C1/57DA:	3A58       ; build list of first 65 items?
-C1/57DC:	5058       ; build list of first 128 items?
-C1/57DE:	5658       ; build list of first 192 items?
-C1/57E0:	5C58       ; build list of first (all?) 256 items
-C1/57E2:	8258
+C1/57DA:	3A 58       ; $00 - build list of first 65 items?
+C1/57DC:	50 58       ; $01 - build list of first 128 items?
+C1/57DE:	56 58       ; $02 - build list of first 192 items?
+C1/57E0:	5C 58       ; $03 - build list of first (all?) 256 items
+C1/57E2:	82 58
 
 ; Tools pointers
-C1/57E4:	3658       ; build list of first 65 items?
-C1/57E6:	5058       ; build list of first 128 items?
-C1/57E8:	5658       ; build list of first 192 items?
-C1/57EA:	5C58       ; build list of first (all?) 256 items
-C1/57EC:	BE58
+C1/57E4:	36 58       ; $04 - build list of first 65 items?
+C1/57E6:	50 58       ; $05 - build list of first 128 items?
+C1/57E8:	56 58       ; $06 - build list of first 192 items?
+C1/57EA:	5C 58       ; $07 - build list of first (all?) 256 items
+C1/57EC:	BE 58       ; $08 - build list of
 
 ; Build tools list or throwables list
 C1/57EE:	86 36      	STX $36         ; set max item index to check
@@ -11344,30 +11344,33 @@ C1/5871:	E8         	INX
 C1/5872:	80 F0      	BRA $5864       ; loop until all 256 slots are filled
 C1/5874:	60         	RTS
 
+; Throw battle menu
+
 C1/5875:	A9 2B      	LDA #$2B
-C1/5877:	8D C2 7B   	STA $7BC2
-C1/587A:	AD 9E 7B   	LDA $7B9E
-C1/587D:	0A         	ASL A
-C1/587E:	AA         	TAX
-C1/587F:	7C DA 57   	JMP ($57DA,X)  ; Jump table
+C1/5877:	8D C2 7B   	STA $7BC2       ; current cursor state
+C1/587A:	AD 9E 7B   	LDA $7B9E       ; inventory id / section
+C1/587D:	0A         	ASL A           ; x2
+C1/587E:	AA         	TAX             ; index it
+C1/587F:	7C DA 57   	JMP ($57DA,X)   ; build tool or throw inventory
 
 C1/5882:	AD A5 7B   	LDA $7BA5
 C1/5885:	30 11      	BMI $5898
 C1/5887:	20 17 5A   	JSR $5A17
-C1/588A:	AE CA 62   	LDX $62CA
+C1/588A:	AE CA 62   	LDX $62CA       ; active character
 C1/588D:	BD 53 89   	LDA $8953,X
 C1/5890:	8D A6 7B   	STA $7BA6
 C1/5893:	A9 80      	LDA #$80
 C1/5895:	8D A5 7B   	STA $7BA5
+
 C1/5898:	AD A6 7B   	LDA $7BA6
 C1/589B:	20 27 4C   	JSR $4C27
 C1/589E:	20 29 57   	JSR $5729
 C1/58A1:	90 0D      	BCC $58B0
 C1/58A3:	9C 9E 7B   	STZ $7B9E
 C1/58A6:	A9 1D      	LDA #$1D
-C1/58A8:	8D F0 7B   	STA $7BF0
+C1/58A8:	8D F0 7B   	STA $7BF0       ; set menu state
 C1/58AB:	A9 0E      	LDA #$0E
-C1/58AD:	4C 2C 5A   	JMP $5A2C
+C1/58AD:	4C 2C 5A   	JMP $5A2C       ; queue up cursor state sequence $0E
 
 C1/58B0:	60         	RTS
 
@@ -15988,26 +15991,28 @@ C1/7CC8:	20 AB 84   	JSR $84AB
 C1/7CCB:	20 A9 7C   	JSR $7CA9
 C1/7CCE:	BD 30 20   	LDA $2030,X
 C1/7CD1:	8D 84 7A   	STA $7A84
-C1/7CD4:	BD 2E 20   	LDA $202E,X
-C1/7CD7:	99 AF 2B   	STA $2BAF,Y
-C1/7CDA:	29 7F      	AND #$7F
-C1/7CDC:	0A         	ASL A
-C1/7CDD:	AA         	TAX
+C1/7CD4:	BD 2E 20   	LDA $202E,X    ; slot's command number
+C1/7CD7:	99 AF 2B   	STA $2BAF,Y    ; pending user action
+C1/7CDA:	29 7F      	AND #$7F       ; mask top bit [?]
+C1/7CDC:	0A         	ASL A          ; x2
+C1/7CDD:	AA         	TAX            ; index it
 C1/7CDE:	7C E9 7C   	JMP ($7CE9,X)  ; Jump table
 
 C1/7CE1:	A9 01      	LDA #$01
 C1/7CE3:	8D E8 7A   	STA $7AE8
 C1/7CE6:	4C A0 57   	JMP $57A0
 
-C1/7CE9:	9277
-C1/7CEB:	6957
-C1/7CED:	A057
-C1/7CEF:	9577
-C1/7CF1:	9577
-C1/7CF3:	9577
-C1/7CF5:	9577
-C1/7CF7:	1B56
-C1/7CF9:	7558
+; Battle Menu Command Selection
+
+C1/7CE9:	9277 ; $00 ($7792) - Fight
+C1/7CEB:	6957 ; $01 ($5769) - Item
+C1/7CED:	A057 ; $02 ($57A0) - Magic
+C1/7CEF:	9577 ; $03 ($7795) - Morph
+C1/7CF1:	9577 ; $04 ($7795) - Revert
+C1/7CF3:	9577 ; $05 ($7795) - Steal
+C1/7CF5:	9577 ; $06 ($7795) - Capture
+C1/7CF7:	1B56 ; $07 ($561B) - SwdTech
+C1/7CF9:	7558 ; $08 ($5875) - Throw
 C1/7CFB:	B158
 C1/7CFD:	6B77
 C1/7CFF:	9577
