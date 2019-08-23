@@ -25664,30 +25664,32 @@ C1/C64F:	7B         	TDC
 C1/C650:	E2 20      	SEP #$20           ; 8-bit A
 C1/C652:	60         	RTS
 
-C1/C653:	7B         	TDC
-C1/C654:	AA         	TAX
-C1/C655:	9E 95 60   	STZ $6095,X
+C1/C653:	7B         	TDC                ; A = 0000
+C1/C654:	AA         	TAX                ; X = 0000
+C1/C655:	9E 95 60   	STZ $6095,X        ; zero BG scroll data
 C1/C658:	E8         	INX
-C1/C659:	E0 12 00   	CPX #$0012
-C1/C65C:	D0 F7      	BNE $C655
+C1/C659:	E0 12 00   	CPX #$0012         ; loop 18 times
+C1/C65C:	D0 F7      	BNE $C655          ; clear scroll amplitude/frequency for BG1-BG3
+
 C1/C65E:	20 7C 95   	JSR $957C          ; update sprite priority (buffer)
-C1/C661:	9C FA EB   	STZ $EBFA
-C1/C664:	9C A7 60   	STZ $60A7
-C1/C667:	9C A8 60   	STZ $60A8
-C1/C66A:	7B         	TDC
-C1/C66B:	AA         	TAX
-C1/C66C:	9E 95 60   	STZ $6095,X
+C1/C661:	9C FA EB   	STZ $EBFA          ; [?]
+C1/C664:	9C A7 60   	STZ $60A7          ; unset "Hide BG1 animation" flag
+C1/C667:	9C A8 60   	STZ $60A8          ; unset "HIde BG3 animation" flag
+C1/C66A:	7B         	TDC                ; A = 0000
+C1/C66B:	AA         	TAX                ; X = 0000
+C1/C66C:	9E 95 60   	STZ $6095,X        ; zero BG scroll data
 C1/C66F:	E8         	INX
-C1/C670:	E0 12 00   	CPX #$0012
-C1/C673:	D0 F7      	BNE $C66C
-C1/C675:	7B         	TDC
-C1/C676:	AA         	TAX
-C1/C677:	A8         	TAY
-C1/C678:	BD BC 61   	LDA $61BC,X
-C1/C67B:	99 6E 61   	STA $616E,Y
+C1/C670:	E0 12 00   	CPX #$0012         ; loop 18 times
+C1/C673:	D0 F7      	BNE $C66C          ; clear amplitude/frequency data again (why?)
+
+C1/C675:	7B         	TDC                ; A = 0000
+C1/C676:	AA         	TAX                ; X = 0000
+C1/C677:	A8         	TAY                ; Y = 0000
+C1/C678:	BD BC 61   	LDA $61BC,X        ; character palette index
+C1/C67B:	99 6E 61   	STA $616E,Y        ; copy to buffer
 C1/C67E:	8A         	TXA
 C1/C67F:	18         	CLC
-C1/C680:	69 20      	ADC #$20
+C1/C680:	69 20      	ADC #$20           ; next character's offset
 C1/C682:	AA         	TAX
 C1/C683:	C8         	INY
 C1/C684:	C0 04 00   	CPY #$0004
