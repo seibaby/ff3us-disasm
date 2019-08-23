@@ -123,7 +123,7 @@ C1/0104:	6B         	RTL
 C1/0105:	A2 FF FF   	LDX #$FFFF
 C1/0108:	8E 01 40   	STX $4001
 C1/010B:	8E 03 40   	STX $4003
-C1/010E:	20 2A 02   	JSR $022A
+C1/010E:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/0111:	AD CA 7B   	LDA $7BCA
 C1/0114:	D0 EF      	BNE $0105
 C1/0116:	60         	RTS
@@ -142,8 +142,8 @@ C1/0131:	9D 6E 2D   	STA $2D6E,X
 C1/0134:	E8         	INX
 C1/0135:	E0 05 00   	CPX #$0005
 C1/0138:	D0 F3      	BNE $012D
-C1/013A:	20 2A 02   	JSR $022A
-C1/013D:	20 2A 02   	JSR $022A
+C1/013A:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/013D:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/0140:	AD E4 11   	LDA $11E4
 C1/0143:	29 08      	AND #$08
 C1/0145:	D0 1C      	BNE $0163
@@ -182,7 +182,7 @@ C1/0186:	6B         	RTL
 C1/0187:	20 61 4A   	JSR $4A61
 C1/018A:	20 59 47   	JSR $4759
 C1/018D:	EE BB 7B   	INC $7BBB
-C1/0190:	20 2A 02   	JSR $022A
+C1/0190:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/0193:	20 BD 01   	JSR $01BD
 C1/0196:	6B         	RTL
 
@@ -201,7 +201,7 @@ C1/01AB:	D0 0F      	BNE $01BC
 C1/01AD:	20 61 4A   	JSR $4A61
 C1/01B0:	20 59 47   	JSR $4759
 C1/01B3:	EE BB 7B   	INC $7BBB
-C1/01B6:	20 2A 02   	JSR $022A
+C1/01B6:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/01B9:	20 BD 01   	JSR $01BD
 C1/01BC:	6B         	RTL
 
@@ -260,7 +260,7 @@ C1/0223:	7A         	PLY
 C1/0224:	FA         	PLX
 C1/0225:	6B         	RTL
 
-C1/0226:	20 2A 02   	JSR $022A
+C1/0226:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/0229:	6B         	RTL
 
 ; Wait a frame, then run menu and battle ATB and timer updates
@@ -621,7 +621,7 @@ C1/04F9:	85 36      	STA $36
 C1/04FB:	7B         	TDC
 C1/04FC:	E2 20      	SEP #$20           ; 8-bit A
 C1/04FE:	A9 7E      	LDA #$7E
-C1/0500:	20 2B 1A   	JSR $1A2B
+C1/0500:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/0503:	CE AA 62   	DEC $62AA
 C1/0506:	D0 03      	BNE $050B
 C1/0508:	9C BB 7B   	STZ $7BBB
@@ -780,7 +780,7 @@ C1/064B:	86 36      	STX $36
 C1/064D:	A2 B3 60   	LDX #$60B3
 C1/0650:	A9 7E      	LDA #$7E
 C1/0652:	AC 17 63   	LDY $6317
-C1/0655:	4C 2B 1A   	JMP $1A2B
+C1/0655:	4C 2B 1A   	JMP $1A2B         ; execute VRAM DMA transfer
 
 C1/0658:	60         	RTS
 
@@ -2068,13 +2068,13 @@ C1/1164:	86 36      	STX $36
 C1/1166:	A2 00 B8   	LDX #$B800
 C1/1169:	A9 7F      	LDA #$7F
 C1/116B:	A0 00 2E   	LDY #$2E00
-C1/116E:	20 2B 1A   	JSR $1A2B
+C1/116E:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/1171:	A2 80 00   	LDX #$0080
 C1/1174:	86 36      	STX $36
 C1/1176:	A2 AD 5F   	LDX #$5FAD
 C1/1179:	A9 7E      	LDA #$7E
 C1/117B:	A0 00 40   	LDY #$4000
-C1/117E:	20 2B 1A   	JSR $1A2B
+C1/117E:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/1181:	7B         	TDC
 C1/1182:	AA         	TAX
 C1/1183:	BD 1F 7A   	LDA $7A1F,X
@@ -2250,13 +2250,13 @@ C1/12EA:	AA         	TAX
 C1/12EB:	8E 30 2F   	STX $2F30
 C1/12EE:	8E 32 2F   	STX $2F32
 C1/12F1:	20 5C 0D   	JSR $0D5C
-C1/12F4:	20 F6 1F   	JSR $1FF6
+C1/12F4:	20 F6 1F   	JSR $1FF6         ; fill BG tile data buffer w/ $02EE
 C1/12F7:	A2 C0 04   	LDX #$04C0
 C1/12FA:	86 36      	STX $36
 C1/12FC:	A2 7F A9   	LDX #$A97F
 C1/12FF:	A9 7E      	LDA #$7E
 C1/1301:	A0 00 0C   	LDY #$0C00
-C1/1304:	20 2B 1A   	JSR $1A2B
+C1/1304:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/1307:	A9 4C      	LDA #$4C
 C1/1309:	8D F7 E9   	STA $E9F7
 C1/130C:	9C F8 E9   	STZ $E9F8
@@ -2356,7 +2356,7 @@ C1/13F9:	8E 72 2D   	STX $2D72
 C1/13FC:	22 12 95 C1	JSL $C19512
 C1/1400:	68         	PLA
 C1/1401:	8D AB 61   	STA $61AB
-C1/1404:	20 2A 02   	JSR $022A
+C1/1404:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/1407:	AD F6 E9   	LDA $E9F6
 C1/140A:	D0 F8      	BNE $1404
 C1/140C:	7B         	TDC
@@ -3616,7 +3616,7 @@ C1/1CD6:	A2 00 08   	LDX #$0800
 C1/1CD9:	86 36      	STX $36
 C1/1CDB:	A9 7F      	LDA #$7F
 C1/1CDD:	A2 00 C4   	LDX #$C400
-C1/1CE0:	20 2B 1A   	JSR $1A2B
+C1/1CE0:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/1CE3:	80 0D      	BRA $1CF2
 C1/1CE5:	A2 00 08   	LDX #$0800
 C1/1CE8:	86 10      	STX $10
@@ -3701,7 +3701,7 @@ C1/1D82:	D0 0D      	BNE $1D91
 C1/1D84:	86 36      	STX $36
 C1/1D86:	AE F2 E9   	LDX $E9F2
 C1/1D89:	AD F4 E9   	LDA $E9F4
-C1/1D8C:	20 2B 1A   	JSR $1A2B
+C1/1D8C:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/1D8F:	80 1B      	BRA $1DAC
 C1/1D91:	86 10      	STX $10
 C1/1D93:	AD DE E9   	LDA $E9DE
@@ -3805,18 +3805,19 @@ C1/1E51:	4A         	LSR A
 C1/1E52:	85 24      	STA $24
 C1/1E54:	60         	RTS
 
-C1/1E55:	20 59 1E   	JSR $1E59
+C1/1E55:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
 C1/1E58:	6B         	RTL
 
-C1/1E59:	20 F6 1F   	JSR $1FF6          ; fill BG tile data buffer [?]
-C1/1E5C:	4C 26 1F   	JMP $1F26
+; Fill VRAM BG1 Tiles w/ $02EE
+C1/1E59:	20 F6 1F   	JSR $1FF6          ; fill BG tile data buffer w/ $02EE
+C1/1E5C:	4C 26 1F   	JMP $1F26          ; set battlefield BG1 tiles in VRAM
 
 C1/1E5F:	20 63 1E   	JSR $1E63
 C1/1E62:	6B         	RTL
 
 C1/1E63:	48         	PHA
 C1/1E64:	20 00 0F   	JSR $0F00
-C1/1E67:	20 F6 1F   	JSR $1FF6
+C1/1E67:	20 F6 1F   	JSR $1FF6          ; fill BG tile data buffer w/ $02EE
 C1/1E6A:	68         	PLA
 C1/1E6B:	2D 1E 20   	AND $201E
 C1/1E6E:	2D AB 61   	AND $61AB
@@ -3825,7 +3826,7 @@ C1/1E74:	85 24      	STA $24
 C1/1E76:	4C 95 1E   	JMP $1E95
 
 C1/1E79:	20 00 0F   	JSR $0F00
-C1/1E7C:	20 F6 1F   	JSR $1FF6
+C1/1E7C:	20 F6 1F   	JSR $1FF6          ; fill BG tile data buffer w/ $02EE
 C1/1E7F:	20 3C 1E   	JSR $1E3C
 C1/1E82:	A5 24      	LDA $24
 C1/1E84:	2D 1E 20   	AND $201E
@@ -3915,14 +3916,18 @@ C1/1F1C:	E0 0C 00   	CPX #$000C
 C1/1F1F:	D0 B2      	BNE $1ED3
 C1/1F21:	60         	RTS
 
-C1/1F22:	20 26 1F   	JSR $1F26
+; Long access to transfer BG tile data to VRAM
+
+C1/1F22:	20 26 1F   	JSR $1F26         ; set battlefield BG1 tiles in VRAM
 C1/1F25:	6B         	RTL
 
-C1/1F26:	A2 C0 04   	LDX #$04C0
-C1/1F29:	86 10      	STX $10
-C1/1F2B:	A2 7F A9   	LDX #$A97F
-C1/1F2E:	A9 7E      	LDA #$7E
-C1/1F30:	A0 00 0C   	LDY #$0C00
+; Transfer Background Tile Data buffer to VRAM
+
+C1/1F26:	A2 C0 04   	LDX #$04C0        ; BG tile data buffer
+C1/1F29:	86 10      	STX $10           ; VRAM data length
+C1/1F2B:	A2 7F A9   	LDX #$A97F        ; VRAM source offset (BG tile buffer)
+C1/1F2E:	A9 7E      	LDA #$7E          ; VRAM source bank
+C1/1F30:	A0 00 0C   	LDY #$0C00        ; VRAM destination offset (Battlefield BG1 tiles)
 C1/1F33:	4C 8D 19   	JMP $198D         ; initialize VRAM DMA transfer
 
 C1/1F36:	DA         	PHX
@@ -4034,16 +4039,21 @@ C1/1FE9:	E2 20      	SEP #$20           ; 8-bit A
 C1/1FEB:	FA         	PLX
 C1/1FEC:	60         	RTS
 
+; Fill BG tile buffer with $01EE [?]
+
 C1/1FED:	C2 20      	REP #$20           ; 16-bit A
 C1/1FEF:	7B         	TDC                ; A = 0000
 C1/1FF0:	AA         	TAX                ; X = 0000
-C1/1FF1:	A9 EE 01   	LDA #$01EE
-C1/1FF4:	80 07      	BRA $1FFD
+C1/1FF1:	A9 EE 01   	LDA #$01EE         ; [?]
+C1/1FF4:	80 07      	BRA $1FFD          ; fill BG tile buffer
+
+; Fill BG tile buffer with $02EE [?]
 
 C1/1FF6:	C2 20      	REP #$20           ; 16-bit A
 C1/1FF8:	7B         	TDC                ; A = 0000
 C1/1FF9:	AA         	TAX                ; X = 0000
-C1/1FFA:	A9 EE 02   	LDA #$02EE
+C1/1FFA:	A9 EE 02   	LDA #$02EE         ; [?]
+
 C1/1FFD:	9D 7F A9   	STA $A97F,X
 C1/2000:	9D 17 AA   	STA $AA17,X
 C1/2003:	9D AF AA   	STA $AAAF,X
@@ -4804,7 +4814,7 @@ C1/25D4:	86 36      	STX $36
 C1/25D6:	A2 3F AE   	LDX #$AE3F
 C1/25D9:	A0 00 30   	LDY #$3000
 C1/25DC:	A9 7E      	LDA #$7E
-C1/25DE:	4C 2B 1A   	JMP $1A2B
+C1/25DE:	4C 2B 1A   	JMP $1A2B         ; execute VRAM DMA transfer
 
 C1/25E1:	AD D1 62   	LDA $62D1
 C1/25E4:	F0 22      	BEQ $2608
@@ -8188,19 +8198,19 @@ C1/4042:	A4 10      	LDY $10
 C1/4044:	84 36      	STY $36
 C1/4046:	A5 12      	LDA $12
 C1/4048:	A0 00 42   	LDY #$4200
-C1/404B:	20 2B 1A   	JSR $1A2B
+C1/404B:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/404E:	A2 00 08   	LDX #$0800
 C1/4051:	86 36      	STX $36
 C1/4053:	A2 00 F0   	LDX #$F000
 C1/4056:	A0 00 44   	LDY #$4400
 C1/4059:	A9 D2      	LDA #$D2
-C1/405B:	20 2B 1A   	JSR $1A2B
+C1/405B:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/405E:	A2 00 10   	LDX #$1000
 C1/4061:	86 36      	STX $36
 C1/4063:	A2 C0 7F   	LDX #$7FC0
 C1/4066:	A0 00 58   	LDY #$5800
 C1/4069:	A9 C4      	LDA #$C4
-C1/406B:	20 2B 1A   	JSR $1A2B
+C1/406B:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/406E:	AD 34 2F   	LDA $2F34
 C1/4071:	29 07      	AND #$07
 C1/4073:	8D 34 2F   	STA $2F34
@@ -8260,7 +8270,7 @@ C1/40DE:	85 36      	STA $36
 C1/40E0:	7B         	TDC
 C1/40E1:	E2 20      	SEP #$20           ; 8-bit A
 C1/40E3:	A9 C4      	LDA #$C4
-C1/40E5:	20 2B 1A   	JSR $1A2B
+C1/40E5:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/40E8:	FA         	PLX
 C1/40E9:	C2 20      	REP #$20
 C1/40EB:	98         	TYA
@@ -8546,7 +8556,7 @@ C1/4315:	8E 01 40   	STX $4001
 C1/4318:	8E 03 40   	STX $4003
 C1/431B:	AD CA 7B   	LDA $7BCA
 C1/431E:	F0 05      	BEQ $4325
-C1/4320:	20 2A 02   	JSR $022A
+C1/4320:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/4323:	80 ED      	BRA $4312
 C1/4325:	AD D5 64   	LDA $64D5
 C1/4328:	D0 20      	BNE $434A
@@ -8559,7 +8569,7 @@ C1/4337:	8D C2 7B   	STA $7BC2
 C1/433A:	AD F0 7B   	LDA $7BF0
 C1/433D:	0D C2 7B   	ORA $7BC2
 C1/4340:	F0 05      	BEQ $4347
-C1/4342:	20 2A 02   	JSR $022A
+C1/4342:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/4345:	80 F3      	BRA $433A
 C1/4347:	20 E4 42   	JSR $42E4
 C1/434A:	60         	RTS
@@ -9403,7 +9413,7 @@ C1/49C4:	86 36      	STX $36
 C1/49C6:	A2 55 58   	LDX #$5855
 C1/49C9:	A0 A0 6A   	LDY #$6AA0
 C1/49CC:	A9 7E      	LDA #$7E
-C1/49CE:	20 2B 1A   	JSR $1A2B
+C1/49CE:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/49D1:	7B         	TDC
 C1/49D2:	A8         	TAY
 C1/49D3:	B9 83 58   	LDA $5883,Y
@@ -9422,7 +9432,7 @@ C1/49F3:	86 36      	STX $36
 C1/49F5:	A2 4D 5E   	LDX #$5E4D
 C1/49F8:	A9 7E      	LDA #$7E
 C1/49FA:	A0 00 7E   	LDY #$7E00
-C1/49FD:	20 2B 1A   	JSR $1A2B
+C1/49FD:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/4A00:	60         	RTS
 
 C1/4A01:	20 61 4A   	JSR $4A61
@@ -10696,7 +10706,7 @@ C1/537F:	A2 00 02   	LDX #$0200
 C1/5382:	86 36      	STX $36
 C1/5384:	A2 13 8D   	LDX #$8D13
 C1/5387:	A9 7E      	LDA #$7E
-C1/5389:	4C 2B 1A   	JMP $1A2B
+C1/5389:	4C 2B 1A   	JMP $1A2B         ; execute VRAM DMA transfer
 
 C1/538C:	0A         	ASL A
 C1/538D:	0A         	ASL A
@@ -10957,7 +10967,7 @@ C1/557A:	057E ; 27
 C1/557C:	8359 ; 28
 C1/557E:	1657 ; 29
 C1/5580:	2586 ; 2A
-C1/5582:	7558 ; 2B
+C1/5582:	7558 ; 2B: ($5875)
 C1/5584:	E056 ; 2C
 C1/5586:	B586 ; 2D
 C1/5588:	B158 ; 2E
@@ -11253,18 +11263,18 @@ C1/57D9:	60         	RTS
 ; scrolling?
 
 ; Throw pointers
-C1/57DA:	3A58       ; build list of first 65 items?
-C1/57DC:	5058       ; build list of first 128 items?
-C1/57DE:	5658       ; build list of first 192 items?
-C1/57E0:	5C58       ; build list of first (all?) 256 items
-C1/57E2:	8258
+C1/57DA:	3A 58       ; $00 - build list of first 65 items?
+C1/57DC:	50 58       ; $01 - build list of first 128 items?
+C1/57DE:	56 58       ; $02 - build list of first 192 items?
+C1/57E0:	5C 58       ; $03 - build list of first (all?) 256 items
+C1/57E2:	82 58
 
 ; Tools pointers
-C1/57E4:	3658       ; build list of first 65 items?
-C1/57E6:	5058       ; build list of first 128 items?
-C1/57E8:	5658       ; build list of first 192 items?
-C1/57EA:	5C58       ; build list of first (all?) 256 items
-C1/57EC:	BE58
+C1/57E4:	36 58       ; $04 - build list of first 65 items?
+C1/57E6:	50 58       ; $05 - build list of first 128 items?
+C1/57E8:	56 58       ; $06 - build list of first 192 items?
+C1/57EA:	5C 58       ; $07 - build list of first (all?) 256 items
+C1/57EC:	BE 58       ; $08 - build list of
 
 ; Build tools list or throwables list
 C1/57EE:	86 36      	STX $36         ; set max item index to check
@@ -11334,30 +11344,33 @@ C1/5871:	E8         	INX
 C1/5872:	80 F0      	BRA $5864       ; loop until all 256 slots are filled
 C1/5874:	60         	RTS
 
+; Throw battle menu
+
 C1/5875:	A9 2B      	LDA #$2B
-C1/5877:	8D C2 7B   	STA $7BC2
-C1/587A:	AD 9E 7B   	LDA $7B9E
-C1/587D:	0A         	ASL A
-C1/587E:	AA         	TAX
-C1/587F:	7C DA 57   	JMP ($57DA,X)  ; Jump table
+C1/5877:	8D C2 7B   	STA $7BC2       ; current cursor state
+C1/587A:	AD 9E 7B   	LDA $7B9E       ; inventory id / section
+C1/587D:	0A         	ASL A           ; x2
+C1/587E:	AA         	TAX             ; index it
+C1/587F:	7C DA 57   	JMP ($57DA,X)   ; build tool or throw inventory
 
 C1/5882:	AD A5 7B   	LDA $7BA5
 C1/5885:	30 11      	BMI $5898
 C1/5887:	20 17 5A   	JSR $5A17
-C1/588A:	AE CA 62   	LDX $62CA
+C1/588A:	AE CA 62   	LDX $62CA       ; active character
 C1/588D:	BD 53 89   	LDA $8953,X
 C1/5890:	8D A6 7B   	STA $7BA6
 C1/5893:	A9 80      	LDA #$80
 C1/5895:	8D A5 7B   	STA $7BA5
+
 C1/5898:	AD A6 7B   	LDA $7BA6
 C1/589B:	20 27 4C   	JSR $4C27
 C1/589E:	20 29 57   	JSR $5729
 C1/58A1:	90 0D      	BCC $58B0
 C1/58A3:	9C 9E 7B   	STZ $7B9E
 C1/58A6:	A9 1D      	LDA #$1D
-C1/58A8:	8D F0 7B   	STA $7BF0
+C1/58A8:	8D F0 7B   	STA $7BF0       ; set menu state
 C1/58AB:	A9 0E      	LDA #$0E
-C1/58AD:	4C 2C 5A   	JMP $5A2C
+C1/58AD:	4C 2C 5A   	JMP $5A2C       ; queue up cursor state sequence $0E
 
 C1/58B0:	60         	RTS
 
@@ -11966,7 +11979,7 @@ C1/5DA1:	86 36      	STX $36
 C1/5DA3:	AC AA 7B   	LDY $7BAA
 C1/5DA6:	A2 4D 5E   	LDX #$5E4D
 C1/5DA9:	A9 7E      	LDA #$7E
-C1/5DAB:	20 2B 1A   	JSR $1A2B
+C1/5DAB:	20 2B 1A   	JSR $1A2B         ; execute VRAM DMA transfer
 C1/5DAE:	9C A9 7B   	STZ $7BA9
 C1/5DB1:	AD 85 62   	LDA $6285
 C1/5DB4:	30 04      	BMI $5DBA
@@ -12031,7 +12044,7 @@ C1/5E1F:	A6 4A      	LDX $4A
 C1/5E21:	DA         	PHX
 C1/5E22:	A5 7A      	LDA $7A
 C1/5E24:	48         	PHA
-C1/5E25:	20 2A 02   	JSR $022A
+C1/5E25:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/5E28:	68         	PLA
 C1/5E29:	85 7A      	STA $7A
 C1/5E2B:	FA         	PLX
@@ -15978,26 +15991,28 @@ C1/7CC8:	20 AB 84   	JSR $84AB
 C1/7CCB:	20 A9 7C   	JSR $7CA9
 C1/7CCE:	BD 30 20   	LDA $2030,X
 C1/7CD1:	8D 84 7A   	STA $7A84
-C1/7CD4:	BD 2E 20   	LDA $202E,X
-C1/7CD7:	99 AF 2B   	STA $2BAF,Y
-C1/7CDA:	29 7F      	AND #$7F
-C1/7CDC:	0A         	ASL A
-C1/7CDD:	AA         	TAX
+C1/7CD4:	BD 2E 20   	LDA $202E,X    ; slot's command number
+C1/7CD7:	99 AF 2B   	STA $2BAF,Y    ; pending user action
+C1/7CDA:	29 7F      	AND #$7F       ; mask top bit [?]
+C1/7CDC:	0A         	ASL A          ; x2
+C1/7CDD:	AA         	TAX            ; index it
 C1/7CDE:	7C E9 7C   	JMP ($7CE9,X)  ; Jump table
 
 C1/7CE1:	A9 01      	LDA #$01
 C1/7CE3:	8D E8 7A   	STA $7AE8
 C1/7CE6:	4C A0 57   	JMP $57A0
 
-C1/7CE9:	9277
-C1/7CEB:	6957
-C1/7CED:	A057
-C1/7CEF:	9577
-C1/7CF1:	9577
-C1/7CF3:	9577
-C1/7CF5:	9577
-C1/7CF7:	1B56
-C1/7CF9:	7558
+; Battle Menu Command Selection
+
+C1/7CE9:	9277 ; $00 ($7792) - Fight
+C1/7CEB:	6957 ; $01 ($5769) - Item
+C1/7CED:	A057 ; $02 ($57A0) - Magic
+C1/7CEF:	9577 ; $03 ($7795) - Morph
+C1/7CF1:	9577 ; $04 ($7795) - Revert
+C1/7CF3:	9577 ; $05 ($7795) - Steal
+C1/7CF5:	9577 ; $06 ($7795) - Capture
+C1/7CF7:	1B56 ; $07 ($561B) - SwdTech
+C1/7CF9:	7558 ; $08 ($5875) - Throw
 C1/7CFB:	B158
 C1/7CFD:	6B77
 C1/7CFF:	9577
@@ -18570,15 +18585,15 @@ C1/9121:	4C 95 77    JMP $7795
 
 C1/9124:	20 43 AB   	JSR $AB43
 C1/9127:	9C B0 62   	STZ $62B0
-C1/912A:	20 E5 94   	JSR $94E5
-C1/912D:	20 F4 94   	JSR $94F4      ; copy monster sprite data
+C1/912A:	20 E5 94   	JSR $94E5        ; move color palette data from/to buffer [?]
+C1/912D:	20 F4 94   	JSR $94F4       ; copy monster sprite data to buffer
 C1/9130:	9C D0 62   	STZ $62D0
 C1/9133:	9C D1 62   	STZ $62D1
 C1/9136:	6B         	RTL
 
-C1/9137:	20 E5 94   	JSR $94E5
-C1/913A:	20 03 95   	JSR $9503
-C1/913D:	20 85 B0   	JSR $B085
+C1/9137:	20 E5 94   	JSR $94E5        ; move color palette data from/to buffer [?]
+C1/913A:	20 03 95   	JSR $9503       ; update monster sprite data from buffer
+C1/913D:	20 85 B0   	JSR $B085       ; post-animation cleanup [?]
 C1/9140:	9C D0 62   	STZ $62D0
 C1/9143:	9C D1 62   	STZ $62D1
 C1/9146:	6B         	RTL
@@ -18667,7 +18682,7 @@ C1/91D7:	22 6B A9 C2	JSR $C2A96B
 C1/91DB:	6B         	RTL
 
 C1/91DC:	EE BF 62   	INC $62BF
-C1/91DF:	20 E5 94   	JSR $94E5
+C1/91DF:	20 E5 94   	JSR $94E5        ; move color palette data from/to buffer [?]
 C1/91E2:	7B         	TDC
 C1/91E3:	20 56 92   	JSR $9256
 C1/91E6:	48         	PHA
@@ -18692,14 +18707,14 @@ C1/9207:	86 10      	STX $10
 C1/9209:	4C 3C C2   	JMP $C23C
 
 C1/920C:	EE BF 62   	INC $62BF
-C1/920F:	20 E5 94   	JSR $94E5
+C1/920F:	20 E5 94   	JSR $94E5        ; move color palette data from/to buffer [?]
 C1/9212:	7B         	TDC
 C1/9213:	AA         	TAX
 C1/9214:	9E 80 7F   	STZ $7F80,X
 C1/9217:	E8         	INX
 C1/9218:	E0 80 00   	CPX #$0080
 C1/921B:	D0 F7      	BNE $9214
-C1/921D:	20 2A 02   	JSR $022A
+C1/921D:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/9220:	A9 0F      	LDA #$0F
 C1/9222:	8D AC 61   	STA $61AC
 C1/9225:	A9 1F      	LDA #$1F
@@ -18753,7 +18768,7 @@ C1/9283:	9C 1E 20    STZ $201E
 C1/9286:	AD B8 EC    LDA $ECB8
 C1/9289:	48          PHA
 C1/928A:	20 D1 1B    JSR $1BD1
-C1/928D:	20 2A 02    JSR $022A
+C1/928D:	20 2A 02    JSR $022A          ; wait a frame (and run updates)
 C1/9290:	7B          TDC
 C1/9291:	AA          TAX
 C1/9292:	8E B2 64    STX $64B2
@@ -18785,12 +18800,12 @@ C1/92D3:	68          PLA
 C1/92D4:	8D DF E9    STA $E9DF
 C1/92D7:	48          PHA
 C1/92D8:	20 DF 1B    JSR $1BDF
-C1/92DB:	20 2A 02    JSR $022A
+C1/92DB:	20 2A 02    JSR $022A          ; wait a frame (and run updates)
 C1/92DE:	20 07 B0    JSR $B007
 C1/92E1:	7B          TDC
 C1/92E2:	AA          TAX
 C1/92E3:	8E B2 64    STX $64B2
-C1/92E6:	20 2A 02    JSR $022A
+C1/92E6:	20 2A 02    JSR $022A          ; wait a frame (and run updates)
 C1/92E9:	68          PLA
 C1/92EA:	20 DC 1B    JSR $1BDC
 C1/92ED:	20 07 B0    JSR $B007
@@ -18917,11 +18932,11 @@ C1/9400:	4C 92 94   	JMP $9492
 
 C1/9403:	48         	PHA
 C1/9404:	9C 67 7B   	STZ $7B67
-C1/9407:	20 2A 02   	JSR $022A
-C1/940A:	20 59 1E   	JSR $1E59
-C1/940D:	20 ED 1F   	JSR $1FED
-C1/9410:	20 F9 B0   	JSR $B0F9
-C1/9413:	20 F4 94   	JSR $94F4      ; copy monster sprite data
+C1/9407:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/940A:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
+C1/940D:	20 ED 1F   	JSR $1FED          ; fill BG tile data buffer w/ $01EE
+C1/9410:	20 F9 B0   	JSR $B0F9          ; move BG tile buffer to BG3 VRAM
+C1/9413:	20 F4 94   	JSR $94F4          ; copy monster sprite data to buffer
 C1/9416:	7B         	TDC
 C1/9417:	AA         	TAX
 C1/9418:	BF 5D B0 C2	LDA $C2B05D,X
@@ -18965,7 +18980,7 @@ C1/946C:	A9 2D      	LDA #$2D
 C1/946E:	20 EF 17   	JSR $17EF
 C1/9471:	A9 20      	LDA #$20
 C1/9473:	48         	PHA
-C1/9474:	20 2A 02   	JSR $022A
+C1/9474:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/9477:	20 C0 94   	JSR $94C0
 C1/947A:	68         	PLA
 C1/947B:	3A         	DEC A
@@ -18976,7 +18991,7 @@ C1/9484:	7B         	TDC
 C1/9485:	AA         	TAX
 C1/9486:	86 10      	STX $10
 C1/9488:	20 3C C2   	JSR $C23C
-C1/948B:	20 03 95   	JSR $9503
+C1/948B:	20 03 95   	JSR $9503        ; update monster sprite data from buffer
 C1/948E:	22 97 01 C1	JSL $C10197
 C1/9492:	AD 1E 20   	LDA $201E
 C1/9495:	CD 2F 2F   	CMP $2F2F
@@ -19020,16 +19035,17 @@ C1/94E1:	7B         	TDC
 C1/94E2:	E2 20      	SEP #$20           ; 8-bit A
 C1/94E4:	60         	RTS
 
-C1/94E5:	7B         	TDC
-C1/94E6:	AA         	TAX
-C1/94E7:	BD 00 7E   	LDA $7E00,X
-C1/94EA:	9D 00 7C   	STA $7C00,X
+; Move color palette data from/to buffer [?]
+C1/94E5:	7B         	TDC              ; A = 0000
+C1/94E6:	AA         	TAX              ; X = 0000
+C1/94E7:	BD 00 7E   	LDA $7E00,X      ; color palettes (buffer?)
+C1/94EA:	9D 00 7C   	STA $7C00,X      ; update color palettes [?]
 C1/94ED:	E8         	INX
-C1/94EE:	E0 00 02   	CPX #$0200
-C1/94F1:	D0 F4      	BNE $94E7
+C1/94EE:	E0 00 02   	CPX #$0200       ; move full color palette data
+C1/94F1:	D0 F4      	BNE $94E7        ; continue loop
 C1/94F3:	60         	RTS
 
-; Move monster sprite data to new location (12 bytes)
+; Move monster sprite data to animation buffer
 C1/94F4:	7B         	TDC
 C1/94F5:	AA         	TAX              ; X = 0 (index to monster)
 C1/94F6:	BD DB 80   	LDA $80DB,X      ; A = monster data
@@ -19039,13 +19055,14 @@ C1/94FD:	E0 0C 00   	CPX #$000C       ; write 12 bytes total, 2 per monster
 C1/9500:	D0 F4      	BNE $94F6
 C1/9502:	60         	RTS
 
-C1/9503:	7B         	TDC
-C1/9504:	AA         	TAX
-C1/9505:	BD 0B 81   	LDA $810B,X
-C1/9508:	9D DB 80   	STA $80DB,X
-C1/950B:	E8         	INX
-C1/950C:	E0 0C 00   	CPX #$000C
-C1/950F:	D0 F4      	BNE $9505
+; Update monster sprite data from buffer
+C1/9503:	7B         	TDC              ; A = 0000
+C1/9504:	AA         	TAX              ; X = 0000
+C1/9505:	BD 0B 81   	LDA $810B,X      ; monster sprite data (buffer)
+C1/9508:	9D DB 80   	STA $80DB,X      ; update permanent monster sprite data
+C1/950B:	E8         	INX              ; next byte
+C1/950C:	E0 0C 00   	CPX #$000C       ; loop 12 times (2 bytes per monster)
+C1/950F:	D0 F4      	BNE $9505        ; continue loop
 C1/9511:	60         	RTS
 
 ; Setup the Battle Dynamics Script to be decoded
@@ -19190,7 +19207,7 @@ C1/9608:	60         	RTS
 ; Battle Dynamics Command 03
 ; Simultaneous multiple damage display
 C1/9609:	20 FA A5   	JSR $A5FA
-C1/960C:	20 2A 02   	JSR $022A
+C1/960C:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/960F:	7B         	TDC
 C1/9610:	AA         	TAX
 C1/9611:	1D 3F 7B   	ORA $7B3F,X
@@ -19282,7 +19299,7 @@ C1/96B0:	A9 3C      	LDA #$3C
 C1/96B2:	8D C3 7B   	STA $7BC3
 C1/96B5:	A9 02      	LDA #$02
 C1/96B7:	8D C2 7B   	STA $7BC2
-C1/96BA:	20 2A 02   	JSR $022A
+C1/96BA:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/96BD:	9C D5 64   	STZ $64D5
 C1/96C0:	60         	RTS
 
@@ -19319,7 +19336,7 @@ C1/9702:	48         	PHA
 C1/9703:	2B         	PLD
 C1/9704:	E2 20      	SEP #$20           ; 8-bit A
 C1/9706:	C2 10      	REP #$10
-C1/9708:	20 2A 02   	JSR $022A
+C1/9708:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/970B:	60         	RTS
 
 C1/970C:	20 0F 98   	JSR $980F
@@ -19375,7 +19392,7 @@ C1/9774:	A9 12      	LDA #$12
 C1/9776:	8D 8D 89   	STA $898D
 C1/9779:	20 D5 5D   	JSR $5DD5
 C1/977C:	20 87 98   	JSR $9887
-C1/977F:	20 26 1F   	JSR $1F26
+C1/977F:	20 26 1F   	JSR $1F26          ; set battlefield BG1 tiles in VRAM
 C1/9782:	68         	PLA
 C1/9783:	8D 8D 89   	STA $898D
 C1/9786:	A9 20      	LDA #$20
@@ -19383,7 +19400,7 @@ C1/9788:	20 B6 9B   	JSR $9BB6
 C1/978B:	A9 12      	LDA #$12
 C1/978D:	8D 8D 89   	STA $898D
 C1/9790:	20 17 99   	JSR $9917
-C1/9793:	20 2A 02   	JSR $022A
+C1/9793:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/9796:	A9 17      	LDA #$17
 C1/9798:	8D 8D 89   	STA $898D
 C1/979B:	7B         	TDC
@@ -19430,14 +19447,14 @@ C1/97E3:	A9 01      	LDA #$01
 C1/97E5:	8D AC 62   	STA $62AC
 C1/97E8:	20 D5 5D   	JSR $5DD5
 C1/97EB:	20 87 98   	JSR $9887
-C1/97EE:	20 26 1F   	JSR $1F26
+C1/97EE:	20 26 1F   	JSR $1F26          ; set battlefield BG1 tiles in VRAM
 C1/97F1:	A9 17      	LDA #$17
 C1/97F3:	8D 8D 89   	STA $898D
 C1/97F6:	20 A7 98   	JSR $98A7
 C1/97F9:	A9 12      	LDA #$12
 C1/97FB:	8D 8D 89   	STA $898D
 C1/97FE:	20 17 99   	JSR $9917
-C1/9801:	20 2A 02   	JSR $022A
+C1/9801:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/9804:	A9 17      	LDA #$17
 C1/9806:	8D 8D 89   	STA $898D
 C1/9809:	7B         	TDC
@@ -19447,7 +19464,7 @@ C1/980E:	60         	RTS
 
 C1/980F:	A9 0B      	LDA #$0B
 C1/9811:	20 C4 98   	JSR $98C4
-C1/9814:	20 26 1F   	JSR $1F26
+C1/9814:	20 26 1F   	JSR $1F26          ; set battlefield BG1 tiles in VRAM
 C1/9817:	4C 80 99   	JMP $9980
 
 C1/981A:	A9 D0      	LDA #$D0
@@ -19536,7 +19553,7 @@ C1/98B4:	29 07      	AND #$07
 C1/98B6:	AA         	TAX
 C1/98B7:	BF 72 98 C1	LDA $C19872,X    ; Data
 C1/98BB:	48         	PHA
-C1/98BC:	20 2A 02   	JSR $022A
+C1/98BC:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/98BF:	68         	PLA
 C1/98C0:	3A         	DEC A
 C1/98C1:	D0 F8      	BNE $98BB
@@ -19549,14 +19566,14 @@ C1/98CB:	A9 01      	LDA #$01
 C1/98CD:	8D C3 E9   	STA $E9C3
 C1/98D0:	A0 00 50   	LDY #$5000
 C1/98D3:	8C BF E9   	STY $E9BF
-C1/98D6:	20 2A 02   	JSR $022A
-C1/98D9:	20 59 1E   	JSR $1E59
-C1/98DC:	20 2A 02   	JSR $022A
+C1/98D6:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/98D9:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
+C1/98DC:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/98DF:	20 34 40   	JSR $4034
 C1/98E2:	AD 7D 89   	LDA $897D
 C1/98E5:	8D 7D 60   	STA $607D
 C1/98E8:	20 29 96   	JSR $9629
-C1/98EB:	20 2A 02   	JSR $022A
+C1/98EB:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/98EE:	20 BB 5D   	JSR $5DBB
 C1/98F1:	A0 00 50   	LDY #$5000
 C1/98F4:	8C BF E9   	STY $E9BF
@@ -19589,8 +19606,8 @@ C1/992B:	20 BB 5D   	JSR $5DBB
 C1/992E:	A0 00 50   	LDY #$5000
 C1/9931:	8C BF E9   	STY $E9BF
 C1/9934:	20 9B 63   	JSR $639B
-C1/9937:	20 59 1E   	JSR $1E59
-C1/993A:	20 2A 02   	JSR $022A
+C1/9937:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
+C1/993A:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/993D:	20 5F 96   	JSR $965F
 C1/9940:	AD 7D 60   	LDA $607D
 C1/9943:	8D 7D 89   	STA $897D
@@ -19687,7 +19704,7 @@ C1/99EF:	AD BA 64   	LDA $64BA
 C1/99F2:	AA         	TAX
 C1/99F3:	BF C1 99 C1	LDA $C199C1,X    ; Data
 C1/99F7:	8D F1 7A   	STA $7AF1
-C1/99FA:	20 2A 02   	JSR $022A
+C1/99FA:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/99FD:	7B         	TDC
 C1/99FE:	A8         	TAY
 C1/99FF:	B9 AE 61   	LDA $61AE,Y
@@ -19934,7 +19951,7 @@ C1/9BB6:	C9 00      	CMP #$00
 C1/9BB8:	F0 0A      	BEQ $9BC4
 C1/9BBA:	48         	PHA
 C1/9BBB:	DA         	PHX
-C1/9BBC:	20 2A 02   	JSR $022A      ; loop frame advance A times
+C1/9BBC:	20 2A 02   	JSR $022A         ; loop frame advance A times
 C1/9BBF:	FA         	PLX
 C1/9BC0:	68         	PLA
 C1/9BC1:	3A         	DEC A
@@ -20338,9 +20355,10 @@ C1/9EC2:	7B         	TDC
 C1/9EC3:	E2 20      	SEP #$20           ; 8-bit A
 C1/9EC5:	60         	RTS
 
-C1/9EC6:	20 CA 9E   	JSR $9ECA
+C1/9EC6:	20 CA 9E   	JSR $9ECA       ; fill BG1 animation tile buffer w/ $02EE
 C1/9EC9:	6B         	RTL
 
+; Fill BG1 Animation Tile Buffer w/ $02EE
 C1/9ECA:	8B         	PHB               ; store bank
 C1/9ECB:	A9 7F      	LDA #$7F
 C1/9ECD:	48         	PHA
@@ -20362,6 +20380,7 @@ C1/9EEA:	E2 20      	SEP #$20          ; 8-bit A
 C1/9EEC:	AB         	PLB               ; restore bank
 C1/9EED:	60         	RTS
 
+; FIll BG3 Animation Tile Buffer w/ $01EE
 C1/9EEE:	8B         	PHB               ; store bank
 C1/9EEF:	A9 7F      	LDA #$7F
 C1/9EF1:	48         	PHA
@@ -20417,7 +20436,7 @@ C1/9F44:	29 01      	AND #$01
 C1/9F46:	F0 E1      	BEQ $9F29
 C1/9F48:	80 E8      	BRA $9F32
 C1/9F4A:	20 1C 9F   	JSR $9F1C
-C1/9F4D:	20 EE 9E   	JSR $9EEE        ; fill/clear BG3 animation tile data buffer [?]
+C1/9F4D:	20 EE 9E   	JSR $9EEE       ; fill BG3 animation tile buffer w/ $01EE
 C1/9F50:	A9 D1      	LDA #$D1
 C1/9F52:	85 12      	STA $12
 C1/9F54:	A9 7F      	LDA #$7F
@@ -20428,7 +20447,7 @@ C1/9F5C:	A2 00 E4   	LDX #$E400
 C1/9F5F:	80 12      	BRA $9F73
 
 C1/9F61:	48         	PHA
-C1/9F62:	20 CA 9E   	JSR $9ECA
+C1/9F62:	20 CA 9E   	JSR $9ECA       ; fill BG1 animation tile buffer w/ $02EE
 C1/9F65:	A9 D1      	LDA #$D1
 C1/9F67:	85 12      	STA $12
 C1/9F69:	A9 7F      	LDA #$7F
@@ -20763,9 +20782,10 @@ C1/A1AD:	7B         	TDC                ; A = 0000
 C1/A1AE:	E2 20      	SEP #$20           ; 8-bit A
 C1/A1B0:	60         	RTS
 
-; Move 32-byte tiles from ROM to VRAM
+; ###########################
+; Move tiles from ROM to VRAM
 
-; Move 128 tiles
+; Set VRAM - Battle Animation Sprite Graphics [?] (128 tiles)
 C1/A1B1:	86 10      	STX $10            ; store pointer to instructions
 C1/A1B3:	A2 80 00   	LDX #$0080         ; number of tiles to move
 C1/A1B6:	86 16      	STX $16            ; save it
@@ -20773,7 +20793,7 @@ C1/A1B8:	A2 00 24   	LDX #$2400         ; ultimate VRAM destination
 C1/A1BB:	86 1A      	STX $1A            ; save it
 C1/A1BD:	4C EF A1   	JMP $A1EF          ; finish prepping VRAM move
 
-; Move 96 tiles
+; Set VRAM - Battle Animation Sprite Graphics [?] (96 tiles)
 C1/A1C0:	86 10      	STX $10            ; store pointer to instructions
 C1/A1C2:	A2 60 00   	LDX #$0060         ; number of tiles to move
 C1/A1C5:	86 16      	STX $16            ; save it
@@ -20781,7 +20801,7 @@ C1/A1C7:	A2 00 26   	LDX #$2600         ; ultimate VRAM destination
 C1/A1CA:	86 1A      	STX $1A            ; save it
 C1/A1CC:	4C EF A1   	JMP $A1EF          ; finish prepping VRAM move
 
-; Move 128 tiles (different method) [?]
+; Set VRAM - BG3 Battlefield Animation Graphics (128 tiles)
 C1/A1CF:	86 10      	STX $10            ; store pointer to instructions
 C1/A1D1:	A2 80 00   	LDX #$0080         ; number of tiles to move
 C1/A1D4:	86 16      	STX $16            ; save it
@@ -20790,7 +20810,7 @@ C1/A1D9:	86 1A      	STX $1A            ; save it
 C1/A1DB:	A5 11      	LDA $11
 C1/A1DD:	4C C8 A3   	JMP $A3C8
 
-; Move 160 tiles
+; Set VRAM - BG1 Battlefield Animation Graphics (160 tiles)
 C1/A1E0:	86 10      	STX $10            ; store pointer to instructions
 C1/A1E2:	A2 A0 00   	LDX #$00A0         ; number of tiles to move
 C1/A1E5:	86 16      	STX $16            ; save it
@@ -20809,6 +20829,7 @@ C1/A1FA:	4C 06 A3   	JMP $A306          ; alternate tile move procedure [?]
 ; Multi-tile move (ROM --> RAM --> VRAM) procedure
 ; Uses variable ROM offset for tile data, $D30000 - $D40000
 ; Second 16-byte block alternates zeroes
+; Handles 32-byte tiles?
 
 C1/A1FD:	85 11      	STA $11            ; restore graphics byte 2 (why?)
 C1/A1FF:	A5 10      	LDA $10            ; graphics byte 1
@@ -20968,6 +20989,7 @@ C1/A303:	4C 8D 19   	JMP $198D          ; execute VRAM DMA transfer
 ; Alternate tile move (ROM --> RAM --> VRAM) procedure
 ; Uses fixed ROM offset for tile data, $D87000, and
 ; second 16-byte block is always zeroed (simpler palette?)
+; Handles 16-byte tiles?
 
 C1/A306:	85 11      	STA $11            ; restore graphics byte 2 (why?)
 C1/A308:	A5 10      	LDA $10            ; graphics byte 1
@@ -21285,7 +21307,7 @@ C1/A4F6:	8D 17 63   	STA $6317       ; save it
 C1/A4F9:	BF CC A5 C1	LDA $C1A5CC,X   ; address to write VRAM (hi byte) [?]      ; Data
 C1/A4FD:	8D 18 63   	STA $6318       ; save it
 C1/A500:	EE 16 63   	INC $6316       ; enable dmg numeral graphics update
-C1/A503:	20 2A 02   	JSR $022A       ; wait a frame, then run menu update?
+C1/A503:	20 2A 02   	JSR $022A       ; wait a frame, then run menu update
 C1/A506:	A0 03 00   	LDY #$0003
 C1/A509:	B1 76      	LDA ($76),Y     ; A = dmg high byte: hmdddddd
 C1/A50B:	C9 FF      	CMP #$FF        ; h=heal,m=miss,d=damage-bits
@@ -21663,7 +21685,7 @@ C1/A79A:	60         	RTS
 
 ; Reflection Function
 
-C1/A79B:	20 F4 94   	JSR $94F4           ; copy monster sprite data
+C1/A79B:	20 F4 94   	JSR $94F4           ; copy monster sprite data to buffer
 C1/A79E:	EE D1 62   	INC $62D1
 C1/A7A1:	7B         	TDC
 C1/A7A2:	A8         	TAY
@@ -21789,7 +21811,7 @@ C1/A897:	A4 12      	LDY $12
 C1/A899:	5A         	PHY
 C1/A89A:	A9 01      	LDA #$01
 C1/A89C:	8D 7E 60   	STA $607E
-C1/A89F:	20 3E B2   	JSR $B23E
+C1/A89F:	20 3E B2   	JSR $B23E           ; prepare animation thread for execution
 C1/A8A2:	7A         	PLY
 C1/A8A3:	84 12      	STY $12
 C1/A8A5:	66 13      	ROR $13
@@ -21810,7 +21832,7 @@ C1/A8C7:	AC 31 7B   	LDY $7B31
 C1/A8CA:	84 22      	STY $22
 C1/A8CC:	AC 75 62   	LDY $6275
 C1/A8CF:	84 24      	STY $24
-C1/A8D1:	20 3E B2   	JSR $B23E
+C1/A8D1:	20 3E B2   	JSR $B23E           ; prepare animation thread for execution
 C1/A8D4:	A2 00 05   	LDX #$0500
 C1/A8D7:	BD 86 6F   	LDA $6F86,X
 C1/A8DA:	09 01      	ORA #$01
@@ -21827,7 +21849,7 @@ C1/A8F3:	AC 33 7B   	LDY $7B33
 C1/A8F6:	84 22      	STY $22
 C1/A8F8:	AC 77 62   	LDY $6277
 C1/A8FB:	84 24      	STY $24
-C1/A8FD:	20 3E B2   	JSR $B23E
+C1/A8FD:	20 3E B2   	JSR $B23E           ; prepare animation thread for execution
 C1/A900:	A2 10 05   	LDX #$0510
 C1/A903:	BD 86 6F   	LDA $6F86,X
 C1/A906:	09 02      	ORA #$02
@@ -21871,7 +21893,7 @@ C1/A953:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
 C1/A957:	AA         	TAX
 C1/A958:	7B         	TDC
 C1/A959:	E2 20      	SEP #$20           ; 8-bit A
-C1/A95B:	20 08 B2   	JSR $B208
+C1/A95B:	20 08 B2   	JSR $B208        ; prepare extra animation thread for execution
 C1/A95E:	7B         	TDC
 C1/A95F:	AA         	TAX
 C1/A960:	8E 80 60   	STX $6080
@@ -21888,13 +21910,13 @@ C1/A974:	8E 80 60   	STX $6080
 C1/A977:	20 2F AE   	JSR $AE2F
 C1/A97A:	20 E5 94   	JSR $94E5
 C1/A97D:	20 53 C6   	JSR $C653
-C1/A980:	20 03 95   	JSR $9503
-C1/A983:	20 85 B0   	JSR $B085
+C1/A980:	20 03 95   	JSR $9503          ; update monster sprite data from buffer
+C1/A983:	20 85 B0   	JSR $B085          ; post-animation cleanup [?]
 C1/A986:	9C D1 62   	STZ $62D1
 C1/A989:	9C D0 62   	STZ $62D0
 C1/A98C:	4C 6E 95   	JMP $956E
 
-C1/A98F:	20 F4 94   	JSR $94F4           ; copy monster sprite data
+C1/A98F:	20 F4 94   	JSR $94F4           ; copy monster sprite data to buffer
 C1/A992:	EE D0 62   	INC $62D0
 C1/A995:	EE D1 62   	INC $62D1
 C1/A998:	7B         	TDC
@@ -22005,7 +22027,7 @@ C1/AA71:	A4 12      	LDY $12
 C1/AA73:	5A         	PHY
 C1/AA74:	A9 01      	LDA #$01
 C1/AA76:	8D 7E 60   	STA $607E
-C1/AA79:	20 3E B2   	JSR $B23E
+C1/AA79:	20 3E B2   	JSR $B23E           ; prepare animation thread for execution
 C1/AA7C:	7A         	PLY
 C1/AA7D:	84 12      	STY $12
 C1/AA7F:	66 13      	ROR $13
@@ -22029,7 +22051,7 @@ C1/AA9B:	99 BB 61   	STA $61BB,Y
 
 C1/AA9E:	4C B3 A8   	JMP $A8B3
 
-C1/AAA1:	20 A5 AA   	JSR $AAA5
+C1/AAA1:	20 A5 AA   	JSR $AAA5           ; set target in $12 (checks reflector)
 C1/AAA4:	6B         	RTL
 
 C1/AAA5:	AD D1 62   	LDA $62D1           ; reflection or super ball [?]
@@ -22075,40 +22097,43 @@ C1/AAE5:	98         	TYA                 ; reflector index
 C1/AAE6:	8D 40 61   	STA $6140           ; save as animation entity [?]
 C1/AAE9:	60         	RTS
 
-C1/AAEA:	AC 75 62   	LDY $6275
-C1/AAED:	30 27      	BMI $AB16
-C1/AAEF:	20 A5 AA   	JSR $AAA5
-C1/AAF2:	A5 12      	LDA $12
-C1/AAF4:	8D 3F 61   	STA $613F
+; Prepare/Setup BG1 and BG3 animation scripts
+
+C1/AAEA:	AC 75 62   	LDY $6275         ; BG1 animation script id
+C1/AAED:	30 27      	BMI $AB16         ; branch if BG1 script disabled [?]
+C1/AAEF:	20 A5 AA   	JSR $AAA5         ; set target in $12 (checks reflector)
+C1/AAF2:	A5 12      	LDA $12           ; target id
+C1/AAF4:	8D 3F 61   	STA $613F         ; set BG thread starting position
 C1/AAF7:	A9 01      	LDA #$01
-C1/AAF9:	85 1C      	STA $1C
-C1/AAFB:	A2 00 05   	LDX #$0500
-C1/AAFE:	AC 31 7B   	LDY $7B31
-C1/AB01:	84 22      	STY $22
-C1/AB03:	AC 75 62   	LDY $6275
-C1/AB06:	84 24      	STY $24
-C1/AB08:	20 3E B2   	JSR $B23E
-C1/AB0B:	A2 00 05   	LDX #$0500
+C1/AAF9:	85 1C      	STA $1C           ; flag "some animation" [?]
+C1/AAFB:	A2 00 05   	LDX #$0500        ; redundant with LDX below
+C1/AAFE:	AC 31 7B   	LDY $7B31         ; BG1 animation frame dimensions
+C1/AB01:	84 22      	STY $22           ; set for $B23E below
+C1/AB03:	AC 75 62   	LDY $6275         ; BG1 animation script id
+C1/AB06:	84 24      	STY $24           ; set for $B23E below
+C1/AB08:	20 3E B2   	JSR $B23E         ; prepare animation thread for execution
+C1/AB0B:	A2 00 05   	LDX #$0500        ; BG1 animation thread offset
 C1/AB0E:	BD 86 6F   	LDA $6F86,X
 C1/AB11:	09 01      	ORA #$01
-C1/AB13:	9D 86 6F   	STA $6F86,X
-C1/AB16:	AC 77 62   	LDY $6277
-C1/AB19:	30 27      	BMI $AB42
-C1/AB1B:	20 A5 AA   	JSR $AAA5
-C1/AB1E:	A5 12      	LDA $12
-C1/AB20:	8D 3F 61   	STA $613F
+C1/AB13:	9D 86 6F   	STA $6F86,X       ; set thread to BG1 layer
+
+C1/AB16:	AC 77 62   	LDY $6277         ; BG3 animation script id
+C1/AB19:	30 27      	BMI $AB42         ; exit if BG3 script disabled [?]
+C1/AB1B:	20 A5 AA   	JSR $AAA5         ; set target in $12 (checks reflector)
+C1/AB1E:	A5 12      	LDA $12           ; target id
+C1/AB20:	8D 3F 61   	STA $613F         ; set BG thread starting position
 C1/AB23:	A9 01      	LDA #$01
-C1/AB25:	85 1C      	STA $1C
-C1/AB27:	A2 10 05   	LDX #$0510
-C1/AB2A:	AC 33 7B   	LDY $7B33
-C1/AB2D:	84 22      	STY $22
-C1/AB2F:	AC 77 62   	LDY $6277
-C1/AB32:	84 24      	STY $24
-C1/AB34:	20 3E B2   	JSR $B23E
-C1/AB37:	A2 10 05   	LDX #$0510
+C1/AB25:	85 1C      	STA $1C           ; flag "some animation" [?]
+C1/AB27:	A2 10 05   	LDX #$0510        ; redundant with LDX below
+C1/AB2A:	AC 33 7B   	LDY $7B33         ; BG3 animation frame dimensions
+C1/AB2D:	84 22      	STY $22           ; set for $B23E below
+C1/AB2F:	AC 77 62   	LDY $6277         ; BG3 animation script id
+C1/AB32:	84 24      	STY $24           ; set for $B23E below
+C1/AB34:	20 3E B2   	JSR $B23E         ; prepare animation thread for execution
+C1/AB37:	A2 10 05   	LDX #$0510        ; BG3 animation thread offset
 C1/AB3A:	BD 86 6F   	LDA $6F86,X
 C1/AB3D:	09 02      	ORA #$02
-C1/AB3F:	9D 86 6F   	STA $6F86,X
+C1/AB3F:	9D 86 6F   	STA $6F86,X       ; set thread to BG3 layer
 C1/AB42:	60         	RTS
 
 C1/AB43:	A9 01      	LDA #$01
@@ -22121,7 +22146,7 @@ C1/AB54:	9C 99 00   	STZ $0099      ; pause sprite animation threads [?]
 C1/AB57:	60         	RTS
 
 C1/AB58:	9C B0 62   	STZ $62B0      ; esper thread 1 sprite priority [?]
-C1/AB5B:	20 F4 94   	JSR $94F4      ; copy monster sprite data
+C1/AB5B:	20 F4 94   	JSR $94F4      ; copy monster sprite data to buffer
 C1/AB5E:	20 67 AB   	JSR $AB67      ; copy original character/monster targets
 C1/AB61:	20 A2 9A   	JSR $9AA2      ; initial attack animation
 C1/AB64:	4C 43 AB   	JMP $AB43      ; initialize animation threads
@@ -22249,27 +22274,29 @@ C1/AC2E:	20 5B AC   	JSR $AC5B       ; animate the spell
 C1/AC31:	20 35 AC   	JSR $AC35       ; fill/clear BG1 and BG3 tile data
 C1/AC34:	60         	RTS
 
-C1/AC35:	20 CA 9E   	JSR $9ECA       ; fill/clear BG1 animation tile data buffer [?]
+; Fill VRAM BG1/BG3 with $02EE/$01EE Respectively
+
+C1/AC35:	20 CA 9E   	JSR $9ECA       ; fill BG1 animation tile buffer w/ $02EE
 C1/AC38:	A2 00 08   	LDX #$0800
 C1/AC3B:	86 10      	STX $10         ; VRAM transfer data length
-C1/AC3D:	A2 00 C4   	LDX #$C400      ; VRAM transfer source offset
+C1/AC3D:	A2 00 C4   	LDX #$C400      ; VRAM transfer source (BG1 tiles buffer)
 C1/AC40:	A9 7F      	LDA #$7F        ; VRAM transfer source bank
-C1/AC42:	A0 00 0C   	LDY #$0C00      ; VRAM destination offset
+C1/AC42:	A0 00 0C   	LDY #$0C00      ; VRAM destination (Battlefield BG1 tiles)
 C1/AC45:	20 8D 19   	JSR $198D       ; initialize VRAM DMA transfer
-C1/AC48:	20 EE 9E   	JSR $9EEE       ; fill/clear BG3 animation tile data buffer [?]
+C1/AC48:	20 EE 9E   	JSR $9EEE       ; fill BG3 animation tile buffer w/ $01EE
 C1/AC4B:	A2 00 08   	LDX #$0800
 C1/AC4E:	86 10      	STX $10         ; VRAM transfer data length
-C1/AC50:	A2 00 E4   	LDX #$E400      ; VRAM transfer source offset
+C1/AC50:	A2 00 E4   	LDX #$E400      ; VRAM transfer source (BG3 tiles buffer)
 C1/AC53:	A9 7F      	LDA #$7F        ; VRAM transfer source bank
-C1/AC55:	A0 00 54   	LDY #$5400      ; VRAM destination offset
+C1/AC55:	A0 00 54   	LDY #$5400      ; VRAM destination offset (Battlefield BG3 tiles)
 C1/AC58:	4C 8D 19   	JMP $198D       ; initialize VRAM DMA transfer
 
 ; Setup magic spell animation
 
 C1/AC5B:	20 6B AC   	JSR $AC6B
 C1/AC5E:	20 53 C6   	JSR $C653
-C1/AC61:	20 03 95   	JSR $9503
-C1/AC64:	4C 85 B0   	JMP $B085
+C1/AC61:	20 03 95   	JSR $9503        ; update monster sprite data from buffer
+C1/AC64:	4C 85 B0   	JMP $B085        ; post-animation cleanup [?]
 
 C1/AC67:	20 6B AC   	JSR $AC6B
 C1/AC6A:	6B         	RTL
@@ -22416,29 +22443,29 @@ C1/AD6F:	AD 0B 89   	LDA $890B        ; new entity index
 C1/AD72:	C9 0A      	CMP #$0A         ; loop 10 times (for all entities)
 C1/AD74:	D0 84      	BNE $ACFA        ; continue loop
 
-C1/AD76:	20 EA AA   	JSR $AAEA
-C1/AD79:	AC 7E 62   	LDY $627E
-C1/AD7C:	C0 FF FF   	CPY #$FFFF
-C1/AD7F:	F0 59      	BEQ $ADDA
-C1/AD81:	30 59      	BMI $ADDC
+C1/AD76:	20 EA AA   	JSR $AAEA        ; prepare/setup BG1 and BG3 animations
+C1/AD79:	AC 7E 62   	LDY $627E        ; extra animation script id [?]
+C1/AD7C:	C0 FF FF   	CPY #$FFFF       ; null
+C1/AD7F:	F0 59      	BEQ $ADDA        ; branch if no extra animation data
+C1/AD81:	30 59      	BMI $ADDC        ; branch if esper animation [?]
 C1/AD83:	A9 01      	LDA #$01
-C1/AD85:	85 1C      	STA $1C
-C1/AD87:	AC 37 7B   	LDY $7B37
-C1/AD8A:	84 22      	STY $22
-C1/AD8C:	AC 7E 62   	LDY $627E
-C1/AD8F:	84 24      	STY $24
+C1/AD85:	85 1C      	STA $1C          ; flag "some animation" [?]
+C1/AD87:	AC 37 7B   	LDY $7B37        ; extra animation dimensions
+C1/AD8A:	84 22      	STY $22          ; save for $B208 below
+C1/AD8C:	AC 7E 62   	LDY $627E        ; extra animation script id
+C1/AD8F:	84 24      	STY $24          ; save for $B208 below
 C1/AD91:	20 89 BC   	JSR $BC89        ; set attacker index in $10
-C1/AD94:	A5 10      	LDA $10
-C1/AD96:	29 0F      	AND #$0F
-C1/AD98:	C2 20      	REP #$20
-C1/AD9A:	0A         	ASL A
-C1/AD9B:	AA         	TAX
-C1/AD9C:	BF 8B CE C2	LDA $C2CE8B,X   ; increment of 128 bytes
-C1/ADA0:	AA         	TAX
-C1/ADA1:	7B         	TDC
-C1/ADA2:	E2 20      	SEP #$20           ; 8-bit A
-C1/ADA4:	AD 7D 62   	LDA $627D
-C1/ADA7:	29 7F      	AND #$7F
+C1/AD94:	A5 10      	LDA $10          ; attacker id
+C1/AD96:	29 0F      	AND #$0F         ; mask "is monster" flag
+C1/AD98:	C2 20      	REP #$20         ; 16-bit A
+C1/AD9A:	0A         	ASL A            ; x2
+C1/AD9B:	AA         	TAX              ; index it
+C1/AD9C:	BF 8B CE C2	LDA $C2CE8B,X    ; offset to attacker's animation threads
+C1/ADA0:	AA         	TAX              ; index it
+C1/ADA1:	7B         	TDC              ; A = 0000
+C1/ADA2:	E2 20      	SEP #$20         ; 8-bit A
+C1/ADA4:	AD 7D 62   	LDA $627D        ; animation init function id [?]
+C1/ADA7:	29 7F      	AND #$7F         ; mask top "BG1 target, not graphics"
 C1/ADA9:	C9 12      	CMP #$12
 C1/ADAB:	D0 04      	BNE $ADB1
 C1/ADAD:	A9 03      	LDA #$03
@@ -22447,65 +22474,68 @@ C1/ADB1:	C9 11      	CMP #$11
 C1/ADB3:	D0 04      	BNE $ADB9
 C1/ADB5:	A9 06      	LDA #$06
 C1/ADB7:	80 02      	BRA $ADBB
-C1/ADB9:	A9 01      	LDA #$01
-C1/ADBB:	48         	PHA
-C1/ADBC:	DA         	PHX
-C1/ADBD:	20 A5 AA   	JSR $AAA5
-C1/ADC0:	A5 12      	LDA $12
-C1/ADC2:	8D 3F 61   	STA $613F
-C1/ADC5:	FA         	PLX
-C1/ADC6:	DA         	PHX
-C1/ADC7:	20 08 B2   	JSR $B208
-C1/ADCA:	FA         	PLX
-C1/ADCB:	C2 20      	REP #$20
+C1/ADB9:	A9 01      	LDA #$01         ; if id $12 (03), $11 (06), else (01)
+
+C1/ADBB:	48         	PHA              ; store number of thread repetitions [?]
+C1/ADBC:	DA         	PHX              ; store attacker's animation thread offset
+C1/ADBD:	20 A5 AA   	JSR $AAA5        ; set target in $12 (checks reflector)
+C1/ADC0:	A5 12      	LDA $12          ; target id
+C1/ADC2:	8D 3F 61   	STA $613F        ; set thread animation's starting position
+C1/ADC5:	FA         	PLX              ; useless PLX
+C1/ADC6:	DA         	PHX              ; useless PHX
+C1/ADC7:	20 08 B2   	JSR $B208        ; prepare extra animation thread for execution
+C1/ADCA:	FA         	PLX              ; restore attacker animation thread offset
+C1/ADCB:	C2 20      	REP #$20         ; 16-bit A
 C1/ADCD:	8A         	TXA
 C1/ADCE:	18         	CLC
-C1/ADCF:	69 10 00   	ADC #$0010
-C1/ADD2:	AA         	TAX
-C1/ADD3:	7B         	TDC
-C1/ADD4:	E2 20      	SEP #$20           ; 8-bit A
-C1/ADD6:	68         	PLA
-C1/ADD7:	3A         	DEC A
-C1/ADD8:	D0 E1      	BNE $ADBB
-
+C1/ADCF:	69 10 00   	ADC #$0010       ; get attacker's next thread offset
+C1/ADD2:	AA         	TAX              ; index it
+C1/ADD3:	7B         	TDC              ; A = 0000
+C1/ADD4:	E2 20      	SEP #$20         ; 8-bit A
+C1/ADD6:	68         	PLA              ; restore number of thread repetitions [?]
+C1/ADD7:	3A         	DEC A            ; loop for each repetition
+C1/ADD8:	D0 E1      	BNE $ADBB        ; continue loop
 C1/ADDA:	80 27      	BRA $AE03
+
+; Esper animation handling [?]
 C1/ADDC:	20 89 BC   	JSR $BC89        ; set attacker index in $10
-C1/ADDF:	20 A5 AA   	JSR $AAA5
-C1/ADE2:	A5 12      	LDA $12
-C1/ADE4:	8D 3F 61   	STA $613F
+C1/ADDF:	20 A5 AA   	JSR $AAA5        ; set target in $12 (checks reflector)
+C1/ADE2:	A5 12      	LDA $12          ; target id
+C1/ADE4:	8D 3F 61   	STA $613F        ; set thread animation starting position
 C1/ADE7:	A9 01      	LDA #$01
-C1/ADE9:	85 1C      	STA $1C
-C1/ADEB:	A2 20 05   	LDX #$0520
-C1/ADEE:	AC 37 7B   	LDY $7B37
-C1/ADF1:	84 22      	STY $22
-C1/ADF3:	C2 20      	REP #$20
-C1/ADF5:	AD 7E 62   	LDA $627E
-C1/ADF8:	29 FF 7F   	AND #$7FFF
-C1/ADFB:	85 24      	STA $24
-C1/ADFD:	7B         	TDC
-C1/ADFE:	E2 20      	SEP #$20           ; 8-bit A
-C1/AE00:	20 3E B2   	JSR $B23E
-C1/AE03:	A0 06 00   	LDY #$0006
-C1/AE06:	B1 78      	LDA ($78),Y
+C1/ADE9:	85 1C      	STA $1C          ; flag "some animation" [?]
+C1/ADEB:	A2 20 05   	LDX #$0520       ; esper animation thread offset
+C1/ADEE:	AC 37 7B   	LDY $7B37        ; esper animation frame dimensions
+C1/ADF1:	84 22      	STY $22          ; save for $B23E below
+C1/ADF3:	C2 20      	REP #$20         ; 16-bit A
+C1/ADF5:	AD 7E 62   	LDA $627E        ; extra animation script id
+C1/ADF8:	29 FF 7F   	AND #$7FFF       ; mask "is esper" flag [?]
+C1/ADFB:	85 24      	STA $24          ; save for $B23E below
+C1/ADFD:	7B         	TDC              ; A = 0000
+C1/ADFE:	E2 20      	SEP #$20         ; 8-bit A
+C1/AE00:	20 3E B2   	JSR $B23E        ; prepare animation thread for execution
+
+C1/AE03:	A0 06 00   	LDY #$0006       ; command data arg #6
+C1/AE06:	B1 78      	LDA ($78),Y      ; character bodyguards/reflectors
 C1/AE08:	0A         	ASL A
 C1/AE09:	0A         	ASL A
 C1/AE0A:	0A         	ASL A
-C1/AE0B:	0A         	ASL A
-C1/AE0C:	8D 80 60   	STA $6080
-C1/AE0F:	C8         	INY
-C1/AE10:	B1 78      	LDA ($78),Y
-C1/AE12:	8D 81 60   	STA $6081
-C1/AE15:	FA         	PLX
-C1/AE16:	8E 7E 60   	STX $607E
-C1/AE19:	DA         	PHX
-C1/AE1A:	9C EE E9   	STZ $E9EE
-C1/AE1D:	20 3C B1   	JSR $B13C
-C1/AE20:	FA         	PLX
-C1/AE21:	8E 7E 60   	STX $607E
-C1/AE24:	FA         	PLX
-C1/AE25:	8E 80 60   	STX $6080
-C1/AE28:	20 2F AE   	JSR $AE2F
-C1/AE2B:	20 E5 94   	JSR $94E5
+C1/AE0B:	0A         	ASL A            ; shift to top nibble
+C1/AE0C:	8D 80 60   	STA $6080        ; save targets hit [?]
+C1/AE0F:	C8         	INY              ; command data arg #7
+C1/AE10:	B1 78      	LDA ($78),Y      ; monster bodyguards/reflectors
+C1/AE12:	8D 81 60   	STA $6081        ; save targets hit [?]
+C1/AE15:	FA         	PLX              ; restore not-missed targets [?]
+C1/AE16:	8E 7E 60   	STX $607E        ; save them
+C1/AE19:	DA         	PHX              ; store not-missed targets
+C1/AE1A:	9C EE E9   	STZ $E9EE        ; [?]
+C1/AE1D:	20 3C B1   	JSR $B13C        ; [?] some cleanup?
+C1/AE20:	FA         	PLX              ; restore not-missed targets [?]
+C1/AE21:	8E 7E 60   	STX $607E        ; save them again (why [?])
+C1/AE24:	FA         	PLX              ; restore bodyguards/reflectors [?]
+C1/AE25:	8E 80 60   	STX $6080        ; save them
+C1/AE28:	20 2F AE   	JSR $AE2F        ; ??????????/
+C1/AE2B:	20 E5 94   	JSR $94E5        ; move color palette data from/to buffer [?]
 C1/AE2E:	60         	RTS
 
 C1/AE2F:	20 89 BC   	JSR $BC89        ; set attacker index in $10
@@ -22645,8 +22675,8 @@ C1/AF66:	B1 78      	LDA ($78),Y
 C1/AF68:	8D 7F 60   	STA $607F
 C1/AF6B:	9C 7E 60   	STZ $607E
 C1/AF6E:	9C 67 7B   	STZ $7B67
-C1/AF71:	20 2A 02   	JSR $022A
-C1/AF74:	20 2A 02   	JSR $022A
+C1/AF71:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/AF74:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/AF77:	AD 7E 60   	LDA $607E
 C1/AF7A:	AA         	TAX
 C1/AF7B:	AD 7F 60   	LDA $607F
@@ -22655,8 +22685,8 @@ C1/AF82:	F0 59      	BEQ $AFDD
 C1/AF84:	48         	PHA
 C1/AF85:	20 63 1E   	JSR $1E63
 C1/AF88:	20 1A B0   	JSR $B01A
-C1/AF8B:	20 26 1F   	JSR $1F26
-C1/AF8E:	20 2A 02   	JSR $022A
+C1/AF8B:	20 26 1F   	JSR $1F26          ; set battlefield BG1 tiles in VRAM
+C1/AF8E:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/AF91:	68         	PLA
 C1/AF92:	49 FF      	EOR #$FF
 C1/AF94:	8D AB 60   	STA $60AB
@@ -22665,7 +22695,7 @@ C1/AF9A:	A9 80      	LDA #$80
 C1/AF9C:	85 10      	STA $10
 C1/AF9E:	A9 BE      	LDA #$BE
 C1/AFA0:	20 EF 17   	JSR $17EF
-C1/AFA3:	20 2A 02   	JSR $022A
+C1/AFA3:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/AFA6:	AD 6D 5F   	LDA $5F6D
 C1/AFA9:	A2 10 00   	LDX #$0010
 C1/AFAC:	86 24      	STX $24
@@ -22687,13 +22717,13 @@ C1/AFCE:	AD 1E 20   	LDA $201E
 C1/AFD1:	2D AB 61   	AND $61AB
 C1/AFD4:	2D AB 60   	AND $60AB
 C1/AFD7:	8D 1E 20   	STA $201E
-C1/AFDA:	20 59 1E   	JSR $1E59
+C1/AFDA:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
 C1/AFDD:	EE 7E 60   	INC $607E
 C1/AFE0:	AD 7E 60   	LDA $607E
 C1/AFE3:	C9 06      	CMP #$06
 C1/AFE5:	D0 8D      	BNE $AF74
-C1/AFE7:	20 2A 02   	JSR $022A
-C1/AFEA:	20 59 1E   	JSR $1E59
+C1/AFE7:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/AFEA:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
 C1/AFED:	7B         	TDC
 C1/AFEE:	AA         	TAX
 C1/AFEF:	86 10      	STX $10
@@ -22774,46 +22804,48 @@ C1/B07A:	7B         	TDC
 C1/B07B:	E2 20      	SEP #$20           ; 8-bit A
 C1/B07D:	60         	RTS
 
-C1/B07E:	20 ED 1F   	JSR $1FED
-C1/B081:	20 F9 B0   	JSR $B0F9
+C1/B07E:	20 ED 1F   	JSR $1FED          ; fill BG tile data buffer w/ $01EE
+C1/B081:	20 F9 B0   	JSR $B0F9          ; move BG tile buffer to BG3 VRAM
 C1/B084:	6B         	RTL
 
-C1/B085:	A9 FF      	LDA #$FF
-C1/B087:	8D AB 60   	STA $60AB
+; Post-animation clean-up [?]
+
+C1/B085:	A9 FF      	LDA #$FF           ; full bitmask
+C1/B087:	8D AB 60   	STA $60AB          ; show all monsters [?]
 C1/B08A:	20 8A C3   	JSR $C38A          ; set max sprite priority for all entities
-C1/B08D:	9C 67 7B   	STZ $7B67
-C1/B090:	20 2A 02   	JSR $022A
-C1/B093:	20 59 1E   	JSR $1E59
-C1/B096:	20 ED 1F   	JSR $1FED
-C1/B099:	20 F9 B0   	JSR $B0F9
-C1/B09C:	7B         	TDC
-C1/B09D:	AA         	TAX
-C1/B09E:	8E B4 64   	STX $64B4
-C1/B0A1:	8E B6 64   	STX $64B6
+C1/B08D:	9C 67 7B   	STZ $7B67          ; clear "hide BG1 monster sprites" [?]
+C1/B090:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/B093:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
+C1/B096:	20 ED 1F   	JSR $1FED          ; fill BG tile data buffer w/ $01EE
+C1/B099:	20 F9 B0   	JSR $B0F9          ; move BG tile buffer to BG3 VRAM
+C1/B09C:	7B         	TDC                ; A = 0000
+C1/B09D:	AA         	TAX                ; X = 0000
+C1/B09E:	8E B4 64   	STX $64B4          ; zero BG1 horizontal scroll
+C1/B0A1:	8E B6 64   	STX $64B6          ; zero BG1 vertical scroll
 C1/B0A4:	A9 17      	LDA #$17
-C1/B0A6:	8D 8D 89   	STA $898D
-C1/B0A9:	AD 6F 89   	LDA $896F
+C1/B0A6:	8D 8D 89   	STA $898D          ; HDMA main screen designation [?]
+C1/B0A9:	AD 6F 89   	LDA $896F          ; HDMA screen mode [?]
 C1/B0AC:	29 AF      	AND #$AF
 C1/B0AE:	09 08      	ORA #$08
-C1/B0B0:	8D 6F 89   	STA $896F
-C1/B0B3:	20 2A 02   	JSR $022A
-C1/B0B6:	7B         	TDC
-C1/B0B7:	AA         	TAX
-C1/B0B8:	86 10      	STX $10
-C1/B0BA:	8E B4 64   	STX $64B4
-C1/B0BD:	8E B6 64   	STX $64B6
-C1/B0C0:	8E F5 4A   	STX $4AF5
-C1/B0C3:	8E F7 4A   	STX $4AF7
+C1/B0B0:	8D 6F 89   	STA $896F          ; [?]
+C1/B0B3:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/B0B6:	7B         	TDC                ; A = 0000
+C1/B0B7:	AA         	TAX                ; X = 0000
+C1/B0B8:	86 10      	STX $10            ; 
+C1/B0BA:	8E B4 64   	STX $64B4          ; zero BG1 horizontal scroll (again) [?]
+C1/B0BD:	8E B6 64   	STX $64B6          ; zero BG1 vertical scroll (again) [?]
+C1/B0C0:	8E F5 4A   	STX $4AF5          ; zero HDMA BG3 scroll data [?]
+C1/B0C3:	8E F7 4A   	STX $4AF7          ; zero HDMA BG3 scroll data [?]
 C1/B0C6:	20 3C C2   	JSR $C23C
 C1/B0C9:	A9 33      	LDA #$33
-C1/B0CB:	8F 23 21 00	STA $002123
-C1/B0CF:	8F 24 21 00	STA $002124
-C1/B0D3:	9C 1B 96   	STZ $961B
-C1/B0D6:	22 4B FA C2	JSL $C2FA4B
-C1/B0DA:	A9 FF      	LDA #$FF
-C1/B0DC:	8D AB 60   	STA $60AB
-C1/B0DF:	AD 7D 62   	LDA $627D
-C1/B0E2:	30 0F      	BMI $B0F3
+C1/B0CB:	8F 23 21 00	STA $002123        ; turn on inverted BG1/2 window mask [?]
+C1/B0CF:	8F 24 21 00	STA $002124        ; turn on inverted BG3/4 window mask [?]
+C1/B0D3:	9C 1B 96   	STZ $961B          ; zero "circle shape" [?]
+C1/B0D6:	22 4B FA C2	JSL $C2FA4B        ; reset window mask position buffer [?]
+C1/B0DA:	A9 FF      	LDA #$FF           ; full bitmask
+C1/B0DC:	8D AB 60   	STA $60AB          ; show all monster sprites [?]
+C1/B0DF:	AD 7D 62   	LDA $627D          ; animation data init function [?]
+C1/B0E2:	30 0F      	BMI $B0F3          ; branch if BG1 target [?]
 C1/B0E4:	C9 6B      	CMP #$6B
 C1/B0E6:	F0 08      	BEQ $B0F0
 C1/B0E8:	C9 45      	CMP #$45
@@ -22821,16 +22853,18 @@ C1/B0EA:	F0 04      	BEQ $B0F0
 C1/B0EC:	C9 0B      	CMP #$0B
 C1/B0EE:	D0 03      	BNE $B0F3
 
-C1/B0F0:	20 5A AF   	JSR $AF5A
+C1/B0F0:	20 5A AF   	JSR $AF5A          ; process animation funcs $6B,$45,$0B [?]
 C1/B0F3:	A9 17      	LDA #$17
-C1/B0F5:	8D 8D 89   	STA $898D
+C1/B0F5:	8D 8D 89   	STA $898D          ; main screen designation [?]
 C1/B0F8:	60         	RTS
 
-C1/B0F9:	A2 00 04   	LDX #$0400
-C1/B0FC:	86 10      	STX $10
-C1/B0FE:	A2 7F A9   	LDX #$A97F
-C1/B101:	A9 7E      	LDA #$7E
-C1/B103:	A0 00 54   	LDY #$5400
+; Move tile buffer to Battlefield BG3 Tile VRAM
+
+C1/B0F9:	A2 00 04   	LDX #$0400        ; BG3 tile data buffer size
+C1/B0FC:	86 10      	STX $10           ; VRAM data length
+C1/B0FE:	A2 7F A9   	LDX #$A97F        ; VRAM source offset (BG tile buffer)
+C1/B101:	A9 7E      	LDA #$7E          ; VRAM source bank
+C1/B103:	A0 00 54   	LDY #$5400        ; VRAM destination (Battlefield BG3 tiles)
 C1/B106:	4C 8D 19   	JMP $198D         ; initialize VRAM DMA transfer
 
 C1/B109:	20 0D B1   	JSR $B10D
@@ -22873,20 +22907,20 @@ C1/B152:	A9 FF      	LDA #$FF
 C1/B154:	8D AB 60   	STA $60AB
 C1/B157:	A0 00 0C   	LDY #$0C00
 C1/B15A:	20 0D B1   	JSR $B10D
-C1/B15D:	20 2A 02   	JSR $022A
+C1/B15D:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/B160:	A9 0C      	LDA #$0C
 C1/B162:	8D 71 89   	STA $8971
-C1/B165:	20 59 1E   	JSR $1E59
-C1/B168:	20 F9 B0   	JSR $B0F9
+C1/B165:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
+C1/B168:	20 F9 B0   	JSR $B0F9          ; move BG tile buffer to BG3 VRAM
 C1/B16B:	7B         	TDC
 C1/B16C:	AA         	TAX
 C1/B16D:	8E B4 64   	STX $64B4
 C1/B170:	8E B6 64   	STX $64B6
 C1/B173:	8E F5 4A   	STX $4AF5
 C1/B176:	8E F7 4A   	STX $4AF7
-C1/B179:	20 2A 02   	JSR $022A
+C1/B179:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/B17C:	20 79 1E   	JSR $1E79
-C1/B17F:	20 26 1F   	JSR $1F26
+C1/B17F:	20 26 1F   	JSR $1F26          ; set battlefield BG1 tiles in VRAM
 C1/B182:	A9 01      	LDA #$01
 C1/B184:	8D 67 7B   	STA $7B67
 C1/B187:	8D 0E 7B   	STA $7B0E
@@ -22897,9 +22931,9 @@ C1/B18E:	4C BB B1   	JMP $B1BB
 C1/B191:	48         	PHA
 C1/B192:	AD 67 61   	LDA $6167
 C1/B195:	20 26 9C   	JSR $9C26
-C1/B198:	20 59 1E   	JSR $1E59
-C1/B19B:	20 ED 1F   	JSR $1FED
-C1/B19E:	20 F9 B0   	JSR $B0F9
+C1/B198:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
+C1/B19B:	20 ED 1F   	JSR $1FED          ; fill BG tile data buffer w/ $01EE
+C1/B19E:	20 F9 B0   	JSR $B0F9          ; move BG tile buffer to BG3 VRAM
 C1/B1A1:	7B         	TDC
 C1/B1A2:	AA         	TAX
 C1/B1A3:	8E B4 64   	STX $64B4
@@ -22948,31 +22982,33 @@ C1/B202:	7B         	TDC
 C1/B203:	E2 20      	SEP #$20           ; 8-bit A
 C1/B205:	4C D0 B2   	JMP $B2D0
 
-C1/B208:	AD 7D 62   	LDA $627D
+C1/B208:	AD 7D 62   	LDA $627D        ; animation init function id
 C1/B20B:	C9 18      	CMP #$18
-C1/B20D:	D0 09      	BNE $B218
-C1/B20F:	C2 20      	REP #$20
-C1/B211:	8A         	TXA
-C1/B212:	18         	CLC
-C1/B213:	69 60 00   	ADC #$0060
+C1/B20D:	D0 09      	BNE $B218        ; branch if not id $18 [?]
+C1/B20F:	C2 20      	REP #$20         ; 16-bit A
+C1/B211:	8A         	TXA              ; attacker's animation thread offset
+C1/B212:	18         	CLC              ; prep add
+C1/B213:	69 60 00   	ADC #$0060       ; get attacker's 7th animation thread
 C1/B216:	80 07      	BRA $B21F
-C1/B218:	C2 20      	REP #$20
-C1/B21A:	8A         	TXA
-C1/B21B:	18         	CLC
-C1/B21C:	69 10 00   	ADC #$0010
-C1/B21F:	AA         	TAX
-C1/B220:	7B         	TDC
-C1/B221:	E2 20      	SEP #$20           ; 8-bit A
-C1/B223:	8E F6 7A   	STX $7AF6
-C1/B226:	A9 FF      	LDA #$FF
-C1/B228:	8D 7E 60   	STA $607E
-C1/B22B:	8D 7F 60   	STA $607F
-C1/B22E:	AD 3F 61   	LDA $613F
-C1/B231:	85 12      	STA $12
+
+C1/B218:	C2 20      	REP #$20         ; 16-bit A
+C1/B21A:	8A         	TXA              ; attacker's animation thread offset
+C1/B21B:	18         	CLC              ; prep add
+C1/B21C:	69 10 00   	ADC #$0010       ; get attacker's 2nd animation thread
+
+C1/B21F:	AA         	TAX              ; index it
+C1/B220:	7B         	TDC              ; A = 0000
+C1/B221:	E2 20      	SEP #$20         ; 8-bit A
+C1/B223:	8E F6 7A   	STX $7AF6        ; current animation thread offset
+C1/B226:	A9 FF      	LDA #$FF         ; full bitmask
+C1/B228:	8D 7E 60   	STA $607E        ; all character targets possible
+C1/B22B:	8D 7F 60   	STA $607F        ; all monster targets possible
+C1/B22E:	AD 3F 61   	LDA $613F        ; animation target (thread starting position)
+C1/B231:	85 12      	STA $12          ; save target
 C1/B233:	A9 08      	LDA #$08
-C1/B235:	8D A9 60   	STA $60A9
+C1/B235:	8D A9 60   	STA $60A9        ; set 8-frame multi-target delay
 C1/B238:	A9 03      	LDA #$03
-C1/B23A:	85 1A      	STA $1A
+C1/B23A:	85 1A      	STA $1A          ; flag "active" and "extra" thread
 C1/B23C:	80 66      	BRA $B2A4
 
 C1/B23E:	AD 80 62   	LDA $6280        ; animation data's multi-target delay
@@ -23029,6 +23065,7 @@ C1/B29C:	09 80      	ORA #$80         ; else set "is monster" flag
 C1/B29E:	85 12      	STA $12          ; store it (as target) [?]
 C1/B2A0:	A9 01      	LDA #$01         ; "active" animation thread
 C1/B2A2:	85 1A      	STA $1A          ; pending thread state update "active"
+
 C1/B2A4:	A9 D0      	LDA #$D0
 C1/B2A6:	85 26      	STA $26          ; set animation data bank $D0
 C1/B2A8:	A6 22      	LDX $22          ; animation frame dimensions
@@ -23753,7 +23790,7 @@ C1/B845:	48         	PHA
 C1/B846:	5A         	PHY
 C1/B847:	A6 10      	LDX $10
 C1/B849:	DA         	PHX
-C1/B84A:	20 2A 02   	JSR $022A
+C1/B84A:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/B84D:	FA         	PLX
 C1/B84E:	86 10      	STX $10
 C1/B850:	7A         	PLY
@@ -23770,7 +23807,7 @@ C1/B861:	D0 E2      	BNE $B845
 C1/B863:	7B         	TDC
 C1/B864:	99 C0 61   	STA $61C0,Y
 
-C1/B867:	20 2A 02   	JSR $022A
+C1/B867:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/B86A:	60         	RTS
 
 C1/B86B:	20 89 BC   	JSR $BC89          ; set attacker index in $10
@@ -23823,12 +23860,12 @@ C1/B8BF:	7B         	TDC
 C1/B8C0:	E2 20      	SEP #$20           ; 8-bit A
 
 C1/B8C2:	DA         	PHX
-C1/B8C3:	20 F4 94   	JSR $94F4           ; copy monster sprite data
+C1/B8C3:	20 F4 94   	JSR $94F4          ; copy monster sprite data to buffer
 C1/B8C6:	20 67 AB   	JSR $AB67
 C1/B8C9:	20 8B AB   	JSR $AB8B
 C1/B8CC:	FA         	PLX
 C1/B8CD:	20 F5 B7   	JSR $B7F5
-C1/B8D0:	20 03 95   	JSR $9503
+C1/B8D0:	20 03 95   	JSR $9503          ; update monster sprite data from buffer
 C1/B8D3:	20 8B AB   	JSR $AB8B
 C1/B8D6:	C2 20      	REP #$20
 C1/B8D8:	68         	PLA
@@ -23858,10 +23895,10 @@ C1/B903:	A2 6C 0F   	LDX #$0F6C
 C1/B906:	20 F5 B7   	JSR $B7F5
 C1/B909:	B2 78      	LDA ($78)
 C1/B90B:	30 0C      	BMI $B919
-C1/B90D:	20 EB AB   	JSR $ABEB      ; animation function for "Magic"
-C1/B910:	20 35 AC   	JSR $AC35       ; fill/clear BG1 and BG3 tile data
-C1/B913:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
-C1/B916:	20 03 95   	JSR $9503
+C1/B90D:	20 EB AB   	JSR $ABEB        ; animation function for "Magic"
+C1/B910:	20 35 AC   	JSR $AC35        ; fill (clear?) BG1 and BG3 tile data
+C1/B913:	20 6B B8   	JSR $B86B        ; disable stepping forward for regen, etc
+C1/B916:	20 03 95   	JSR $9503        ; update monster sprite data from buffer
 C1/B919:	60         	RTS
 
 C1/B91A:	20 35 BC   	JSR $BC35
@@ -23875,7 +23912,7 @@ C1/B92C:	A0 02 00   	LDY #$0002
 C1/B92F:	B1 76      	LDA ($76),Y
 C1/B931:	20 B3 9C   	JSR $9CB3
 C1/B934:	20 5B AC   	JSR $AC5B
-C1/B937:	20 03 95   	JSR $9503
+C1/B937:	20 03 95   	JSR $9503          ; update monster sprite data from buffer
 C1/B93A:	20 6B B8   	JSR $B86B          ; disable stepping forward for regen, etc
 C1/B93D:	20 8B AB   	JSR $AB8B
 C1/B940:	60         	RTS
@@ -23945,7 +23982,7 @@ C1/B9B7:	B1 76      	LDA ($76),Y
 C1/B9B9:	30 09      	BMI $B9C4
 C1/B9BB:	20 B3 9C   	JSR $9CB3
 C1/B9BE:	20 5B AC   	JSR $AC5B
-C1/B9C1:	20 03 95   	JSR $9503
+C1/B9C1:	20 03 95   	JSR $9503          ; update monster sprite data from buffer
 C1/B9C4:	60         	RTS
 
 ; Throw animation
@@ -24091,14 +24128,14 @@ C1/BAC6:	20 CA BA   	JSR $BACA
 C1/BAC9:	6B         	RTL
 
 C1/BACA:	48         	PHA
-C1/BACB:	20 E5 94   	JSR $94E5
+C1/BACB:	20 E5 94   	JSR $94E5        ; move color palette data from/to buffer [?]
 C1/BACE:	A9 00      	LDA #$00
 C1/BAD0:	48         	PHA
 C1/BAD1:	85 14      	STA $14
 C1/BAD3:	85 16      	STA $16
 C1/BAD5:	85 18      	STA $18
 C1/BAD7:	20 E0 EB   	JSR $EBE0
-C1/BADA:	20 2A 02   	JSR $022A
+C1/BADA:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/BADD:	68         	PLA
 C1/BADE:	1A         	INC A
 C1/BADF:	1A         	INC A
@@ -24119,7 +24156,7 @@ C1/BAF8:	85 14      	STA $14
 C1/BAFA:	85 16      	STA $16
 C1/BAFC:	85 18      	STA $18
 C1/BAFE:	20 E0 EB   	JSR $EBE0
-C1/BB01:	20 2A 02   	JSR $022A
+C1/BB01:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/BB04:	68         	PLA
 C1/BB05:	3A         	DEC A
 C1/BB06:	3A         	DEC A
@@ -24247,7 +24284,7 @@ C1/BC01:	30 0E      	BMI $BC11      ; exit if attacker is a monster (w/ carry)
 C1/BC03:	A2 6C 0F   	LDX #$0F6C
 C1/BC06:	20 F5 B7   	JSR $B7F5
 C1/BC09:	20 6B B8   	JSR $B86B      ; disable stepping forward for regen, etc
-C1/BC0C:	20 03 95   	JSR $9503
+C1/BC0C:	20 03 95   	JSR $9503      ; update monster sprite data from buffer
 C1/BC0F:	18         	CLC
 C1/BC10:	60         	RTS
 
@@ -24265,7 +24302,7 @@ C1/BC23:	A0 02 00   	LDY #$0002
 C1/BC26:	B1 76      	LDA ($76),Y    ; A = spell index (0-8 for tools)
 C1/BC28:	20 B3 9C   	JSR $9CB3      ; load graphic data for spell animation
 C1/BC2B:	20 5B AC   	JSR $AC5B
-C1/BC2E:	20 03 95   	JSR $9503
+C1/BC2E:	20 03 95   	JSR $9503      ; update monster sprite data from buffer
 C1/BC31:	20 6B B8   	JSR $B86B      ; disable stepping forward for regen, etc
 C1/BC34:	60         	RTS
 
@@ -24300,7 +24337,7 @@ C1/BC69:	AA         	TAX
 C1/BC6A:	BF 00 00 D1	LDA $D10000,X
 C1/BC6E:	AA         	TAX
 C1/BC6F:	7B         	TDC
-C1/BC70:	E2 20      	SEP #$20           ; 8-bit A
+C1/BC70:	E2 20      	SEP #$20         ; 8-bit A
 C1/BC72:	E0 FF FF   	CPX #$FFFF
 C1/BC75:	F0 0E      	BEQ $BC85
 C1/BC77:	DA         	PHX
@@ -24311,7 +24348,7 @@ C1/BC7E:	7B         	TDC
 C1/BC7F:	20 B3 9C   	JSR $9CB3
 C1/BC82:	20 5B AC   	JSR $AC5B
 
-C1/BC85:	4C 03 95   	JMP $9503
+C1/BC85:	4C 03 95   	JMP $9503        ; update monster sprite data from buffer
 
 C1/BC88:	60         	RTS
 
@@ -25021,7 +25058,7 @@ C1/C1C9:	9C 67 7B   	STZ $7B67          ; stoping hiding BG1 monster sprites [?]
 C1/C1CC:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/C1CF:	AD 67 61   	LDA $6167          ; animation BG1 palette index [?]
 C1/C1D2:	20 26 9C   	JSR $9C26          ; transfer animation palette data
-C1/C1D5:	20 59 1E   	JSR $1E59
+C1/C1D5:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
 C1/C1D8:	AD 6F 89   	LDA $896F          ; screen mode (battlefield) [?]
 C1/C1DB:	09 10      	ORA #$10
 C1/C1DD:	8D 6F 89   	STA $896F
@@ -25041,7 +25078,7 @@ C1/C1FC:	A9 20      	LDA #$20           ; else, no targets and no reflection
 C1/C1FE:	20 B6 9B   	JSR $9BB6          ; wait 32 frames (to fill time [?])
 
 C1/C201:	20 0B BD   	JSR $BD0B          ; update sprite/position data for all entities
-C1/C204:	20 59 1E   	JSR $1E59
+C1/C204:	20 59 1E   	JSR $1E59          ; fill VRAM Battle BG1 tiles w/ $02EE
 C1/C207:	20 8A C3   	JSR $C38A          ; set max sprite priority for all entities
 C1/C20A:	AD 6F 89   	LDA $896F          ; screen mode (battlefield) [?]
 C1/C20D:	29 AF      	AND #$AF           ; clear bits 4 and 6 [?]
@@ -25060,7 +25097,7 @@ C1/C22A:	80 06      	BRA $C232
 
 ; Do these two ops ever run?
 C1/C22C:	20 0B BD   	JSR $BD0B          ; update sprite/position data for all entities
-C1/C22F:	20 03 95   	JSR $9503
+C1/C22F:	20 03 95   	JSR $9503          ; update monster sprite data from buffer
 
 C1/C232:	20 8B AB   	JSR $AB8B          ; clear attacker's graphic action [?]
 C1/C235:	9C 96 61   	STZ $6196          ; clear "Flash Screen" flag
@@ -25801,7 +25838,7 @@ C1/C76B:	E0 50 05   	CPX #$0550
 C1/C76E:	F0 03      	BEQ $C773
 C1/C770:	4C A9 C6   	JMP $C6A9
 
-C1/C773:	20 2A 02   	JSR $022A
+C1/C773:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/C776:	AD D2 62   	LDA $62D2
 C1/C779:	D0 03      	BNE $C77E
 C1/C77B:	20 7C 95   	JSR $957C          ; update sprite priority (buffer)
@@ -26331,7 +26368,7 @@ C1/CB55:	60         	RTS
 C1/CB56:	EE 8B 62   	INC $628B
 C1/CB59:	60         	RTS
 
-C1/CB5A:	4C CA 9E   	JMP $9ECA
+C1/CB5A:	4C CA 9E   	JMP $9ECA       ; fill BG1 animation tile buffer w/ $02EE
 
 C1/CB5D:	EE FA EB   	INC $EBFA
 C1/CB60:	60         	RTS
