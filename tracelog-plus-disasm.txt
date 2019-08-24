@@ -3148,7 +3148,7 @@ C1/1985:	9C 00 80   	STZ $8000    ; clear VRAM pending flag
 C1/1988:	60         	RTS
 
 ; Long access to VRAM DMA transfer
-C1/1989:	20 8D 19   	JSR $198D         ; initialize VRAM DMA transfer
+C1/1989:	20 8D 19   	JSR $198D     ; initialize VRAM DMA transfer
 C1/198C:	6B         	RTL
 
 ; Initialize VRAM DMA data transfer
@@ -20409,13 +20409,12 @@ C1/9F18:	A5 12      	LDA $12
 C1/9F1A:	80 05      	BRA $9F21
 
 C1/9F1C:	20 89 BC   	JSR $BC89        ; set attacker index in $10
-C1/9F1F:	A5 10      	LDA $10
-
-C1/9F21:	30 14      	BMI $9F37
-C1/9F23:	AA         	TAX
-C1/9F24:	BD 10 7B   	LDA $7B10,X
-C1/9F27:	F0 09      	BEQ $9F32
-C1/9F29:	A9 10      	LDA #$10
+C1/9F1F:	A5 10      	LDA $10          ; attacker index
+C1/9F21:	30 14      	BMI $9F37        ; branch if monster attacker
+C1/9F23:	AA         	TAX              ; character index
+C1/9F24:	BD 10 7B   	LDA $7B10,X      ; character facing right
+C1/9F27:	F0 09      	BEQ $9F32        ; branch if not
+C1/9F29:	A9 10      	LDA #$10         ; attacker index
 C1/9F2B:	85 28      	STA $28
 C1/9F2D:	A9 40      	LDA #$40
 C1/9F2F:	85 29      	STA $29
@@ -24695,9 +24694,9 @@ C1/BEE2:	29 20      	AND #$20           ; flash screen (critical)
 C1/BEE4:	8D 96 61   	STA $6196          ; flash screen byte
 C1/BEE7:	A2 00 04   	LDX #$0400         ; size of data block
 C1/BEEA:	86 10      	STX $10            ; save it
-C1/BEEC:	A2 00 B4   	LDX #$B400         ; data source address
-C1/BEEF:	A9 7F      	LDA #$7F           ; data source bank
-C1/BEF1:	A0 00 24   	LDY #$2400         ; data destination address
+C1/BEEC:	A2 00 B4   	LDX #$B400         ; VRAM source address
+C1/BEEF:	A9 7F      	LDA #$7F           ; VRAM source bank
+C1/BEF1:	A0 00 24   	LDY #$2400         ; VRAM destination (Battle Sprite Graphics)
 C1/BEF4:	20 8D 19   	JSR $198D          ; move animation data
 C1/BEF7:	AD 8A 61   	LDA $618A          ; monster special attack
 C1/BEFA:	D0 03      	BNE $BEFF          ; branch if ^
