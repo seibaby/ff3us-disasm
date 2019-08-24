@@ -2359,10 +2359,10 @@ C1/1401:	8D AB 61   	STA $61AB
 C1/1404:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
 C1/1407:	AD F6 E9   	LDA $E9F6
 C1/140A:	D0 F8      	BNE $1404
-C1/140C:	7B         	TDC
-C1/140D:	AA         	TAX
-C1/140E:	86 10      	STX $10
-C1/1410:	20 3C C2   	JSR $C23C
+C1/140C:	7B         	TDC                ; A = 0000
+C1/140D:	AA         	TAX                ; X = 0000
+C1/140E:	86 10      	STX $10            ; set window mask fill byte
+C1/1410:	20 3C C2   	JSR $C23C          ; clear subscreen window mask
 C1/1413:	EE 96 7B   	INC $7B96
 C1/1416:	9C EF E9   	STZ $E9EF
 C1/1419:	9C 8C 62   	STZ $628C
@@ -18704,17 +18704,17 @@ C1/9202:	9C BF 62   	STZ $62BF
 C1/9205:	7B         	TDC
 C1/9206:	AA         	TAX
 C1/9207:	86 10      	STX $10
-C1/9209:	4C 3C C2   	JMP $C23C
+C1/9209:	4C 3C C2   	JMP $C23C         ; clear subscreen window mask
 
 C1/920C:	EE BF 62   	INC $62BF
-C1/920F:	20 E5 94   	JSR $94E5        ; move color palette data from/to buffer [?]
+C1/920F:	20 E5 94   	JSR $94E5         ; move color palette data from/to buffer [?]
 C1/9212:	7B         	TDC
 C1/9213:	AA         	TAX
 C1/9214:	9E 80 7F   	STZ $7F80,X
 C1/9217:	E8         	INX
 C1/9218:	E0 80 00   	CPX #$0080
 C1/921B:	D0 F7      	BNE $9214
-C1/921D:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
+C1/921D:	20 2A 02   	JSR $022A         ; wait a frame (and run updates)
 C1/9220:	A9 0F      	LDA #$0F
 C1/9222:	8D AC 61   	STA $61AC
 C1/9225:	A9 1F      	LDA #$1F
@@ -18740,7 +18740,7 @@ C1/924C:	9C BF 62   	STZ $62BF
 C1/924F:	7B         	TDC
 C1/9250:	AA         	TAX
 C1/9251:	86 10      	STX $10
-C1/9253:	4C 3C C2   	JMP $C23C
+C1/9253:	4C 3C C2   	JMP $C23C         ; clear subscreen window mask
 
 C1/9256:	48         	PHA
 C1/9257:	A9 04      	LDA #$04
@@ -18757,7 +18757,7 @@ C1/926A:	60         	RTS
 C1/926B:	A2 02 02    LDX #$0202
 C1/926E:	86 10       STX $10
 C1/9270:	A9 10       LDA #$10
-C1/9272:	4C 3C C2    JMP $C23C
+C1/9272:	4C 3C C2    JMP $C23C         ; fill subscreen window mask
 
 C1/9275:	9C 80 7B    STZ $7B80
 C1/9278:	EE B8 EC    INC $ECB8
@@ -18954,7 +18954,7 @@ C1/9434:	22 42 B4 C2 JSL $C2B442
 C1/9438:	A2 02 02   	LDX #$0202
 C1/943B:	86 10      	STX $10
 C1/943D:	A9 10      	LDA #$10
-C1/943F:	20 3C C2   	JSR $C23C
+C1/943F:	20 3C C2   	JSR $C23C          ; fill subscreen window mask
 C1/9442:	68         	PLA
 C1/9443:	85 10      	STA $10
 C1/9445:	85 12      	STA $12
@@ -18990,7 +18990,7 @@ C1/9481:	8D 1E 20   	STA $201E
 C1/9484:	7B         	TDC
 C1/9485:	AA         	TAX
 C1/9486:	86 10      	STX $10
-C1/9488:	20 3C C2   	JSR $C23C
+C1/9488:	20 3C C2   	JSR $C23C         ; clear subscreen window mask
 C1/948B:	20 03 95   	JSR $9503        ; update monster sprite data from buffer
 C1/948E:	22 97 01 C1	JSL $C10197
 C1/9492:	AD 1E 20   	LDA $201E
@@ -22728,13 +22728,13 @@ C1/AFEE:	AA         	TAX
 C1/AFEF:	86 10      	STX $10
 C1/AFF1:	8E B4 64   	STX $64B4
 C1/AFF4:	8E B6 64   	STX $64B6
-C1/AFF7:	20 3C C2   	JSR $C23C
+C1/AFF7:	20 3C C2   	JSR $C23C          ; clear subscreen window mask
 C1/AFFA:	A9 03      	LDA #$03
 C1/AFFC:	8D 0C 80   	STA $800C
 C1/AFFF:	60         	RTS
 
 C1/B000:	20 07 B0   	JSR $B007
-C1/B003:	20 3C C2   	JSR $C23C
+C1/B003:	20 3C C2   	JSR $C23C          ; fill subscreen window mask
 C1/B006:	6B         	RTL
 
 C1/B007:	48         	PHA
@@ -22835,7 +22835,7 @@ C1/B0BA:	8E B4 64   	STX $64B4          ; zero BG1 horizontal scroll (again) [?]
 C1/B0BD:	8E B6 64   	STX $64B6          ; zero BG1 vertical scroll (again) [?]
 C1/B0C0:	8E F5 4A   	STX $4AF5          ; zero HDMA BG3 scroll data [?]
 C1/B0C3:	8E F7 4A   	STX $4AF7          ; zero HDMA BG3 scroll data [?]
-C1/B0C6:	20 3C C2   	JSR $C23C
+C1/B0C6:	20 3C C2   	JSR $C23C          ; clear subscreen window mask
 C1/B0C9:	A9 33      	LDA #$33
 C1/B0CB:	8F 23 21 00	STA $002123        ; turn on inverted BG1/2 window mask [?]
 C1/B0CF:	8F 24 21 00	STA $002124        ; turn on inverted BG3/4 window mask [?]
@@ -25103,7 +25103,7 @@ C1/C235:	9C 96 61   	STZ $6196          ; clear "Flash Screen" flag
 C1/C238:	9C 8A 61   	STZ $618A          ; clear "monster special attack" flag
 C1/C23B:	60         	RTS
 
-;
+; Fill subscreen window mask with repeating $10 and #0000
 
 C1/C23C:	48         	PHA                ; store A (subscreen designation [?])
 C1/C23D:	C2 20      	REP #$20           ; 16-bit A
@@ -25255,7 +25255,7 @@ C1/C35D:	9D 55 6A   	STA $6A55,X
 C1/C360:	A2 02 02   	LDX #$0202
 C1/C363:	86 10      	STX $10
 C1/C365:	A9 10      	LDA #$10
-C1/C367:	20 3C C2   	JSR $C23C
+C1/C367:	20 3C C2   	JSR $C23C         ; fill subscreen window mask
 C1/C36A:	A9 05      	LDA #$05
 C1/C36C:	8D 0E 7B   	STA $7B0E
 C1/C36F:	8D 0F 7B   	STA $7B0F
@@ -25265,7 +25265,7 @@ C1/C372:	60         	RTS
 C1/C373:	A2 02 02   	LDX #$0202
 C1/C376:	86 10      	STX $10
 C1/C378:	A9 10      	LDA #$10
-C1/C37A:	20 3C C2   	JSR $C23C
+C1/C37A:	20 3C C2   	JSR $C23C         ; fill subscreen window mask
 C1/C37D:	A9 02      	LDA #$02
 C1/C37F:	8D 0E 7B   	STA $7B0E
 C1/C382:	8D 0F 7B   	STA $7B0F
@@ -25726,149 +25726,161 @@ C1/C677:	A8         	TAY                ; Y = 0000
 C1/C678:	BD BC 61   	LDA $61BC,X        ; character palette index
 C1/C67B:	99 6E 61   	STA $616E,Y        ; copy to buffer
 C1/C67E:	8A         	TXA
-C1/C67F:	18         	CLC
+C1/C67F:	18         	CLC                ; clear carry
 C1/C680:	69 20      	ADC #$20           ; next character's offset
-C1/C682:	AA         	TAX
-C1/C683:	C8         	INY
-C1/C684:	C0 04 00   	CPY #$0004
-C1/C687:	D0 EF      	BNE $C678
-C1/C689:	7B         	TDC
-C1/C68A:	AA         	TAX
-C1/C68B:	BD DB 80   	LDA $80DB,X
-C1/C68E:	99 6E 61   	STA $616E,Y
-C1/C691:	E8         	INX
-C1/C692:	E8         	INX
-C1/C693:	C8         	INY
-C1/C694:	C0 0A 00   	CPY #$000A
-C1/C697:	D0 F2      	BNE $C68B
-C1/C699:	7B         	TDC
-C1/C69A:	AA         	TAX
-C1/C69B:	9E 85 60   	STZ $6085,X
-C1/C69E:	E8         	INX
-C1/C69F:	E0 10 00   	CPX #$0010
-C1/C6A2:	D0 F7      	BNE $C69B
-C1/C6A4:	7B         	TDC
-C1/C6A5:	AA         	TAX
-C1/C6A6:	9C 14 7B   	STZ $7B14
-C1/C6A9:	64 9B      	STZ $9B
-C1/C6AB:	BD 2E 6A   	LDA $6A2E,X
-C1/C6AE:	F0 58      	BEQ $C708
-C1/C6B0:	A5 99      	LDA $99
-C1/C6B2:	F0 05      	BEQ $C6B9
-C1/C6B4:	E0 00 05   	CPX #$0500
-C1/C6B7:	90 4F      	BCC $C708
-C1/C6B9:	EE 14 7B   	INC $7B14
-C1/C6BC:	DE 35 6A   	DEC $6A35,X
-C1/C6BF:	D0 47      	BNE $C708
-C1/C6C1:	BD 34 6A   	LDA $6A34,X
-C1/C6C4:	9D 35 6A   	STA $6A35,X
-C1/C6C7:	BC 31 6A   	LDY $6A31,X
-C1/C6CA:	84 5B      	STY $5B
-C1/C6CC:	BD 33 6A   	LDA $6A33,X
-C1/C6CF:	85 5D      	STA $5D
-C1/C6D1:	BD 86 6F   	LDA $6F86,X
-C1/C6D4:	29 03      	AND #$03
-C1/C6D6:	F0 1E      	BEQ $C6F6
-C1/C6D8:	29 01      	AND #$01
-C1/C6DA:	D0 0D      	BNE $C6E9
-C1/C6DC:	9E DE 64   	STZ $64DE,X
-C1/C6DF:	AD AD 60   	LDA $60AD
-C1/C6E2:	D0 7C      	BNE $C760
-C1/C6E4:	20 23 C8   	JSR $C823
-C1/C6E7:	80 6F      	BRA $C758
-C1/C6E9:	9E DE 64   	STZ $64DE,X
-C1/C6EC:	AD AC 60   	LDA $60AC
-C1/C6EF:	D0 6F      	BNE $C760
-C1/C6F1:	20 B9 C7   	JSR $C7B9
-C1/C6F4:	90 62      	BCC $C758
-C1/C6F6:	A5 9B      	LDA $9B
-C1/C6F8:	D0 1A      	BNE $C714
-C1/C6FA:	A7 5B      	LDA [$5B]
-C1/C6FC:	10 16      	BPL $C714
-C1/C6FE:	C9 FF      	CMP #$FF
-C1/C700:	D0 08      	BNE $C70A
-C1/C702:	9E 2E 6A   	STZ $6A2E,X
-C1/C705:	9E DE 64   	STZ $64DE,X
+C1/C682:	AA         	TAX                ; index it
+C1/C683:	C8         	INY                ; next buffer index
+C1/C684:	C0 04 00   	CPY #$0004         ; loop 4 times (4 characters)
+C1/C687:	D0 EF      	BNE $C678          ; continue loop
 
-C1/C708:	80 56      	BRA $C760
-C1/C70A:	20 D7 D9   	JSR $D9D7
-C1/C70D:	A4 5B      	LDY $5B
-C1/C70F:	C8         	INY
-C1/C710:	84 5B      	STY $5B
-C1/C712:	80 BD      	BRA $C6D1
-C1/C714:	64 9B      	STZ $9B
-C1/C716:	C9 1F      	CMP #$1F
-C1/C718:	F0 06      	BEQ $C720
-C1/C71A:	18         	CLC
-C1/C71B:	7D 8C 6F   	ADC $6F8C,X
-C1/C71E:	29 7F      	AND #$7F
-C1/C720:	9D E3 64   	STA $64E3,X
-C1/C723:	BD 37 6A   	LDA $6A37,X
-C1/C726:	9D E4 64   	STA $64E4,X
-C1/C729:	C2 20      	REP #$20
-C1/C72B:	BD 3A 6A   	LDA $6A3A,X
-C1/C72E:	18         	CLC
-C1/C72F:	7D CE 74   	ADC $74CE,X
-C1/C732:	9D DF 64   	STA $64DF,X
-C1/C735:	BD 3C 6A   	LDA $6A3C,X
-C1/C738:	18         	CLC
-C1/C739:	7D D0 74   	ADC $74D0,X
-C1/C73C:	9D E1 64   	STA $64E1,X
-C1/C73F:	7B         	TDC
+C1/C689:	7B         	TDC                ; A = 0000
+C1/C68A:	AA         	TAX                ; X = 0000
+C1/C68B:	BD DB 80   	LDA $80DB,X        ; monster sprite data
+C1/C68E:	99 6E 61   	STA $616E,Y        ; copy to buffer
+C1/C691:	E8         	INX
+C1/C692:	E8         	INX                ; point to next monster
+C1/C693:	C8         	INY                ; point to next buffer byte
+C1/C694:	C0 0A 00   	CPY #$000A         ; loop 6 times (6 monsters)
+C1/C697:	D0 F2      	BNE $C68B          ; continue loop
+
+C1/C699:	7B         	TDC                ; A = 0000
+C1/C69A:	AA         	TAX                ; X = 0000
+C1/C69B:	9E 85 60   	STZ $6085,X        ; zero palette shift counter [?]
+C1/C69E:	E8         	INX                ; next shift counter byte
+C1/C69F:	E0 10 00   	CPX #$0010         ; zero 16 bytes (all palette shifts) [?]
+C1/C6A2:	D0 F7      	BNE $C69B          ; continue loop
+
+C1/C6A4:	7B         	TDC                ; A = 0000
+C1/C6A5:	AA         	TAX                ; X = 0000
+C1/C6A6:	9C 14 7B   	STZ $7B14          ; # of active (sprite) threads [?]
+C1/C6A9:	64 9B      	STZ $9B            ; [?]
+C1/C6AB:	BD 2E 6A   	LDA $6A2E,X        ; thread is active
+C1/C6AE:	F0 58      	BEQ $C708          ; continue loop if not ^
+C1/C6B0:	A5 99      	LDA $99            ; sprite animation threads paused
+C1/C6B2:	F0 05      	BEQ $C6B9          ; branch if not ^
+C1/C6B4:	E0 00 05   	CPX #$0500         ; is this a sprite animation thread?
+C1/C6B7:	90 4F      	BCC $C708          ; continue loop if ^
+C1/C6B9:	EE 14 7B   	INC $7B14          ; add to active sprite thread count
+C1/C6BC:	DE 35 6A   	DEC $6A35,X        ; decrement animation frame counter [?]
+C1/C6BF:	D0 47      	BNE $C708          ; if not zero, continue loop
+C1/C6C1:	BD 34 6A   	LDA $6A34,X        ; animation speed (frames per update)
+C1/C6C4:	9D 35 6A   	STA $6A35,X        ; reset animation frame counter
+C1/C6C7:	BC 31 6A   	LDY $6A31,X        ; animation script pointer
+C1/C6CA:	84 5B      	STY $5B            ; save it
+C1/C6CC:	BD 33 6A   	LDA $6A33,X        ; animation script bank
+C1/C6CF:	85 5D      	STA $5D            ; save it
+C1/C6D1:	BD 86 6F   	LDA $6F86,X        ; thread layer/priority
+C1/C6D4:	29 03      	AND #$03           ; isolate thread layer
+C1/C6D6:	F0 1E      	BEQ $C6F6          ; branch if sprite layer
+C1/C6D8:	29 01      	AND #$01           ; "BG1 layer"
+C1/C6DA:	D0 0D      	BNE $C6E9          ; branch if ^
+
+; BG3 layer
+C1/C6DC:	9E DE 64   	STZ $64DE,X        ; zero "sprite is active"
+C1/C6DF:	AD AD 60   	LDA $60AD          ; "BG3 animation paused"
+C1/C6E2:	D0 7C      	BNE $C760          ; continue loop if ^
+C1/C6E4:	20 23 C8   	JSR $C823          ; ????????????
+C1/C6E7:	80 6F      	BRA $C758          ; continue loop
+
+; BG1 layer
+C1/C6E9:	9E DE 64   	STZ $64DE,X        ; zero "sprite is active"
+C1/C6EC:	AD AC 60   	LDA $60AC          ; "BG1 animation paused"
+C1/C6EF:	D0 6F      	BNE $C760          ; continue loop if ^
+C1/C6F1:	20 B9 C7   	JSR $C7B9          ; ????????????
+C1/C6F4:	90 62      	BCC $C758          ; continue loop
+
+; Sprite layer
+C1/C6F6:	A5 9B      	LDA $9B            ; [?]
+C1/C6F8:	D0 1A      	BNE $C714
+C1/C6FA:	A7 5B      	LDA [$5B]          ; animation script byte
+C1/C6FC:	10 16      	BPL $C714          ; branch if bit 7 unset
+C1/C6FE:	C9 FF      	CMP #$FF           ; null?
+C1/C700:	D0 08      	BNE $C70A          ; branch if not null [?]
+C1/C702:	9E 2E 6A   	STZ $6A2E,X        ; set thread "inactive"
+C1/C705:	9E DE 64   	STZ $64DE,X        ; set sprite "inactive"
+C1/C708:	80 56      	BRA $C760          ; branch to next loop
+
+C1/C70A:	20 D7 D9   	JSR $D9D7          ; ????????????
+C1/C70D:	A4 5B      	LDY $5B            ; animation script pointer
+C1/C70F:	C8         	INY                ; get next byte offset
+C1/C710:	84 5B      	STY $5B            ; update script pointer
+C1/C712:	80 BD      	BRA $C6D1          ; repeat this thread processing [?]
+
+C1/C714:	64 9B      	STZ $9B            ; [?]
+C1/C716:	C9 1F      	CMP #$1F           ; check specific animation byte id
+C1/C718:	F0 06      	BEQ $C720          ; branch if $1F
+C1/C71A:	18         	CLC                ; clear carry
+C1/C71B:	7D 8C 6F   	ADC $6F8C,X        ; add frame offset [?]
+C1/C71E:	29 7F      	AND #$7F           ; mask top bit [?]
+C1/C720:	9D E3 64   	STA $64E3,X        ; set animation frame number [?]
+C1/C723:	BD 37 6A   	LDA $6A37,X        ; sprite graphic index
+C1/C726:	9D E4 64   	STA $64E4,X        ; store in buffer
+C1/C729:	C2 20      	REP #$20           ; 16-bit A
+C1/C72B:	BD 3A 6A   	LDA $6A3A,X        ; thread's X position
+C1/C72E:	18         	CLC                ; clear carry
+C1/C72F:	7D CE 74   	ADC $74CE,X        ; add thread's X offset
+C1/C732:	9D DF 64   	STA $64DF,X        ; update sprite's X position
+C1/C735:	BD 3C 6A   	LDA $6A3C,X        ; thread's Y position
+C1/C738:	18         	CLC                ; clear carry
+C1/C739:	7D D0 74   	ADC $74D0,X        ; add thread's Y offset
+C1/C73C:	9D E1 64   	STA $64E1,X        ; update sprite's Y position
+C1/C73F:	7B         	TDC                ; A = 0000
 C1/C740:	E2 20      	SEP #$20           ; 8-bit A
-C1/C742:	BD 87 6F   	LDA $6F87,X
-C1/C745:	9D E5 64   	STA $64E5,X
-C1/C748:	BD 86 6F   	LDA $6F86,X
-C1/C74B:	29 30      	AND #$30
-C1/C74D:	1D D5 74   	ORA $74D5,X
-C1/C750:	9D E6 64   	STA $64E6,X
+C1/C742:	BD 87 6F   	LDA $6F87,X        ; thread is horizontally flipped
+C1/C745:	9D E5 64   	STA $64E5,X        ; save flag [?]
+C1/C748:	BD 86 6F   	LDA $6F86,X        ; thread priority/layer
+C1/C74B:	29 30      	AND #$30           ; isolate sprite priority
+C1/C74D:	1D D5 74   	ORA $74D5,X        ; combine with thread palette index
+C1/C750:	9D E6 64   	STA $64E6,X        ; save in buffer [?]
 C1/C753:	A9 01      	LDA #$01
-C1/C755:	9D DE 64   	STA $64DE,X
-C1/C758:	C2 20      	REP #$20
+C1/C755:	9D DE 64   	STA $64DE,X        ; set sprite "active"
+C1/C758:	C2 20      	REP #$20           ; 16-bit A
 C1/C75A:	A5 5B      	LDA $5B
 C1/C75C:	1A         	INC A
-C1/C75D:	9D 31 6A   	STA $6A31,X
-C1/C760:	C2 20      	REP #$20
+C1/C75D:	9D 31 6A   	STA $6A31,X        ; advance animation script pointer
+
+C1/C760:	C2 20      	REP #$20           ; 16-bit A
 C1/C762:	8A         	TXA
-C1/C763:	18         	CLC
-C1/C764:	69 10 00   	ADC #$0010
-C1/C767:	AA         	TAX
-C1/C768:	7B         	TDC
+C1/C763:	18         	CLC                ; clear carry
+C1/C764:	69 10 00   	ADC #$0010         ; point to next thread
+C1/C767:	AA         	TAX                ; index it
+C1/C768:	7B         	TDC                ; A = 0000
 C1/C769:	E2 20      	SEP #$20           ; 8-bit A
-C1/C76B:	E0 50 05   	CPX #$0550
-C1/C76E:	F0 03      	BEQ $C773
+C1/C76B:	E0 50 05   	CPX #$0550         ; check all animation threads
+C1/C76E:	F0 03      	BEQ $C773          ; branch when finished
 C1/C770:	4C A9 C6   	JMP $C6A9
 
 C1/C773:	20 2A 02   	JSR $022A          ; wait a frame (and run updates)
-C1/C776:	AD D2 62   	LDA $62D2
-C1/C779:	D0 03      	BNE $C77E
+C1/C776:	AD D2 62   	LDA $62D2          ; sprite priority valid/updated
+C1/C779:	D0 03      	BNE $C77E          ; branch if ^
 C1/C77B:	20 7C 95   	JSR $957C          ; update sprite priority (buffer)
-C1/C77E:	AD 14 7B   	LDA $7B14
-C1/C781:	F0 03      	BEQ $C786
-C1/C783:	4C A4 C6   	JMP $C6A4
+C1/C77E:	AD 14 7B   	LDA $7B14          ; # of active (sprite) threads [?]
+C1/C781:	F0 03      	BEQ $C786          ; branch if none left
+C1/C783:	4C A4 C6   	JMP $C6A4          ; else loop through threads again
 
-C1/C786:	7B         	TDC
-C1/C787:	AA         	TAX
+C1/C786:	7B         	TDC                ; A = 0000
+C1/C787:	AA         	TAX                ; X = 0000
 C1/C788:	86 10      	STX $10
-C1/C78A:	20 3C C2   	JSR $C23C
-C1/C78D:	9C D2 62   	STZ $62D2
-C1/C790:	9C AF 62   	STZ $62AF
+C1/C78A:	20 3C C2   	JSR $C23C          ; clear subscreen window mask
+C1/C78D:	9C D2 62   	STZ $62D2          ; clear "sprite priority valid"
+C1/C790:	9C AF 62   	STZ $62AF          ; clear monsters in BG1 [?]
 C1/C793:	20 7C 95   	JSR $957C          ; update sprite priority (buffer)
-C1/C796:	7B         	TDC
-C1/C797:	AA         	TAX
-C1/C798:	9D 15 7B   	STA $7B15,X
-C1/C79B:	9D 21 7B   	STA $7B21,X
-C1/C79E:	E8         	INX
-C1/C79F:	E0 0C 00   	CPX #$000C
-C1/C7A2:	D0 F4      	BNE $C798
+C1/C796:	7B         	TDC                ; A = 0000
+C1/C797:	AA         	TAX                ; X = 0000
+C1/C798:	9D 15 7B   	STA $7B15,X        ; clear BG1 animation details
+C1/C79B:	9D 21 7B   	STA $7B21,X        ; clear BG3 animation details
+C1/C79E:	E8         	INX                ; next byte
+C1/C79F:	E0 0C 00   	CPX #$000C         ; loop 12 times
+C1/C7A2:	D0 F4      	BNE $C798          ; branch till all data clear
+
 C1/C7A4:	A2 00 01   	LDX #$0100
-C1/C7A7:	8E F5 43   	STX $43F5
-C1/C7AA:	8E B4 64   	STX $64B4
-C1/C7AD:	8E F5 4A   	STX $4AF5
-C1/C7B0:	7B         	TDC
-C1/C7B1:	AA         	TAX
-C1/C7B2:	8E B6 64   	STX $64B6
-C1/C7B5:	8E F7 4A   	STX $4AF7
+C1/C7A7:	8E F5 43   	STX $43F5          ; BG1 scroll HDMA [?]
+C1/C7AA:	8E B4 64   	STX $64B4          ; BG1 horizontal scroll position
+C1/C7AD:	8E F5 4A   	STX $4AF5          ; BG3 scroll HDMA [?]
+C1/C7B0:	7B         	TDC                ; A = 0000
+C1/C7B1:	AA         	TAX                ; X = 0000
+C1/C7B2:	8E B6 64   	STX $64B6          ; BG1 vertical scroll position
+C1/C7B5:	8E F7 4A   	STX $4AF7          ; BG3 scroll something [?]
 C1/C7B8:	60         	RTS
 
 C1/C7B9:	BD 86 6F   	LDA $6F86,X
@@ -29995,7 +30007,7 @@ C1/E729:	B7 5B      	LDA [$5B],Y
 C1/E72B:	85 11      	STA $11
 C1/E72D:	C8         	INY
 C1/E72E:	B7 5B      	LDA [$5B],Y
-C1/E730:	20 3C C2   	JSR $C23C
+C1/E730:	20 3C C2   	JSR $C23C          ; fill subscreen window mask
 C1/E733:	AE F6 7A   	LDX $7AF6
 C1/E736:	A4 5B      	LDY $5B
 C1/E738:	C8         	INY
