@@ -25779,14 +25779,14 @@ C1/C6DA:	D0 0D      	BNE $C6E9          ; branch if ^
 C1/C6DC:	9E DE 64   	STZ $64DE,X        ; zero "sprite is active"
 C1/C6DF:	AD AD 60   	LDA $60AD          ; "BG3 animation paused"
 C1/C6E2:	D0 7C      	BNE $C760          ; continue loop if ^
-C1/C6E4:	20 23 C8   	JSR $C823          ; ????????????
+C1/C6E4:	20 23 C8   	JSR $C823          ; execute BG3 animation
 C1/C6E7:	80 6F      	BRA $C758          ; continue loop
 
 ; BG1 layer
 C1/C6E9:	9E DE 64   	STZ $64DE,X        ; zero "sprite is active"
 C1/C6EC:	AD AC 60   	LDA $60AC          ; "BG1 animation paused"
 C1/C6EF:	D0 6F      	BNE $C760          ; continue loop if ^
-C1/C6F1:	20 B9 C7   	JSR $C7B9          ; ????????????
+C1/C6F1:	20 B9 C7   	JSR $C7B9          ; execute BG1 animation
 C1/C6F4:	90 62      	BCC $C758          ; continue loop
 
 ; Sprite layer
@@ -25800,7 +25800,7 @@ C1/C702:	9E 2E 6A   	STZ $6A2E,X        ; set thread "inactive"
 C1/C705:	9E DE 64   	STZ $64DE,X        ; set sprite "inactive"
 C1/C708:	80 56      	BRA $C760          ; branch to next loop
 
-C1/C70A:	20 D7 D9   	JSR $D9D7          ; ????????????
+C1/C70A:	20 D7 D9   	JSR $D9D7          ; execute script command
 C1/C70D:	A4 5B      	LDY $5B            ; animation script pointer
 C1/C70F:	C8         	INY                ; get next byte offset
 C1/C710:	84 5B      	STY $5B            ; update script pointer
@@ -25883,6 +25883,8 @@ C1/C7B2:	8E B6 64   	STX $64B6          ; BG1 vertical scroll position
 C1/C7B5:	8E F7 4A   	STX $4AF7          ; BG3 scroll something [?]
 C1/C7B8:	60         	RTS
 
+; Execute BG1 animation
+
 C1/C7B9:	BD 86 6F   	LDA $6F86,X
 C1/C7BC:	29 03      	AND #$03
 C1/C7BE:	D0 02      	BNE $C7C2
@@ -25932,53 +25934,58 @@ C1/C812:	8D 15 7B   	STA $7B15
 C1/C815:	18         	CLC
 C1/C816:	60         	RTS
 
-C1/C817:	20 D7 D9   	JSR $D9D7
+C1/C817:	20 D7 D9   	JSR $D9D7          ; execute animation script byte command
 C1/C81A:	A4 5B      	LDY $5B
 C1/C81C:	C8         	INY
-C1/C81D:	84 5B      	STY $5B
+C1/C81D:	84 5B      	STY $5B            ; advance script pointer by 1
 C1/C81F:	80 98      	BRA $C7B9
+
+; Are these two opcodes ever used?
 C1/C821:	18         	CLC
 C1/C822:	60         	RTS
 
-C1/C823:	A7 5B      	LDA [$5B]
-C1/C825:	C9 FF      	CMP #$FF
-C1/C827:	D0 0A      	BNE $C833
-C1/C829:	9E 2E 6A   	STZ $6A2E,X
+; Fight animation BG3 executing
+C1/C823:	A7 5B      	LDA [$5B]          ; animation script byte
+C1/C825:	C9 FF      	CMP #$FF           ; null?
+C1/C827:	D0 0A      	BNE $C833          ; branch if not null
+C1/C829:	9E 2E 6A   	STZ $6A2E,X        ; set thread "inactive"
 C1/C82C:	A0 00 01   	LDY #$0100
-C1/C82F:	8C F5 4A   	STY $4AF5
+C1/C82F:	8C F5 4A   	STY $4AF5          ; BG3 scroll HDMA [?]
 C1/C832:	60         	RTS
 
-C1/C833:	30 33      	BMI $C868
-C1/C835:	18         	CLC
-C1/C836:	7D 8C 6F   	ADC $6F8C,X
-C1/C839:	29 7F      	AND #$7F
-C1/C83B:	C2 20      	REP #$20
-C1/C83D:	EB         	XBA
-C1/C83E:	0A         	ASL A
-C1/C83F:	18         	CLC
-C1/C840:	69 00 E4   	ADC #$E400
-C1/C843:	8D 26 7B   	STA $7B26
-C1/C846:	BD 3A 6A   	LDA $6A3A,X
-C1/C849:	18         	CLC
-C1/C84A:	7D CE 74   	ADC $74CE,X
-C1/C84D:	8D 29 7B   	STA $7B29
-C1/C850:	BD 3C 6A   	LDA $6A3C,X
-C1/C853:	18         	CLC
-C1/C854:	7D D0 74   	ADC $74D0,X
-C1/C857:	8D 2B 7B   	STA $7B2B
-C1/C85A:	7B         	TDC
+C1/C833:	30 33      	BMI $C868          ; branch if byte's top bit set [?]
+C1/C835:	18         	CLC                ; clear carry
+C1/C836:	7D 8C 6F   	ADC $6F8C,X        ; add frame offset
+C1/C839:	29 7F      	AND #$7F           ; mask top bit
+C1/C83B:	C2 20      	REP #$20           ; 16-bit A
+C1/C83D:	EB         	XBA                ; x256
+C1/C83E:	0A         	ASL A              ; x2
+C1/C83F:	18         	CLC                ; clear carry
+C1/C840:	69 00 E4   	ADC #$E400         ; base BG3 tile buffer offset
+C1/C843:	8D 26 7B   	STA $7B26          ; pointer to tile data buffer
+C1/C846:	BD 3A 6A   	LDA $6A3A,X        ; thread X position
+C1/C849:	18         	CLC                ; clear carry
+C1/C84A:	7D CE 74   	ADC $74CE,X        ; add thread X offset
+C1/C84D:	8D 29 7B   	STA $7B29          ; update BG3 animation X position
+C1/C850:	BD 3C 6A   	LDA $6A3C,X        ; thread Y position
+C1/C853:	18         	CLC                ; clear carry
+C1/C854:	7D D0 74   	ADC $74D0,X        ; add thread Y offset
+C1/C857:	8D 2B 7B   	STA $7B2BA         ; update BG3 animation Y position
+C1/C85A:	7B         	TDC                ; A = 0000
 C1/C85B:	E2 20      	SEP #$20           ; 8-bit A
-C1/C85D:	A9 7F      	LDA #$7F
-C1/C85F:	8D 28 7B   	STA $7B28
+C1/C85D:	A9 7F      	LDA #$7F           ; BG3 tile buffer bank
+C1/C85F:	8D 28 7B   	STA $7B28          ; set bank
 C1/C862:	A9 01      	LDA #$01
-C1/C864:	8D 21 7B   	STA $7B21
+C1/C864:	8D 21 7B   	STA $7B21          ; flag BG3 tile data needs update
 C1/C867:	60         	RTS
 
-C1/C868:	20 D7 D9   	JSR $D9D7
+C1/C868:	20 D7 D9   	JSR $D9D7          ; execute animation script byte command
 C1/C86B:	A4 5B      	LDY $5B
 C1/C86D:	C8         	INY
-C1/C86E:	84 5B      	STY $5B
-C1/C870:	80 B1      	BRA $C823
+C1/C86E:	84 5B      	STY $5B            ; point to next animation script byte
+C1/C870:	80 B1      	BRA $C823          ; re-run BG3 processing with new byte
+
+; Is this RTS ever used?
 C1/C872:	60         	RTS
 
 C1/C873:	22 81 C0 C2	JSL $C2C081
@@ -28339,14 +28346,21 @@ C1/D9D3:	7B         	TDC
 C1/D9D4:	E2 20      	SEP #$20           ; 8-bit A
 C1/D9D6:	60         	RTS
 
-C1/D9D7:	29 7F      	AND #$7F
-C1/D9D9:	0A         	ASL A
-C1/D9DA:	8E F6 7A   	STX $7AF6
-C1/D9DD:	AA         	TAX
-C1/D9DE:	A4 5B      	LDY $5B
-C1/D9E0:	C8         	INY
+; Execute animation script byte command
+
+C1/D9D7:	29 7F      	AND #$7F           ; mask top bit/flag
+C1/D9D9:	0A         	ASL A              ; x2
+C1/D9DA:	8E F6 7A   	STX $7AF6          ; store pointer to animation thread
+C1/D9DD:	AA         	TAX                ; index script byte x2
+C1/D9DE:	A4 5B      	LDY $5B            ; this byte's address
+C1/D9E0:	C8         	INY                ; point to next byte
 C1/D9E1:	84 5B      	STY $5B
-C1/D9E3:	7C E6 D9   	JMP ($D9E6,X)  ; Jump table
+C1/D9E3:	7C E6 D9   	JMP ($D9E6,X)      ; execute this byte's command [?]
+
+; Animation script byte commands
+; Script byte commands have bit 7 set
+; initially, to indicate that they are
+; commands [?]
 
 C1/D9E6:	78C8    	; 00:
 C1/D9E8:	47F3    	; 01:
