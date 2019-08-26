@@ -13875,10 +13875,12 @@ C2/FC68:	FFFFFFFF
 C2/FC6C:	FF
 
 
-; (Below are tables for gradually increasing or decreasing various parameters. During the
-; ending, the data distribution affects Mode 7 rotation and governs the back-and-forth or
-; up-and-down motion of various birds and airships. In battle, it influences the path of
-; most sprites, such as the circular motion of boomerangs.)
+; Below are tables for gradually increasing or decreasing
+; various parameters. During the ending, the data distribution
+; affects Mode 7 rotation and governs the back-and-forth or
+; up-and-down motion of various birds and airships. In battle,
+; it influences the path of most sprites, such as the circular
+; motion of boomerangs.
 
 ; Sine/Cosine Table (16-bit, signed)(C2/FC6D - C2/FE6C)
 ; Data retrieved from C1/6C0A and C1/6C6E

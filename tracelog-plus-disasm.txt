@@ -1588,59 +1588,64 @@ C1/0D83:	85 1C      	STA $1C
 C1/0D85:	64 1D      	STZ $1D
 C1/0D87:	64 22      	STZ $22
 C1/0D89:	80 06      	BRA $0D91
-C1/0D8B:	48         	PHA
-C1/0D8C:	A9 01      	LDA #$01
-C1/0D8E:	85 22      	STA $22
-C1/0D90:	68         	PLA
 
-C1/0D91:	DA         	PHX
-C1/0D92:	85 16      	STA $16
-C1/0D94:	86 10      	STX $10
-C1/0D96:	A9 7E      	LDA #$7E
-C1/0D98:	85 12      	STA $12
+; Generate curve values at $7E44F5
+
+C1/0D8B:	48         	PHA              ; store A (always 0) [?]
+C1/0D8C:	A9 01      	LDA #$01
+C1/0D8E:	85 22      	STA $22          ; flag something on? [?]
+C1/0D90:	68         	PLA              ; restore A (always 0) [?]
+
+C1/0D91:	DA         	PHX              ; store destination RAM offset [?]
+C1/0D92:	85 16      	STA $16          ; $00 or $40
+C1/0D94:	86 10      	STX $10          ; store destination RAM offset [?]
+C1/0D96:	A9 7E      	LDA #$7E         ; RAM bank
+C1/0D98:	85 12      	STA $12          ; store destination RAM bank [?]
 C1/0D9A:	64 1B      	STZ $1B
-C1/0D9C:	8B         	PHB
+C1/0D9C:	8B         	PHB              ; store bank
 C1/0D9D:	A9 00      	LDA #$00
-C1/0D9F:	48         	PHA
-C1/0DA0:	AB         	PLB
-C1/0DA1:	7B         	TDC
-C1/0DA2:	A8         	TAY
-C1/0DA3:	A5 16      	LDA $16
-C1/0DA5:	C2 20      	REP #$20
-C1/0DA7:	0A         	ASL A
-C1/0DA8:	85 16      	STA $16
-C1/0DAA:	A5 22      	LDA $22
-C1/0DAC:	29 01 00   	AND #$0001
-C1/0DAF:	F0 22      	BEQ $0DD3
-C1/0DB1:	E2 10      	SEP #$10
-C1/0DB3:	20 02 6C   	JSR $6C02
-C1/0DB6:	C2 10      	REP #$10
+C1/0D9F:	48         	PHA              ; prepare new bank $00
+C1/0DA0:	AB         	PLB              ; set bank to $00
+C1/0DA1:	7B         	TDC              ; A = 0000
+C1/0DA2:	A8         	TAY              ; Y = 0000
+C1/0DA3:	A5 16      	LDA $16          ; sine/cosine table offset ($00 or $40)
+C1/0DA5:	C2 20      	REP #$20         ; 16-bit A
+C1/0DA7:	0A         	ASL A            ; x2 ($00 or $80)
+C1/0DA8:	85 16      	STA $16          ; update value
+C1/0DAA:	A5 22      	LDA $22          ; $01 if $16 is $00. Else $00
+C1/0DAC:	29 01 00   	AND #$0001       ; some flag [?]
+C1/0DAF:	F0 22      	BEQ $0DD3        ; branch if not set ^
+
+C1/0DB1:	E2 10      	SEP #$10         ; 8-bit XY
+C1/0DB3:	20 02 6C   	JSR $6C02        ; get sin/cos value * slope [?]
+C1/0DB6:	C2 10      	REP #$10         ; 16-bit XY
 C1/0DB8:	3A         	DEC A
-C1/0DB9:	3A         	DEC A
-C1/0DBA:	97 10      	STA [$10],Y
-C1/0DBC:	A5 16      	LDA $16
-C1/0DBE:	18         	CLC
-C1/0DBF:	65 1A      	ADC $1A
-C1/0DC1:	85 16      	STA $16
+C1/0DB9:	3A         	DEC A            ; reduce value by 2 [?]
+C1/0DBA:	97 10      	STA [$10],Y      ; save at RAM offset
+C1/0DBC:	A5 16      	LDA $16          ; starts at $00 [?]
+C1/0DBE:	18         	CLC              ; clear carry
+C1/0DBF:	65 1A      	ADC $1A          ; add curve increment ($08 always [?])
+C1/0DC1:	85 16      	STA $16          ; update value
 C1/0DC3:	C8         	INY
 C1/0DC4:	C8         	INY
 C1/0DC5:	C8         	INY
-C1/0DC6:	C8         	INY
-C1/0DC7:	C4 1C      	CPY $1C
-C1/0DC9:	D0 E6      	BNE $0DB1
-C1/0DCB:	7B         	TDC
-C1/0DCC:	C2 10      	REP #$10
-C1/0DCE:	E2 20      	SEP #$20           ; 8-bit A
-C1/0DD0:	AB         	PLB
-C1/0DD1:	FA         	PLX
+C1/0DC6:	C8         	INY              ; advance 4 bytes
+C1/0DC7:	C4 1C      	CPY $1C          ; compare to total data length
+C1/0DC9:	D0 E6      	BNE $0DB1        ; loop
+
+C1/0DCB:	7B         	TDC              ; A = 0000
+C1/0DCC:	C2 10      	REP #$10         ; 16-bit XY
+C1/0DCE:	E2 20      	SEP #$20         ; 8-bit A
+C1/0DD0:	AB         	PLB              ; restore bank
+C1/0DD1:	FA         	PLX              ; restore X
 C1/0DD2:	60         	RTS
 
-C1/0DD3:	E2 10      	SEP #$10
-C1/0DD5:	20 02 6C   	JSR $6C02
-C1/0DD8:	C2 10      	REP #$10
+C1/0DD3:	E2 10      	SEP #$10         ; 8-bit XY
+C1/0DD5:	20 02 6C   	JSR $6C02        ; get sin/cos value * slope [?]
+C1/0DD8:	C2 10      	REP #$10         ; 16-bit XY
 C1/0DDA:	3A         	DEC A
-C1/0DDB:	3A         	DEC A
-C1/0DDC:	97 10      	STA [$10],Y
+C1/0DDB:	3A         	DEC A            ; subtract 2 [?]
+C1/0DDC:	97 10      	STA [$10],Y      ; store at RAM destination
 C1/0DDE:	A5 16      	LDA $16
 C1/0DE0:	18         	CLC
 C1/0DE1:	65 1A      	ADC $1A
@@ -1649,11 +1654,12 @@ C1/0DE5:	C8         	INY
 C1/0DE6:	C8         	INY
 C1/0DE7:	C4 1C      	CPY $1C
 C1/0DE9:	D0 E8      	BNE $0DD3
-C1/0DEB:	7B         	TDC
-C1/0DEC:	C2 10      	REP #$10
+
+C1/0DEB:	7B         	TDC                ; A = 0000
+C1/0DEC:	C2 10      	REP #$10           ; 16-bit XY
 C1/0DEE:	E2 20      	SEP #$20           ; 8-bit A
-C1/0DF0:	AB         	PLB
-C1/0DF1:	FA         	PLX
+C1/0DF0:	AB         	PLB                ; restore bank
+C1/0DF1:	FA         	PLX                ; restore X
 C1/0DF2:	60         	RTS
 
 C1/0DF3:	7B         	TDC
@@ -2977,12 +2983,14 @@ C1/1854:	8F 40 21 00	STA $002140    ; play song change [?]
 C1/1858:	64 97      	STZ $97        ; reset song change flag
 C1/185A:	60         	RTS
 
-C1/185B:	DA         	PHX
-C1/185C:	A5 72      	LDA $72
-C1/185E:	AA         	TAX
-C1/185F:	E6 72      	INC $72
-C1/1861:	BF 00 FD C0	LDA $C0FD00,X
-C1/1865:	FA         	PLX
+; Get random number
+
+C1/185B:	DA         	PHX            ; store X
+C1/185C:	A5 72      	LDA $72        ; random # counter for graphics
+C1/185E:	AA         	TAX            ; index it
+C1/185F:	E6 72      	INC $72        ; increment counter
+C1/1861:	BF 00 FD C0	LDA $C0FD00,X  ; random number
+C1/1865:	FA         	PLX            ; restore X
 C1/1866:	60         	RTS
 
 C1/1867:	64 30      	STZ $30
@@ -13877,45 +13885,50 @@ C1/6BFE:	26 28      	ROL $28
 C1/6C00:	AB         	PLB
 C1/6C01:	60         	RTS
 
-C1/6C02:	C2 10      	REP #$10
-C1/6C04:	A5 16      	LDA $16
-C1/6C06:	29 FF 01   	AND #$01FF
-C1/6C09:	AA         	TAX
-C1/6C0A:	BF 6D FC C2	LDA $C2FC6D,X
-C1/6C0E:	10 2F      	BPL $6C3F
-C1/6C10:	E2 10      	SEP #$10
-C1/6C12:	49 FF FF   	EOR #$FFFF
-C1/6C15:	A6 24      	LDX $24
-C1/6C17:	8E 02 42   	STX $4202
-C1/6C1A:	AA         	TAX
-C1/6C1B:	8E 03 42   	STX $4203
-C1/6C1E:	85 22      	STA $22
-C1/6C20:	EB         	XBA
-C1/6C21:	AA         	TAX
-C1/6C22:	AD 16 42   	LDA $4216
-C1/6C25:	8E 03 42   	STX $4203
-C1/6C28:	85 26      	STA $26
-C1/6C2A:	64 28      	STZ $28
-C1/6C2C:	18         	CLC
-C1/6C2D:	AD 16 42   	LDA $4216
-C1/6C30:	65 27      	ADC $27
-C1/6C32:	85 27      	STA $27
-C1/6C34:	06 26      	ASL $26
+; Read from Sine/Cosine Tables [?]
+
+C1/6C02:	C2 10      	REP #$10         ; 16-bit XY
+C1/6C04:	A5 16      	LDA $16          ; sin/cos index, 8 or 16 byte increments
+C1/6C06:	29 FF 01   	AND #$01FF       ; limit max offset
+C1/6C09:	AA         	TAX              ; index it
+C1/6C0A:	BF 6D FC C2	LDA $C2FC6D,X    ; sin/cos value
+C1/6C0E:	10 2F      	BPL $6C3F        ; branch if positive value
+
+; Negative value
+C1/6C10:	E2 10      	SEP #$10         ; 8-bit XY
+C1/6C12:	49 FF FF   	EOR #$FFFF       ; convert to positive [?]
+C1/6C15:	A6 24      	LDX $24          ; curve slope [?]
+C1/6C17:	8E 02 42   	STX $4202        ; multiplicand 1
+C1/6C1A:	AA         	TAX              ; sine/cosine low-byte
+C1/6C1B:	8E 03 42   	STX $4203        ; multiplicand 2
+C1/6C1E:	85 22      	STA $22          ; save sine/cosine (full value)
+C1/6C20:	EB         	XBA              ; get high-byte
+C1/6C21:	AA         	TAX              ; transfer to X
+C1/6C22:	AD 16 42   	LDA $4216        ; product (sine/cosine-lowbyte * slope)
+C1/6C25:	8E 03 42   	STX $4203        ; multiplicand 2 (hibyte)
+C1/6C28:	85 26      	STA $26          ; store original product
+C1/6C2A:	64 28      	STZ $28          ; zero highest byte [?]
+C1/6C2C:	18         	CLC              ; clear carry
+C1/6C2D:	AD 16 42   	LDA $4216        ; product (sin/cos-hibyte * slope)
+C1/6C30:	65 27      	ADC $27          ; add to hi-byte of original product
+C1/6C32:	85 27      	STA $27          ; store high bytes
+C1/6C34:	06 26      	ASL $26          ; multiply by 2
 C1/6C36:	26 28      	ROL $28
-C1/6C38:	A5 28      	LDA $28
-C1/6C3A:	49 FF FF   	EOR #$FFFF
-C1/6C3D:	1A         	INC A
+C1/6C38:	A5 28      	LDA $28          ; get high bytes
+C1/6C3A:	49 FF FF   	EOR #$FFFF       ; convert to negative number [?]
+C1/6C3D:	1A         	INC A            ; +1
 C1/6C3E:	60         	RTS
 
-C1/6C3F:	E2 10      	SEP #$10
+; Positive value
+C1/6C3F:	E2 10      	SEP #$10         ; 8-bit A
 C1/6C41:	A6 24      	LDX $24
-C1/6C43:	8E 02 42   	STX $4202
+C1/6C43:	8E 02 42   	STX $4202        ; multiplicand 1
 C1/6C46:	AA         	TAX
-C1/6C47:	8E 03 42   	STX $4203
+C1/6C47:	8E 03 42   	STX $4203        ; multiplicand 2
 C1/6C4A:	85 22      	STA $22
 C1/6C4C:	EB         	XBA
 C1/6C4D:	AA         	TAX
-C1/6C4E:	AD 16 42   	LDA $4216
+C1/6C4E:	AD 16 42   	LDA $4216        ; product
 C1/6C51:	8E 03 42   	STX $4203
 C1/6C54:	85 26      	STA $26
 C1/6C56:	64 28      	STZ $28
@@ -14278,7 +14291,7 @@ C1/6F0E:	10 15      	BPL $6F25
 C1/6F10:	AD B1 62    LDA $62B1
 C1/6F13:	D0 37       BNE $6F4C
 C1/6F15:	EE B1 62    INC $62B1
-C1/6F18:	20 5B 18    JSR $185B
+C1/6F18:	20 5B 18    JSR $185B     ; random number
 C1/6F1B:	29 07       AND #$07
 C1/6F1D:	18          CLC
 C1/6F1E:	69 08       ADC #$08
@@ -16312,10 +16325,10 @@ C1/7F1F:	D0 19      	BNE $7F3A
 C1/7F21:	AD 49 2F   	LDA $2F49
 C1/7F24:	29 04      	AND #$04
 C1/7F26:	F0 07      	BEQ $7F2F
-C1/7F28:	20 5B 18   	JSR $185B
+C1/7F28:	20 5B 18   	JSR $185B     ; random number
 C1/7F2B:	09 3C      	ORA #$3C
 C1/7F2D:	80 03      	BRA $7F32
-C1/7F2F:	20 5B 18   	JSR $185B
+C1/7F2F:	20 5B 18   	JSR $185B     ; random number
 C1/7F32:	8D 79 61   	STA $6179
 C1/7F35:	EE 92 7B   	INC $7B92
 C1/7F38:	80 33      	BRA $7F6D
@@ -23206,7 +23219,7 @@ C1/B3B0:	9C B6 62   	STZ $62B6
 C1/B3B3:	9C B9 62   	STZ $62B9
 C1/B3B6:	9C BB 62   	STZ $62BB
 C1/B3B9:	9C BC 62   	STZ $62BC
-C1/B3BC:	20 5B 18   	JSR $185B
+C1/B3BC:	20 5B 18   	JSR $185B     ; random number
 C1/B3BF:	29 7F      	AND #$7F
 C1/B3C1:	18         	CLC
 C1/B3C2:	69 80      	ADC #$80
@@ -23273,7 +23286,7 @@ C1/B43C:	4C 16 B5   	JMP $B516
 
 C1/B43F:	AD BA 62   	LDA $62BA
 C1/B442:	D0 0E      	BNE $B452
-C1/B444:	20 5B 18   	JSR $185B
+C1/B444:	20 5B 18   	JSR $185B     ; random number
 C1/B447:	29 07      	AND #$07
 C1/B449:	18         	CLC
 C1/B44A:	69 08      	ADC #$08
@@ -25991,24 +26004,28 @@ C1/C872:	60         	RTS
 C1/C873:	22 81 C0 C2	JSL $C2C081
 C1/C877:	60         	RTS
 
-C1/C878:	A7 5B      	LDA [$5B]
-C1/C87A:	C2 20      	REP #$20
-C1/C87C:	0A         	ASL A
-C1/C87D:	AA         	TAX
-C1/C87E:	7B         	TDC
-C1/C87F:	E2 20      	SEP #$20           ; 8-bit A
-C1/C881:	A0 01 00   	LDY #$0001
-C1/C884:	FC 8B C8   	JSR ($C88B,X)  ; Pointer table
-C1/C887:	AE F6 7A   	LDX $7AF6
+; Animation command $00
+
+C1/C878:	A7 5B      	LDA [$5B]      ; first command arg
+C1/C87A:	C2 20      	REP #$20       ; 16-bit A
+C1/C87C:	0A         	ASL A          ; x2
+C1/C87D:	AA         	TAX            ; index it
+C1/C87E:	7B         	TDC            ; A = 0000
+C1/C87F:	E2 20      	SEP #$20       ; 8-bit A
+C1/C881:	A0 01 00   	LDY #$0001     ; [?]
+C1/C884:	FC 8B C8   	JSR ($C88B,X)  ; sub-command routine
+C1/C887:	AE F6 7A   	LDX $7AF6      ; current animation thread offset
 C1/C88A:	60         	RTS
 
-C1/C88B:	BED9    	;
-C1/C88D:	A9D9    	;
-C1/C88F:	81D9    	;
-C1/C891:	95D9    	;
-C1/C893:	6ED9    	;
-C1/C895:	38D9    	;
-C1/C897:	07D9    	;
+; Animation command $00 subcommands
+
+C1/C88B:	BED9    	; $00 ($D9BE) - Initialize thread target's position [?]
+C1/C88D:	A9D9    	; $01 ($D9A9) - Zero attacker and thread offsets
+C1/C88F:	81D9    	; $02 ($D981) - Copy attacker sprite flips and direction to buffer
+C1/C891:	95D9    	; $03 ($D995) - Copy attacker sprite flips and direction from buffer
+C1/C893:	6ED9    	; $04 ($D96E) - Randomize polar angle/radius or vector speed
+C1/C895:	38D9    	; $05 ($D938) - Set thread's XY offset/coord based on attacker/target [?]
+C1/C897:	07D9    	; $06 ($D907) - Curving animation, maybe for tornado only
 C1/C899:	F2D8    	;
 C1/C89B:	EBD8    	;
 C1/C89D:	79D8    	;
@@ -26878,7 +26895,7 @@ C1/CEEA:	7B         	TDC
 C1/CEEB:	E2 20      	SEP #$20           ; 8-bit A
 C1/CEED:	4C C6 CF   	JMP $CFC6
 
-C1/CEF0:	20 A1 E7   	JSR $E7A1
+C1/CEF0:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/CEF3:	C2 20      	REP #$20
 C1/CEF5:	B9 B7 61   	LDA $61B7,Y
 C1/CEF8:	18         	CLC
@@ -26949,7 +26966,7 @@ C1/CF7C:	65
 C1/CF7D:	39
 C1/CF7E:	3B
 
-C1/CF7F:	20 5B 18   	JSR $185B
+C1/CF7F:	20 5B 18   	JSR $185B     ; random number
 C1/CF82:	29 07      	AND #$07
 C1/CF84:	AA         	TAX
 C1/CF85:	BF 77 CF C1	LDA $C1CF77,X    ; Data
@@ -27167,7 +27184,7 @@ C1/D126:	B7 5B      	LDA [$5B],Y
 C1/D128:	8D 8D 89   	STA $898D
 C1/D12B:	4C C6 CF   	JMP $CFC6
 
-C1/D12E:	20 A1 E7   	JSR $E7A1
+C1/D12E:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/D131:	BD 87 6F   	LDA $6F87,X
 C1/D134:	29 40      	AND #$40
 C1/D136:	D0 04      	BNE $D13C
@@ -27549,7 +27566,7 @@ C1/D3AF:	AE F6 7A   	LDX $7AF6
 C1/D3B2:	A9 08      	LDA #$08
 C1/D3B4:	8D AF 60   	STA $60AF
 C1/D3B7:	9C B0 60   	STZ $60B0
-C1/D3BA:	20 5B 18   	JSR $185B
+C1/D3BA:	20 5B 18   	JSR $185B     ; random number
 C1/D3BD:	29 07      	AND #$07
 C1/D3BF:	85 22      	STA $22
 C1/D3C1:	BD 87 6F   	LDA $6F87,X
@@ -28017,7 +28034,7 @@ C1/D722:	20 C1 25   	JSR $25C1
 C1/D725:	FA         	PLX
 C1/D726:	60         	RTS
 
-C1/D727:	20 5B 18   	JSR $185B
+C1/D727:	20 5B 18   	JSR $185B     ; random number
 C1/D72A:	AE F6 7A   	LDX $7AF6
 C1/D72D:	9D D8 74   	STA $74D8,X
 C1/D730:	9E D9 74   	STZ $74D9,X
@@ -28059,7 +28076,7 @@ C1/D779:	AE F6 7A   	LDX $7AF6
 C1/D77C:	A9 08      	LDA #$08
 C1/D77E:	8D AF 60   	STA $60AF
 C1/D781:	9C B0 60   	STZ $60B0
-C1/D784:	20 5B 18   	JSR $185B
+C1/D784:	20 5B 18   	JSR $185B     ; random number
 C1/D787:	29 07      	AND #$07
 C1/D789:	85 22      	STA $22
 C1/D78B:	BD 87 6F   	LDA $6F87,X
@@ -28248,101 +28265,124 @@ C1/D903:	7B         	TDC
 C1/D904:	E2 20      	SEP #$20           ; 8-bit A
 C1/D906:	60         	RTS
 
-C1/D907:	7B         	TDC
-C1/D908:	AA         	TAX
-C1/D909:	9E 6D 5F   	STZ $5F6D,X
-C1/D90C:	E8         	INX
-C1/D90D:	E0 40 00   	CPX #$0040
-C1/D910:	D0 F7      	BNE $D909
-C1/D912:	20 5B 18   	JSR $185B
-C1/D915:	7B         	TDC
-C1/D916:	8D 6D 5F   	STA $5F6D
-C1/D919:	18         	CLC
-C1/D91A:	69 10      	ADC #$10
-C1/D91C:	8D 7D 5F   	STA $5F7D
+; Curving animation, maybe for Tornado only
+; Animation command $00, subcommand $06
+
+C1/D907:	7B         	TDC               ; A = 0000
+C1/D908:	AA         	TAX               ; X = 0000
+C1/D909:	9E 6D 5F   	STZ $5F6D,X       ; zero tornado data [?]
+C1/D90C:	E8         	INX               ; next byte
+C1/D90D:	E0 40 00   	CPX #$0040        ; clear 64 bytes
+C1/D910:	D0 F7      	BNE $D909         ; continue loop
+
+C1/D912:	20 5B 18   	JSR $185B         ; random number
+C1/D915:	7B         	TDC               ; A = 0000 (why?) [BUG]
+C1/D916:	8D 6D 5F   	STA $5F6D         ; overwrite first tornado byte
+C1/D919:	18         	CLC               ; clear carry
+C1/D91A:	69 10      	ADC #$10          ; add 16 [?]
+C1/D91C:	8D 7D 5F   	STA $5F7D         ; overwrite 16th tornado byte
 C1/D91F:	A9 08      	LDA #$08
 C1/D921:	85 24      	STA $24
 C1/D923:	85 1A      	STA $1A
-C1/D925:	A2 00 01   	LDX #$0100
-C1/D928:	86 1C      	STX $1C
-C1/D92A:	A2 F5 44   	LDX #$44F5
-C1/D92D:	7B         	TDC
-C1/D92E:	20 8B 0D   	JSR $0D8B
-C1/D931:	20 B4 E5   	JSR $E5B4
-C1/D934:	AE F6 7A   	LDX $7AF6
+C1/D925:	A2 00 01   	LDX #$0100        ; transfer data length
+C1/D928:	86 1C      	STX $1C           ; save for $0D8B below
+C1/D92A:	A2 F5 44   	LDX #$44F5        ; transfer destination RAM offset
+C1/D92D:	7B         	TDC               ; A = 0000
+C1/D92E:	20 8B 0D   	JSR $0D8B         ; generate curve values [?]
+C1/D931:	20 B4 E5   	JSR $E5B4         ; clear BG1 scroll HDMA table buffer
+C1/D934:	AE F6 7A   	LDX $7AF6         ; restore animation thread offset
 C1/D937:	60         	RTS
 
-C1/D938:	20 A1 E7   	JSR $E7A1
-C1/D93B:	C2 20      	REP #$20
-C1/D93D:	B9 C5 61   	LDA $61C5,Y
-C1/D940:	9D CE 74   	STA $74CE,X
-C1/D943:	B9 C7 61   	LDA $61C7,Y
-C1/D946:	9D D0 74   	STA $74D0,X
-C1/D949:	7B         	TDC
-C1/D94A:	E2 20      	SEP #$20           ; 8-bit A
-C1/D94C:	BD 38 6A   	LDA $6A38,X
-C1/D94F:	A8         	TAY
-C1/D950:	B9 10 7B   	LDA $7B10,Y
-C1/D953:	F0 03      	BEQ $D958
-C1/D955:	7B         	TDC
-C1/D956:	80 02      	BRA $D95A
-C1/D958:	A9 80      	LDA #$80
-C1/D95A:	9D 3A 6A   	STA $6A3A,X
-C1/D95D:	A9 04      	LDA #$04
-C1/D95F:	9D 3B 6A   	STA $6A3B,X
-C1/D962:	BD D2 74   	LDA $74D2,X
+; Set thread's XY offset/coord based on attacker/target [?]
+; Animation command $00, subcommand $05
+
+C1/D938:	20 A1 E7   	JSR $E7A1         ; get attacker data offset in Y
+C1/D93B:	C2 20      	REP #$20          ; 16-bit A
+C1/D93D:	B9 C5 61   	LDA $61C5,Y       ; get attacker X offset
+C1/D940:	9D CE 74   	STA $74CE,X       ; copy to thread's X offset
+C1/D943:	B9 C7 61   	LDA $61C7,Y       ; get attacker Y offset
+C1/D946:	9D D0 74   	STA $74D0,X       ; copy to thread's Y offset
+C1/D949:	7B         	TDC               ; A = 0000
+C1/D94A:	E2 20      	SEP #$20          ; 8-bit A
+C1/D94C:	BD 38 6A   	LDA $6A38,X       ; thread attacker index
+C1/D94F:	A8         	TAY               ; index it
+C1/D950:	B9 10 7B   	LDA $7B10,Y       ; attacker is facing right
+C1/D953:	F0 03      	BEQ $D958         ; branch if not ^
+C1/D955:	7B         	TDC               ; A = $00
+C1/D956:	80 02      	BRA $D95A         ; skip
+C1/D958:	A9 80      	LDA #$80          ; A = $80
+
+C1/D95A:	9D 3A 6A   	STA $6A3A,X       ; set thread X coord based on direction
+C1/D95D:	A9 04      	LDA #$04          ; $0400 (face right) or $0480 (left)
+C1/D95F:	9D 3B 6A   	STA $6A3B,X       ; set thread X coord high byte
+C1/D962:	BD D2 74   	LDA $74D2,X       ; target's width
 C1/D965:	0A         	ASL A
-C1/D966:	0A         	ASL A
-C1/D967:	18         	CLC
-C1/D968:	69 08      	ADC #$08
-C1/D96A:	9D 3C 6A   	STA $6A3C,X
+C1/D966:	0A         	ASL A             ; x4
+C1/D967:	18         	CLC               ; clear carry
+C1/D968:	69 08      	ADC #$08          ; add 8 [?]
+C1/D96A:	9D 3C 6A   	STA $6A3C,X       ; thread Y position [?]
 C1/D96D:	60         	RTS
 
-C1/D96E:	20 5B 18   	JSR $185B
-C1/D971:	AE F6 7A   	LDX $7AF6
-C1/D974:	9D D8 74   	STA $74D8,X
-C1/D977:	20 5B 18   	JSR $185B
-C1/D97A:	AE F6 7A   	LDX $7AF6
-C1/D97D:	9D D9 74   	STA $74D9,X
+; Randomize polar angle/radius or vector speed
+; Animation command $00, subcommand $04
+
+C1/D96E:	20 5B 18   	JSR $185B         ; random number
+C1/D971:	AE F6 7A   	LDX $7AF6         ; animation thread offset
+C1/D974:	9D D8 74   	STA $74D8,X       ; set random vector movement speed [?]
+C1/D977:	20 5B 18   	JSR $185B         ; random number
+C1/D97A:	AE F6 7A   	LDX $7AF6         ; animation thread offset (redundant)
+C1/D97D:	9D D9 74   	STA $74D9,X       ; random polar radius [?]
 C1/D980:	60         	RTS
 
-C1/D981:	20 A1 E7   	JSR $E7A1
-C1/D984:	B9 BE 61   	LDA $61BE,Y
-C1/D987:	8D B2 60   	STA $60B2
-C1/D98A:	BD 38 6A   	LDA $6A38,X
-C1/D98D:	A8         	TAY
-C1/D98E:	B9 10 7B   	LDA $7B10,Y
-C1/D991:	8D B1 60   	STA $60B1
+; Copy attacker sprite flip and direction to buffer
+; Animation command $00, subcommand $02
+
+C1/D981:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
+C1/D984:	B9 BE 61   	LDA $61BE,Y        ; attacker sprite flip flags
+C1/D987:	8D B2 60   	STA $60B2          ; save in buffer
+C1/D98A:	BD 38 6A   	LDA $6A38,X        ; thread attacker index
+C1/D98D:	A8         	TAY                ; index it
+C1/D98E:	B9 10 7B   	LDA $7B10,Y        ; attacker facing right
+C1/D991:	8D B1 60   	STA $60B1          ; save in buffer
 C1/D994:	60         	RTS
 
-C1/D995:	20 A1 E7   	JSR $E7A1
-C1/D998:	AD B2 60   	LDA $60B2
-C1/D99B:	99 BE 61   	STA $61BE,Y
-C1/D99E:	BD 38 6A   	LDA $6A38,X
-C1/D9A1:	A8         	TAY
-C1/D9A2:	AD B1 60   	LDA $60B1
-C1/D9A5:	99 10 7B   	STA $7B10,Y
+; Copy attacker sprite flip and direction from buffer
+; Animation command $00, subcommand $03
+
+C1/D995:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
+C1/D998:	AD B2 60   	LDA $60B2          ; buffered attacker sprite flip
+C1/D99B:	99 BE 61   	STA $61BE,Y        ; update in attacker graphics data
+C1/D99E:	BD 38 6A   	LDA $6A38,X        ; thread attacker index
+C1/D9A1:	A8         	TAY                ; index it
+C1/D9A2:	AD B1 60   	LDA $60B1          ; buffered attacker facing direction
+C1/D9A5:	99 10 7B   	STA $7B10,Y        ; update in character graphics data
 C1/D9A8:	60         	RTS
 
-C1/D9A9:	20 A1 E7   	JSR $E7A1
-C1/D9AC:	C2 20      	REP #$20
-C1/D9AE:	7B         	TDC
-C1/D9AF:	99 C5 61   	STA $61C5,Y
-C1/D9B2:	99 C7 61   	STA $61C7,Y
-C1/D9B5:	9D CE 74   	STA $74CE,X
-C1/D9B8:	9D D0 74   	STA $74D0,X
+; Zero attacker and thread offsets
+; Animation command $00, subcommand $01
+
+C1/D9A9:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
+C1/D9AC:	C2 20      	REP #$20           ; 16-bit A
+C1/D9AE:	7B         	TDC                ; A = 0000
+C1/D9AF:	99 C5 61   	STA $61C5,Y        ; zero attacker X offset
+C1/D9B2:	99 C7 61   	STA $61C7,Y        ; zero attacker Y offset
+C1/D9B5:	9D CE 74   	STA $74CE,X        ; zero thread X offset
+C1/D9B8:	9D D0 74   	STA $74D0,X        ; zero thread Y offset
 C1/D9BB:	E2 20      	SEP #$20           ; 8-bit A
 C1/D9BD:	60         	RTS
 
-C1/D9BE:	20 A1 E7   	JSR $E7A1
-C1/D9C1:	C2 20      	REP #$20
-C1/D9C3:	B9 B7 61   	LDA $61B7,Y
-C1/D9C6:	18         	CLC
-C1/D9C7:	79 D4 61   	ADC $61D4,Y
-C1/D9CA:	9D 82 6F   	STA $6F82,X
-C1/D9CD:	B9 B9 61   	LDA $61B9,Y
-C1/D9D0:	9D 84 6F   	STA $6F84,X
-C1/D9D3:	7B         	TDC
+; Initialize thread target's position [?]
+; Animation command $00, subcommand $00
+
+C1/D9BE:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in $7AF8 and Y
+C1/D9C1:	C2 20      	REP #$20           ; 16-bit
+C1/D9C3:	B9 B7 61   	LDA $61B7,Y        ; attacker's X position
+C1/D9C6:	18         	CLC                ; clear carry
+C1/D9C7:	79 D4 61   	ADC $61D4,Y        ; attacker's X offset
+C1/D9CA:	9D 82 6F   	STA $6F82,X        ; set thread target's X position
+C1/D9CD:	B9 B9 61   	LDA $61B9,Y        ; attacker's Y position
+C1/D9D0:	9D 84 6F   	STA $6F84,X        ; set thread target's Y position
+C1/D9D3:	7B         	TDC                ; A = 0000
 C1/D9D4:	E2 20      	SEP #$20           ; 8-bit A
 C1/D9D6:	60         	RTS
 
@@ -28362,7 +28402,7 @@ C1/D9E3:	7C E6 D9   	JMP ($D9E6,X)      ; execute this byte's command [?]
 ; initially, to indicate that they are
 ; commands [?]
 
-C1/D9E6:	78C8    	; 00:
+C1/D9E6:	78C8    	; 00: ($C878) -
 C1/D9E8:	47F3    	; 01:
 C1/D9EA:	3FF3    	; 02:
 C1/D9EC:	77F3    	; 03:
@@ -28714,9 +28754,9 @@ C1/DC94:	8D C9 62   	STA $62C9
 C1/DC97:	AE F6 7A   	LDX $7AF6
 C1/DC9A:	60         	RTS
 
-C1/DC9B:	20 5B 18   	JSR $185B
+C1/DC9B:	20 5B 18   	JSR $185B     ; random number
 C1/DC9E:	85 10      	STA $10
-C1/DCA0:	20 5B 18   	JSR $185B
+C1/DCA0:	20 5B 18   	JSR $185B     ; random number
 C1/DCA3:	85 12      	STA $12
 C1/DCA5:	AE F6 7A   	LDX $7AF6
 C1/DCA8:	A5 10      	LDA $10
@@ -29230,7 +29270,7 @@ C1/E0B3:	E2 20      	SEP #$20           ; 8-bit A
 C1/E0B5:	60         	RTS
 
 C1/E0B6:	48         	PHA
-C1/E0B7:	20 A1 E7   	JSR $E7A1
+C1/E0B7:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E0BA:	A7 5B      	LDA [$5B]
 C1/E0BC:	C2 20      	REP #$20
 C1/E0BE:	85 26      	STA $26
@@ -29307,7 +29347,7 @@ C1/E161:	AE F6 7A   	LDX $7AF6
 C1/E164:	A7 5B      	LDA [$5B]
 C1/E166:	85 26      	STA $26
 C1/E168:	64 27      	STZ $27
-C1/E16A:	20 A1 E7   	JSR $E7A1
+C1/E16A:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E16D:	C2 20      	REP #$20
 C1/E16F:	BD D7 74   	LDA $74D7,X
 C1/E172:	38         	SEC
@@ -29347,7 +29387,7 @@ C1/E1B8:	AE F6 7A   	LDX $7AF6
 C1/E1BB:	A7 5B      	LDA [$5B]
 C1/E1BD:	85 26      	STA $26
 C1/E1BF:	64 27      	STZ $27
-C1/E1C1:	20 A1 E7   	JSR $E7A1
+C1/E1C1:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E1C4:	C2 20      	REP #$20
 C1/E1C6:	BD D7 74   	LDA $74D7,X
 C1/E1C9:	38         	SEC
@@ -29461,7 +29501,7 @@ C1/E2B9:	9E D6 74   	STZ $74D6,X
 C1/E2BC:	9E D8 74   	STZ $74D8,X
 C1/E2BF:	60         	RTS
 
-C1/E2C0:	20 A1 E7   	JSR $E7A1
+C1/E2C0:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E2C3:	A7 5B      	LDA [$5B]
 C1/E2C5:	10 31      	BPL $E2F8
 C1/E2C7:	BD 39 6A   	LDA $6A39,X
@@ -29508,7 +29548,7 @@ C1/E321:	8D AC 61   	STA $61AC
 C1/E324:	AE F6 7A   	LDX $7AF6
 C1/E327:	60         	RTS
 
-C1/E328:	20 A1 E7   	JSR $E7A1
+C1/E328:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E32B:	A7 5B      	LDA [$5B]
 C1/E32D:	10 31      	BPL $E360
 C1/E32F:	BD 38 6A   	LDA $6A38,X
@@ -29820,20 +29860,22 @@ C1/E5A7:	E8         	INX
 C1/E5A8:	E8         	INX
 C1/E5A9:	D0 F4      	BNE $E59F
 C1/E5AB:	7B         	TDC
-C1/E5AC:	E2 20      	SEP #$20           ; 8-bit A
+C1/E5AC:	E2 20      	SEP #$20         ; 8-bit A
 C1/E5AE:	C2 10      	REP #$10
 C1/E5B0:	AE F6 7A   	LDX $7AF6
 C1/E5B3:	60         	RTS
 
-C1/E5B4:	7B         	TDC
-C1/E5B5:	AA         	TAX
-C1/E5B6:	C2 20      	REP #$20
-C1/E5B8:	9D B0 63   	STA $63B0,X
+; Clear BG1 Scroll HDMA Table Buffer
+
+C1/E5B4:	7B         	TDC              ; A = 0000
+C1/E5B5:	AA         	TAX              ; X = 0000
+C1/E5B6:	C2 20      	REP #$20         ; 16-bit A
+C1/E5B8:	9D B0 63   	STA $63B0,X      ; zero BG1 scroll HDMA buffer [?]
 C1/E5BB:	E8         	INX
-C1/E5BC:	E8         	INX
-C1/E5BD:	E0 00 01   	CPX #$0100
-C1/E5C0:	D0 F6      	BNE $E5B8
-C1/E5C2:	E2 20      	SEP #$20           ; 8-bit A
+C1/E5BC:	E8         	INX              ; next pair of bytes
+C1/E5BD:	E0 00 01   	CPX #$0100       ; clear entire buffer
+C1/E5C0:	D0 F6      	BNE $E5B8        ; loop
+C1/E5C2:	E2 20      	SEP #$20         ; 8-bit A
 C1/E5C4:	60         	RTS
 
 C1/E5C5:	AE F6 7A   	LDX $7AF6
@@ -29862,7 +29904,7 @@ C1/E5EA:	07 5B      	ORA [$5B]
 C1/E5EC:	99 DC 80   	STA $80DC,Y
 C1/E5EF:	60         	RTS
 
-C1/E5F0:	20 A1 E7   	JSR $E7A1
+C1/E5F0:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E5F3:	A7 5B      	LDA [$5B]
 C1/E5F5:	99 BD 61   	STA $61BD,Y
 C1/E5F8:	60         	RTS
@@ -29881,7 +29923,7 @@ C1/E610:	BD 3A 6A   	LDA $6A3A,X
 C1/E613:	18         	CLC
 C1/E614:	69 40      	ADC #$40
 C1/E616:	20 67 6C   	JSR $6C67
-C1/E619:	20 A1 E7   	JSR $E7A1
+C1/E619:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E61C:	C2 20      	REP #$20
 C1/E61E:	BD CE 74   	LDA $74CE,X
 C1/E621:	18         	CLC
@@ -29892,7 +29934,7 @@ C1/E629:	7B         	TDC
 C1/E62A:	E2 20      	SEP #$20           ; 8-bit A
 C1/E62C:	BD 3A 6A   	LDA $6A3A,X
 C1/E62F:	20 67 6C   	JSR $6C67
-C1/E632:	20 A1 E7   	JSR $E7A1
+C1/E632:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E635:	C2 20      	REP #$20
 C1/E637:	BD D0 74   	LDA $74D0,X
 C1/E63A:	18         	CLC
@@ -30076,23 +30118,23 @@ C1/E792:	D0 03      	BNE $E797
 C1/E794:	20 68 E7   	JSR $E768
 C1/E797:	60         	RTS
 
-C1/E798:	20 A1 E7   	JSR $E7A1
+C1/E798:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E79B:	A7 5B      	LDA [$5B]
 C1/E79D:	99 D0 61   	STA $61D0,Y
 C1/E7A0:	60         	RTS
 
-C1/E7A1:	AE F6 7A   	LDX $7AF6
-C1/E7A4:	BD 38 6A   	LDA $6A38,X
+C1/E7A1:	AE F6 7A   	LDX $7AF6        ; animation thread offset
+C1/E7A4:	BD 38 6A   	LDA $6A38,X      ; attacker index
 C1/E7A7:	0A         	ASL A
 C1/E7A8:	0A         	ASL A
 C1/E7A9:	0A         	ASL A
 C1/E7AA:	0A         	ASL A
-C1/E7AB:	0A         	ASL A
-C1/E7AC:	A8         	TAY
-C1/E7AD:	8C F8 7A   	STY $7AF8
+C1/E7AB:	0A         	ASL A            ; x32
+C1/E7AC:	A8         	TAY              ; index it
+C1/E7AD:	8C F8 7A   	STY $7AF8        ; pointer to attacker data [?]
 C1/E7B0:	60         	RTS
 
-C1/E7B1:	20 A1 E7   	JSR $E7A1
+C1/E7B1:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E7B4:	A7 5B      	LDA [$5B]
 C1/E7B6:	99 C0 61   	STA $61C0,Y
 C1/E7B9:	60         	RTS
@@ -30120,7 +30162,7 @@ C1/E7E2:	D0 03      	BNE $E7E7
 C1/E7E4:	EE AF 60   	INC $60AF
 C1/E7E7:	60         	RTS
 
-C1/E7E8:	20 A1 E7   	JSR $E7A1
+C1/E7E8:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E7EB:	C2 20      	REP #$20
 C1/E7ED:	B9 B7 61   	LDA $61B7,Y
 C1/E7F0:	18         	CLC
@@ -30277,7 +30319,7 @@ C1/E923:	BD DB 74   	LDA $74DB,X
 C1/E926:	18         	CLC
 C1/E927:	69 40      	ADC #$40
 C1/E929:	20 67 6C   	JSR $6C67
-C1/E92C:	20 A1 E7   	JSR $E7A1
+C1/E92C:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/E92F:	C2 20      	REP #$20
 C1/E931:	A5 28      	LDA $28
 C1/E933:	99 C5 61   	STA $61C5,Y
@@ -31136,7 +31178,7 @@ C1/F040:	88         	DEY
 C1/F041:	84 5B      	STY $5B
 C1/F043:	60         	RTS
 
-C1/F044:	20 A1 E7   	JSR $E7A1
+C1/F044:	20 A1 E7   	JSR $E7A1          ; get attacker data offset in Y
 C1/F047:	C2 20      	REP #$20
 C1/F049:	B9 B7 61   	LDA $61B7,Y
 C1/F04C:	18         	CLC
@@ -32297,7 +32339,7 @@ C1/F8E3:	BD 7E 6F   	LDA $6F7E,X
 C1/F8E6:	85 7D      	STA $7D
 C1/F8E8:	BD 80 6F   	LDA $6F80,X
 C1/F8EB:	85 7E      	STA $7E
-C1/F8ED:	20 5B 18   	JSR $185B
+C1/F8ED:	20 5B 18   	JSR $185B     ; random number
 C1/F8F0:	EB         	XBA
 C1/F8F1:	BD D2 74   	LDA $74D2,X
 C1/F8F4:	4A         	LSR A
@@ -32314,7 +32356,7 @@ C1/F906:	BD 82 6F   	LDA $6F82,X
 C1/F909:	85 12      	STA $12
 C1/F90B:	20 4E F9   	JSR $F94E
 C1/F90E:	85 7F      	STA $7F
-C1/F910:	20 5B 18   	JSR $185B
+C1/F910:	20 5B 18   	JSR $185B     ; random number
 C1/F913:	EB         	XBA
 C1/F914:	BD D3 74   	LDA $74D3,X
 C1/F917:	4A         	LSR A
