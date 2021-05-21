@@ -87,7 +87,7 @@ C0/00A1:	4C7F00  	JMP $007F      (BRA would work)
 C0/00A4:	20BCBE  	JSR $BEBC
 C0/00A7:	208603  	JSR $0386
 
-C0/00AA:	206405  	JSR $0564
+C0/00AA:	206405  	JSR $0564      ; wait until after next NMI
 C0/00AD:	20A00E  	JSR $0EA0
 C0/00B0:	20748D  	JSR $8D74
 C0/00B3:	AC0308  	LDY $0803
@@ -181,132 +181,139 @@ C0/017C:	207403  	JSR $0374
 C0/017F:	4C7F00  	JMP $007F
 
 NMI stuff
-C0/0182:	08      	PHP            (NMI already pushes the processor...)
-C0/0183:	C230    	REP #$30
-C0/0185:	48      	PHA
-C0/0186:	DA      	PHX
-C0/0187:	5A      	PHY
-C0/0188:	8B      	PHB
-C0/0189:	0B      	PHD
-C0/018A:	C210    	REP #$10       (16 bit index registers)
-C0/018C:	E220    	SEP #$20       (8 bit accum./memory)
-C0/018E:	A20000  	LDX #$0000
-C0/0191:	DA      	PHX
-C0/0192:	2B      	PLD            (DP register holds #$0000)
-C0/0193:	7B      	TDC 
-C0/0194:	48      	PHA
-C0/0195:	AB      	PLB            (data bank register holds #$00)
-C0/0196:	AD1042  	LDA $4210
-C0/0199:	9C0B42  	STZ $420B      (turn off DMA)
-C0/019C:	9C0C42  	STZ $420C      (turn off HDMA)
-C0/019F:	A9A1    	LDA #$A1
-C0/01A1:	8D0042  	STA $4200
-C0/01A4:	205F0F  	JSR $0F5F
-C0/01A7:	200110  	JSR $1001
-C0/01AA:	20BF0F  	JSR $0FBF
-C0/01AD:	20371E  	JSR $1E37
-C0/01B0:	AD8605  	LDA $0586
-C0/01B3:	C902    	CMP #$02
-C0/01B5:	D006    	BNE $01BD
-C0/01B7:	20782A  	JSR $2A78
-C0/01BA:	9C8605  	STZ $0586
-C0/01BD:	AD8805  	LDA $0588
-C0/01C0:	C902    	CMP #$02
-C0/01C2:	D008    	BNE $01CC
-C0/01C4:	20FB2A  	JSR $2AFB
-C0/01C7:	9C8805  	STZ $0588
-C0/01CA:	801C    	BRA $01E8
-C0/01CC:	AD8505  	LDA $0585
-C0/01CF:	C902    	CMP #$02
-C0/01D1:	D006    	BNE $01D9
-C0/01D3:	20472A  	JSR $2A47
-C0/01D6:	9C8505  	STZ $0585
-C0/01D9:	AD8705  	LDA $0587
-C0/01DC:	C902    	CMP #$02
-C0/01DE:	D008    	BNE $01E8
-C0/01E0:	20CA2A  	JSR $2ACA
-C0/01E3:	9C8705  	STZ $0587
-C0/01E6:	80E4    	BRA $01CC
-C0/01E8:	AD8A05  	LDA $058A
-C0/01EB:	C902    	CMP #$02
-C0/01ED:	D008    	BNE $01F7
-C0/01EF:	207E2B  	JSR $2B7E
-C0/01F2:	9C8A05  	STZ $058A
-C0/01F5:	800D    	BRA $0204
-C0/01F7:	AD8905  	LDA $0589
-C0/01FA:	C902    	CMP #$02
-C0/01FC:	D006    	BNE $0204
-C0/01FE:	204D2B  	JSR $2B4D
-C0/0201:	9C8905  	STZ $0589
-C0/0204:	207B67  	JSR $677B
-C0/0207:	203E88  	JSR $883E
-C0/020A:	200386  	JSR $8603
-C0/020D:	20B085  	JSR $85B0
-C0/0210:	A9E0    	LDA #$E0
-C0/0212:	8D3221  	STA $2132
-C0/0215:	9C0B42  	STZ $420B      (turn off DMA)
-C0/0218:	A943    	LDA #$43
-C0/021A:	8D0043  	STA $4300
-C0/021D:	A90F    	LDA #$0F
-C0/021F:	8D0143  	STA $4301
-C0/0222:	A2517C  	LDX #$7C51
-C0/0225:	8E0243  	STX $4302
-C0/0228:	A97E    	LDA #$7E
-C0/022A:	8D0443  	STA $4304
-C0/022D:	8D0743  	STA $4307
-C0/0230:	AD2105  	LDA $0521
-C0/0233:	2908    	AND #$08
+C0/0182:	08      	PHP           ; NMI already pushes the processor...
+C0/0183:	C230    	REP #$30      ; 16-bit A, X/Y
+C0/0185:	48      	PHA           ; save A
+C0/0186:	DA      	PHX           ; save X
+C0/0187:	5A      	PHY           ; save Y
+C0/0188:	8B      	PHB           ; save Bank
+C0/0189:	0B      	PHD           ; save Direct Page
+C0/018A:	C210    	REP #$10      ; 16-bit X/Y (redundant)
+C0/018C:	E220    	SEP #$20      ; 8-bit A
+C0/018E:	A20000  	LDX #$0000    ; new Direct Page
+C0/0191:	DA      	PHX           ; push to stack
+C0/0192:	2B      	PLD           ; pull Direct Page
+C0/0193:	7B      	TDC           ; new Bank
+C0/0194:	48      	PHA           ; push to stack
+C0/0195:	AB      	PLB           ; pull Bank
+C0/0196:	AD1042  	LDA $4210     ; clear "NMI" flag
+C0/0199:	9C0B42  	STZ $420B     ; disable all DMA channels
+C0/019C:	9C0C42  	STZ $420C     ; disable all HDMA channels
+C0/019F:	A9A1    	LDA #$A1      ; "Enable NMI","Enable IRQ","Enable Joypad"
+C0/01A1:	8D0042  	STA $4200     ; set interrupt flags
+C0/01A4:	205F0F  	JSR $0F5F     ; adjust screen brightness
+C0/01A7:	200110  	JSR $1001     ; transfer color palettes over HDMA
+C0/01AA:	20BF0F  	JSR $0FBF     ; transfer OAM data over HDMA
+C0/01AD:	20371E  	JSR $1E37     ; handle pending BG updates
+
+C0/01B0:	AD8605  	LDA $0586     ; BG1 horizontal scroll status
+C0/01B3:	C902    	CMP #$02      ; "Update in VRAM"
+C0/01B5:	D006    	BNE $01BD     ; branch to check BG2 horizontal if not ^
+C0/01B7:	20782A  	JSR $2A78     ; update BG1 horizontal scroll [?]
+C0/01BA:	9C8605  	STZ $0586     ; clear "BG1 horizontal scroll update"
+
+C0/01BD:	AD8805  	LDA $0588     ; BG2 horizontal scroll status
+C0/01C0:	C902    	CMP #$02      ; "Update in VRAM"
+C0/01C2:	D008    	BNE $01CC     ; branch to check BG1 vertical if not ^
+C0/01C4:	20FB2A  	JSR $2AFB     ; update BG2 horizontal scroll [?]
+C0/01C7:	9C8805  	STZ $0588     ; clear "BG2 horizontal scroll update"
+C0/01CA:	801C    	BRA $01E8     ; branch to skip vertical updates [?]
+
+C0/01CC:	AD8505  	LDA $0585     ; BG1 vertical scroll status
+C0/01CF:	C902    	CMP #$02      ; "Update in VRAM"
+C0/01D1:	D006    	BNE $01D9     ; branch to check BG2 vertical if not ^
+C0/01D3:	20472A  	JSR $2A47     ; update BG1 vertical scroll [?]
+C0/01D6:	9C8505  	STZ $0585     ; clear "BG1 vertical scroll update"
+
+C0/01D9:	AD8705  	LDA $0587     ; BG2 vertical scroll status
+C0/01DC:	C902    	CMP #$02      ; "Update in VRAM"
+C0/01DE:	D008    	BNE $01E8     ; branch to check BG3 horizontal if not ^
+C0/01E0:	20CA2A  	JSR $2ACA     ; update BG2 vertical scroll [?]
+C0/01E3:	9C8705  	STZ $0587     ; clear "BG2 vertical scroll update"
+C0/01E6:	80E4    	BRA $01CC     ; branch back to BG1 vertical check
+
+C0/01E8:	AD8A05  	LDA $058A     ; BG3 horizontal scroll status
+C0/01EB:	C902    	CMP #$02      ; "Update in VRAM"
+C0/01ED:	D008    	BNE $01F7     ; branch to check BG3 vertical if not ^
+C0/01EF:	207E2B  	JSR $2B7E     ; update BG3 horizontal scroll [?]
+C0/01F2:	9C8A05  	STZ $058A     ; clear "BG3 horizontal scroll update"
+C0/01F5:	800D    	BRA $0204     ; branch to skip BG3 vertical update [?]
+
+C0/01F7:	AD8905  	LDA $0589     ; BG3 vertical scroll status
+C0/01FA:	C902    	CMP #$02      ; "Update in VRAM"
+C0/01FC:	D006    	BNE $0204     ; branch if not ^
+C0/01FE:	204D2B  	JSR $2B4D     ; update BG3 vertical scroll [?]
+C0/0201:	9C8905  	STZ $0589     ; clear "BG3 vertical scroll update"
+
+C0/0204:	207B67  	JSR $677B     ; handle object animations [?]
+C0/0207:	203E88  	JSR $883E     ; handle dialogue window updates [?]
+C0/020A:	200386  	JSR $8603     ; handle text graphics updates [?]
+C0/020D:	20B085  	JSR $85B0     ; handle dialoque window clearing [?]
+C0/0210:	A9E0    	LDA #$E0      ; some color
+C0/0212:	8D3221  	STA $2132     ; set Fixed Color Data
+C0/0215:	9C0B42  	STZ $420B     ; disable DMA all channels
+C0/0218:	A943    	LDA #$43      ; two registers write twice each
+C0/021A:	8D0043  	STA $4300     ; set HDMI write mode
+C0/021D:	A90F    	LDA #$0F      ; destination register $210F
+C0/021F:	8D0143  	STA $4301     ; set destination (BG Scroll)
+C0/0222:	A2517C  	LDX #$7C51    ; source $7E7C51
+C0/0225:	8E0243  	STX $4302     ; set source address
+C0/0228:	A97E    	LDA #$7E      ; source $7E7C51
+C0/022A:	8D0443  	STA $4304     ; set source bank
+C0/022D:	8D0743  	STA $4307     ; set HDMA indirect address register [?]
+C0/0230:	AD2105  	LDA $0521     ; field BG flags
+C0/0233:	2908    	AND #$08      ; "Wavy BG2"
 C0/0235:	4A      	LSR A
 C0/0236:	4A      	LSR A
-C0/0237:	4A      	LSR A
-C0/0238:	09FE    	ORA #$FE
-C0/023A:	8D0C42  	STA $420C
-C0/023D:	20B642  	JSR $42B6
-C0/0240:	205310  	JSR $1053
-C0/0243:	20370E  	JSR $0E37
-C0/0246:	209B3B  	JSR $3B9B
-C0/0249:	203C06  	JSR $063C
-C0/024C:	206D05  	JSR $056D
-C0/024F:	220C00C3	JSL $C3000C    (adjust game-time)
-C0/0253:	E646    	INC $46
-C0/0255:	E645    	INC $45
-C0/0257:	E655    	INC $55
-C0/0259:	C230    	REP #$30
-C0/025B:	2B      	PLD 
-C0/025C:	AB      	PLB
-C0/025D:	7A      	PLY
-C0/025E:	FA      	PLX
-C0/025F:	68      	PLA
-C0/0260:	28      	PLP            (pull what was pointlessly pushed)
-C0/0261:	40      	RTI
+C0/0237:	4A      	LSR A         ; /8
+C0/0238:	09FE    	ORA #$FE      ; 0xFF if Wavy BG2, 0xFE if not
+C0/023A:	8D0C42  	STA $420C     ; enable all HDMA channels (except maybe 1)
+C0/023D:	20B642  	JSR $42B6     ; handle background scroll [??]
+C0/0240:	205310  	JSR $1053     ; handle screen colors [?]
+C0/0243:	20370E  	JSR $0E37     ; handle screen mosaic [?]
+C0/0246:	209B3B  	JSR $3B9B     ; [?]
+C0/0249:	203C06  	JSR $063C     ; handle flashlight/pyramid [?]
+C0/024C:	206D05  	JSR $056D     ; decode joypads for field [?]
+C0/024F:	220C00C3	JSL $C3000C   ; adjust game-time
+C0/0253:	E646    	INC $46       ; increment frame counter
+C0/0255:	E645    	INC $45       ; increment alternate frame counter
+C0/0257:	E655    	INC $55       ; set "NMI Just Ran"
+C0/0259:	C230    	REP #$30      ; 16-bit A, X/Y
+C0/025B:	2B      	PLD           ; restore Direct Page
+C0/025C:	AB      	PLB           ; restore Bank
+C0/025D:	7A      	PLY           ; restore Y
+C0/025E:	FA      	PLX           ; restore X
+C0/025F:	68      	PLA           ; restore A
+C0/0260:	28      	PLP           ; restore flags
+C0/0261:	40      	RTI           ; return from NMI
  
 IRQ stuff
-C0/0262:	08      	PHP            (IRQ already pushes the processor...)
-C0/0263:	C230    	REP #$30
-C0/0265:	48      	PHA
-C0/0266:	DA      	PHX
-C0/0267:	5A      	PHY
-C0/0268:	8B      	PHB
-C0/0269:	0B      	PHD
-C0/026A:	C210    	REP #$10      (16 bit index registers)
-C0/026C:	E220    	SEP #$20      (8 bit accum./memory)
-C0/026E:	A20000  	LDX #$0000
-C0/0271:	DA      	PHX
-C0/0272:	2B      	PLD            (made the direct page reg. hold #$0000)
-C0/0273:	7B      	TDC 
-C0/0274:	48      	PHA
-C0/0275:	AB      	PLB           (made the data bank reg. hold #$00)
-C0/0276:	AD1142  	LDA $4211
-C0/0279:	1015    	BPL $0290
-C0/027B:	A981    	LDA #$81
-C0/027D:	8D0042  	STA $4200
-C0/0280:	9C0C42  	STZ $420C      (turn off HDMA)
-C0/0283:	A545    	LDA $45
-C0/0285:	4A      	LSR A
-C0/0286:	B005    	BCS $028D
-C0/0288:	203F90  	JSR $903F
+C0/0262:	08      	PHP           ; store flags
+C0/0263:	C230    	REP #$30      ; 16-bit A, X/Y
+C0/0265:	48      	PHA           ; store A
+C0/0266:	DA      	PHX           ; store X
+C0/0267:	5A      	PHY           ; store Y
+C0/0268:	8B      	PHB           ; store Bank
+C0/0269:	0B      	PHD           ; store Direct Page
+C0/026A:	C210    	REP #$10      ; 16-bit X/Y
+C0/026C:	E220    	SEP #$20      ; 8-bit A
+C0/026E:	A20000  	LDX #$0000    ; zero
+C0/0271:	DA      	PHX           ; push to stack
+C0/0272:	2B      	PLD           ; new direct page
+C0/0273:	7B      	TDC           ; zero
+C0/0274:	48      	PHA           ; push to stack
+C0/0275:	AB      	PLB           ; new data bank
+C0/0276:	AD1142  	LDA $4211     ; read IRQ triggered flag
+C0/0279:	1015    	BPL $0290     ; exit if no IRQ (how?)
+C0/027B:	A981    	LDA #$81      ; enable NMI, joypad read
+C0/027D:	8D0042  	STA $4200     ; update interrupt flags
+C0/0280:	9C0C42  	STZ $420C     ; disable all HDMA channels
+C0/0283:	A545    	LDA $45       ; NMI frame counter
+C0/0285:	4A      	LSR A         ; /2
+C0/0286:	B005    	BCS $028D     ; branch every other frame
+C0/0288:	203F90  	JSR $903F     ; BG animation [?], maybe force blank [?]
 C0/028B:	8003    	BRA $0290
-C0/028D:	207891  	JSR $9178
+C0/028D:	207891  	JSR $9178     ; transfer background animation frame
 C0/0290:	C230    	REP #$30
 C0/0292:	2B      	PLD 
 C0/0293:	AB      	PLB
@@ -348,6 +355,7 @@ C0/02CF:	60      	RTS
  
 C0/02D0:	4CD002  	JMP $02D0      (jump to itself, hence an infinite loop)
 
+; Play a sound effect [?]
 C0/02D3:	8D0113  	STA $1301      (from C0/4D02, C0/4D08, C0/4DFE, C0/B856, C0/C0F8)
 C0/02D6:	A918    	LDA #$18
 C0/02D8:	8D0013    	STA $1300
@@ -416,20 +424,20 @@ C0/0348:	0000
 C0/034A:	0000    	
 C0/034C:	0000    	
 
-C0/034E:	ADB91E    	LDA $1EB9      (from only C0/C0B4)
-C0/0351:	2910    	AND #10        (song override in place?)
-C0/0353:	D00A    	BNE $035F      (branch if so)
-C0/0355:	AD3C05  	LDA $053C
-C0/0358:	F019    	BEQ $0373
-C0/035A:	8D801F  	STA $1F80
-C0/035D:	8003    	BRA $0362
-C0/035F:	AD801F  	LDA $1F80
-C0/0362:	8D0113  	STA $1301
-C0/0365:	A910    	LDA #$10
-C0/0367:	8D0013  	STA $1300
-C0/036A:	A9FF    	LDA #$FF
-C0/036C:	8D0213  	STA $1302
-C0/036F:	220400C5	JSL $C50004
+C0/034E:	ADB91E    LDA $1EB9      ; various event bits for overrides, etc
+C0/0351:	2910    	AND #10        ; "allow changing music"
+C0/0353:	D00A    	BNE $035F      ; branch if not ^
+C0/0355:	AD3C05  	LDA $053C      ; else, get song ID for current map
+C0/0358:	F019    	BEQ $0373      ; exit if none ^
+C0/035A:	8D801F  	STA $1F80      ; set new current song
+C0/035D:	8003    	BRA $0362      ; and branch (no need to branch here)
+C0/035F:	AD801F  	LDA $1F80      ; get current song
+C0/0362:	8D0113  	STA $1301      ; save input for C5 music/sound handling
+C0/0365:	A910    	LDA #$10       ; music command "play song"
+C0/0367:	8D0013  	STA $1300      ; save input for C5 music/sound handling
+C0/036A:	A9FF    	LDA #$FF       ; max volume
+C0/036C:	8D0213  	STA $1302      ; save input for C5 music/sound handling
+C0/036F:	220400C5	JSL $C50004    ; execute music/sound handling
 C0/0373:	60      	RTS
  
 C0/0374:	9C0B42  	STZ $420B      (from C0/017C, C0/B969, C0/B973, C0/B995, C0/B99F, C0/B9BE, C0/B9C8, C0/B9D9, C0/B9EA, C0/B9FB, C0/BA39, C0/BA43, C0/BA54, C0/BA5E, C0/BA6C, C0/BA76, C0/BEBC, C0/C141, C0/C165, C0/C6CA, C0/C700)
@@ -441,11 +449,11 @@ C0/0381:	8D0042  	STA $4200      ; disable NMI, other things[?]
 C0/0384:	78      	SEI            ; set interrupt disabled
 C0/0385:	60      	RTS
  
-C0/0386:	AD1042  	LDA $4210	  (from C0/00A7, C0/B956, C0/B98A, C0/B9B6, C0/B9DF, C0/BA01, C0/BA49)
-C0/0389:	10FB    	BPL $0386
+C0/0386:	AD1042  	LDA $4210	     ; read (and clear) NMI fired flag
+C0/0389:	10FB    	BPL $0386      ; loop until NMI fired?
 C0/038B:	A981    	LDA #$81
-C0/038D:	8D0042  	STA $4200
-C0/0390:	A900    	LDA #$00
+C0/038D:	8D0042  	STA $4200      ; enable NMI and Joypad
+C0/0390:	A900    	LDA #$00       ; zero brightness, no force blank
 C0/0392:	8D0021  	STA $2100
 C0/0395:	58      	CLI 
 C0/0396:	60      	RTS
@@ -465,6 +473,8 @@ C0/03B2:	D009    	BNE $03BD
 C0/03B4:	9CFD11  	STZ $11FD
 C0/03B7:	9CFE11  	STZ $11FE
 C0/03BA:	9CFF11  	STZ $11FF
+
+;
 C0/03BD:	200505  	JSR $0505
 C0/03C0:	209170  	JSR $7091
 C0/03C3:	20216F  	JSR $6F21
@@ -535,18 +545,18 @@ C0/0445:	8D4307  	STA $0743
 C0/0448:	A51F    	LDA $1F        (load upper map byte)
 C0/044A:	2908    	AND #$08       (mask location name flag)
 C0/044C:	8D4507  	STA $0745      (set location name to appear when map loads)
-C0/044F:	AEFD11  	LDX $11FD
-C0/0452:	86E5    	STX $E5
-C0/0454:	ADFF11  	LDA $11FF
-C0/0457:	85E7    	STA $E7
-C0/0459:	C9CA    	CMP #$CA
-C0/045B:	D00E    	BNE $046B
-C0/045D:	E00000  	CPX #$0000
-C0/0460:	D009    	BNE $046B
-C0/0462:	A600    	LDX $00
-C0/0464:	86E8    	STX $E8
-C0/0466:	A980    	LDA #$80
-C0/0468:	8DFA11  	STA $11FA
+C0/044F:	AEFD11  	LDX $11FD      ; map event pointer
+C0/0452:	86E5    	STX $E5        ; save event pointer
+C0/0454:	ADFF11  	LDA $11FF      ; map event bank
+C0/0457:	85E7    	STA $E7        ; save event bank
+C0/0459:	C9CA    	CMP #$CA       ; "null" bank
+C0/045B:	D00E    	BNE $046B      ; exit if not
+C0/045D:	E00000  	CPX #$0000     ; "null" pointer
+C0/0460:	D009    	BNE $046B      ; exit if not
+C0/0462:	A600    	LDX $00        ; zero X
+C0/0464:	86E8    	STX $E8        ; reset event stack pointer
+C0/0466:	A980    	LDA #$80       ; enable map startup event
+C0/0468:	8DFA11  	STA $11FA      ; set ^
 C0/046B:	60      	RTS
  
 LZ decompression routine
@@ -674,14 +684,15 @@ C0/0560:	CA      	DEX
 C0/0561:	D0CD    	BNE $0530
 C0/0563:	60      	RTS
  
-C0/0564:	6455    	STZ $55        (from C0/00AA, C0/C102)
-C0/0566:	A555    	LDA $55
-C0/0568:	F0FC    	BEQ $0566
-C0/056A:	6455    	STZ $55
+C0/0564:	6455    	STZ $55        ; clear "NMI Just Ran"
+C0/0566:	A555    	LDA $55        ; "NMI Just Ran"
+C0/0568:	F0FC    	BEQ $0566      ; wait until NMI just ran
+C0/056A:	6455    	STZ $55        ; clear "NMI Just Ran"
 C0/056C:	60      	RTS
- 
-C0/056D:	220900C3	JSL $C30009    (from only C0/024C)
-C0/0571:	7B      	TDC 
+
+; Decode joypads
+C0/056D:	220900C3	JSL $C30009    ; decode joypads for field
+C0/0571:	7B      	TDC            ; clear A/B
 C0/0572:	60      	RTS
  
 Set NMI and IRQ entry points
@@ -769,9 +780,9 @@ C0/0636:	BF00FDC0	LDA $C0FD00,X  (Load Xth entry of Random number table)
 C0/063A:	FA      	PLX
 C0/063B:	60      	RTS
  
-C0/063C:	AD7B07  	LDA $077B		(from only C0/0249)
+C0/063C:	AD7B07  	LDA $077B		  ; enable flashlight [?]
 C0/063F:	D00E    	BNE $064F
-C0/0641:	AD8107  	LDA $0781
+C0/0641:	AD8107  	LDA $0781     ; enable pyramid [?]
 C0/0644:	D009    	BNE $064F
 C0/0646:	AD2105  	LDA $0521
 C0/0649:	2920    	AND #$20
@@ -1939,36 +1950,44 @@ C0/0F58:	854A    	STA $4A    ; set fade out?
 C0/0F5A:	A9F0    	LDA #$F0
 C0/0F5C:	854C    	STA $4C
 C0/0F5E:	60      	RTS
- 
-C0/0F5F:	A54A    	LDA $4A		(from C0/01A4)
-C0/0F61:	3013    	BMI $0F76
-C0/0F63:	A54C    	LDA $4C
-C0/0F65:	29F0    	AND #$F0
-C0/0F67:	C9F0    	CMP #$F0
-C0/0F69:	F01E    	BEQ $0F89
-C0/0F6B:	A54A    	LDA $4A
-C0/0F6D:	291F    	AND #$1F
-C0/0F6F:	18      	CLC
-C0/0F70:	654C    	ADC $4C
-C0/0F72:	854C    	STA $4C
-C0/0F74:	8015    	BRA $0F8B
-C0/0F76:	A54C    	LDA $4C
-C0/0F78:	F00F    	BEQ $0F89
-C0/0F7A:	A54A    	LDA $4A
-C0/0F7C:	291F    	AND #$1F
-C0/0F7E:	8510    	STA $10
-C0/0F80:	A54C    	LDA $4C
-C0/0F82:	38      	SEC 
-C0/0F83:	E510    	SBC $10
-C0/0F85:	854C    	STA $4C
-C0/0F87:	8002    	BRA $0F8B
-C0/0F89:	644A    	STZ $4A
-C0/0F8B:	A54C    	LDA $4C
-C0/0F8D:	4A      	LSR A			(from C0/42BF)
-C0/0F8E:	4A      	LSR A
-C0/0F8F:	4A      	LSR A
-C0/0F90:	4A      	LSR A
-C0/0F91:	8D0021  	STA $2100
+
+; Handle Screen Brightness (Fade In / Fade Out)
+C0/0F5F:	A54A    	LDA $4A	       ; screen fade flags
+C0/0F61:	3013    	BMI $0F76      ; branch if fading in
+
+; Screen Fading In
+C0/0F63:	A54C    	LDA $4C        ; screen brightness
+C0/0F65:	29F0    	AND #$F0       ; only top nibble used
+C0/0F67:	C9F0    	CMP #$F0       ; maximum brightness
+C0/0F69:	F01E    	BEQ $0F89      ; branch if max (already faded in)
+C0/0F6B:	A54A    	LDA $4A        ; screen fade flags
+C0/0F6D:	291F    	AND #$1F       ; fade speed
+C0/0F6F:	18      	CLC            ; clear carry
+C0/0F70:	654C    	ADC $4C        ; add to brightness
+C0/0F72:	854C    	STA $4C        ; set new screen brightness
+C0/0F74:	8015    	BRA $0F8B      ; finish up
+
+; Screen Fading Out
+C0/0F76:	A54C    	LDA $4C        ; screen brightness
+C0/0F78:	F00F    	BEQ $0F89      ; branch if black (already faded)
+C0/0F7A:	A54A    	LDA $4A        ; screen fade flags
+C0/0F7C:	291F    	AND #$1F       ; fade speed
+C0/0F7E:	8510    	STA $10        ; store temp
+C0/0F80:	A54C    	LDA $4C        ; screen brightness
+C0/0F82:	38      	SEC            ; set carry
+C0/0F83:	E510    	SBC $10        ; subtract brightness
+C0/0F85:	854C    	STA $4C        ; set new screen brightness
+C0/0F87:	8002    	BRA $0F8B      ; finish up
+
+C0/0F89:	644A    	STZ $4A        ; clear screen fade byte (done fading)
+
+; Update hardware brightness
+C0/0F8B:	A54C    	LDA $4C        ; screen brightness
+C0/0F8D:	4A      	LSR A          ; /2
+C0/0F8E:	4A      	LSR A          ; /4
+C0/0F8F:	4A      	LSR A          ; /8
+C0/0F90:	4A      	LSR A          ; /16
+C0/0F91:	8D0021  	STA $2100      ; set PPU brightness
 C0/0F94:	60      	RTS
  
 C0/0F95:	9C1521  	STZ $2115
@@ -1988,22 +2007,23 @@ C0/0FB6:	8E0543  	STX $4305
 C0/0FB9:	A901    	LDA #$01
 C0/0FBB:	8D0B42  	STA $420B      (turn on channel 1 of DMA)
 C0/0FBE:	60      	RTS
- 
-C0/0FBF:	9C0221  	STZ $2102		(from C0/01AA)
-C0/0FC2:	9C0B42  	STZ $420B      (turn off DMA)
-C0/0FC5:	A940    	LDA #$40
-C0/0FC7:	8D0043  	STA $4300
-C0/0FCA:	A904    	LDA #$04
-C0/0FCC:	8D0143  	STA $4301
-C0/0FCF:	A20003  	LDX #$0300
-C0/0FD2:	8E0243  	STX $4302
-C0/0FD5:	A900    	LDA #$00
-C0/0FD7:	8D0443  	STA $4304
-C0/0FDA:	8D0743  	STA $4307
-C0/0FDD:	A22002  	LDX #$0220
-C0/0FE0:	8E0543  	STX $4305
-C0/0FE3:	A901    	LDA #$01
-C0/0FE5:	8D0B42  	STA $420B       (turn on channel 1 of DMA)
+
+; Transfer (updated) OAM via HDMA
+C0/0FBF:	9C0221  	STZ $2102		   ; clear OAM address
+C0/0FC2:	9C0B42  	STZ $420B      ; disable HDMA channels
+C0/0FC5:	A940    	LDA #$40       ; HDMA instructions 1 reg, write 1
+C0/0FC7:	8D0043  	STA $4300      ; set HDMA flags
+C0/0FCA:	A904    	LDA #$04       ; register $2104
+C0/0FCC:	8D0143  	STA $4301      ; set DMA destination
+C0/0FCF:	A20003  	LDX #$0300     ; source $000300
+C0/0FD2:	8E0243  	STX $4302      ; set DMA source address
+C0/0FD5:	A900    	LDA #$00       ; source $000300
+C0/0FD7:	8D0443  	STA $4304      ; set DMA source bank
+C0/0FDA:	8D0743  	STA $4307      ; set indirect HDMA address [?]
+C0/0FDD:	A22002  	LDX #$0220     ; size of transfer
+C0/0FE0:	8E0543  	STX $4305      ; set number of bytes to transfer
+C0/0FE3:	A901    	LDA #$01       ; DMA channel 1
+C0/0FE5:	8D0B42  	STA $420B      ; turn on channel 1 of DMA
 C0/0FE8:	60      	RTS
  
 C0/0FE9:	A20002  	LDX #$0200		(from C0/BF8E)
@@ -2019,22 +2039,23 @@ C0/0FFA:	9EFF04  	STZ $04FF,X
 C0/0FFD:	CA      	DEX
 C0/0FFE:	D0FA    	BNE $0FFA
 C0/1000:	60      	RTS
- 
-C0/1001:	9C2121  	STZ $2121		(from C0/01A7)
-C0/1004:	9C0B42  	STZ $420B      (turn off DMA)
-C0/1007:	A942    	LDA #$42
-C0/1009:	8D0043  	STA $4300
-C0/100C:	A922    	LDA #$22
-C0/100E:	8D0143  	STA $4301
-C0/1011:	A20074  	LDX #$7400
-C0/1014:	8E0243  	STX $4302
-C0/1017:	A97E    	LDA #$7E
-C0/1019:	8D0443  	STA $4304
-C0/101C:	8D0743  	STA $4307
-C0/101F:	A20002  	LDX #$0200
-C0/1022:	8E0543  	STX $4305
-C0/1025:	A901    	LDA #$01
-C0/1027:	8D0B42  	STA $420B      (turn on channel 1 of DMA)
+
+; Transfer color palettes over HDMA
+C0/1001:	9C2121  	STZ $2121		   ; clear CGRAM word (palette to write to)
+C0/1004:	9C0B42  	STZ $420B      ; disable all DMA channels
+C0/1007:	A942    	LDA #$42       ; CPU->PPU, HDMA Pointers, 1RegWrite2
+C0/1009:	8D0043  	STA $4300      ; prep HDMA over channel 1
+C0/100C:	A922    	LDA #$22       ; register $2122 [?]
+C0/100E:	8D0143  	STA $4301      ; set DMA destination register
+C0/1011:	A20074  	LDX #$7400     ; source $7E7400 (color palettes)
+C0/1014:	8E0243  	STX $4302      ; set DMA source address
+C0/1017:	A97E    	LDA #$7E       ; source $7E7400 (color palettes)
+C0/1019:	8D0443  	STA $4304      ; set DMA source bank
+C0/101C:	8D0743  	STA $4307      ; set indirect HDMA address [?]
+C0/101F:	A20002  	LDX #$0200     ; number of bytes to transfer
+C0/1022:	8E0543  	STX $4305      ; set number of bytes to transfer
+C0/1025:	A901    	LDA #$01       ; channel to enable
+C0/1027:	8D0B42  	STA $420B      ; turn on channel 1 of DMA
 C0/102A:	60      	RTS
  
 C0/102B:	48      	PHA			(from C0/A7C0)
@@ -2779,52 +2800,53 @@ C0/15D4:	48      	PHA
 C0/15D5:	AB      	PLB
 C0/15D6:	60      	RTS
  
-C0/15D7:	C220    	REP #$20      (from C0/BF6A) (16 bit accum./memory)
-C0/15D9:	A582    	LDA $82
-C0/15DB:	0A      	ASL A
-C0/15DC:	AA      	TAX
-C0/15DD:	BFF682ED	LDA $ED82F6,X
-C0/15E1:	851E    	STA $1E
-C0/15E3:	BFF482ED	LDA $ED82F4,X
-C0/15E7:	AA      	TAX
-C0/15E8:	7B      	TDC 
-C0/15E9:	E220    	SEP #$20      (8 bit accum./memory)
-C0/15EB:	E41E    	CPX $1E
-C0/15ED:	F048    	BEQ $1637
-C0/15EF:	C220    	REP #$20      (16 bit accum./memory)
-C0/15F1:	BF3486ED	LDA $ED8634,X
-C0/15F5:	852A    	STA $2A
-C0/15F7:	BF3586ED	LDA $ED8635,X
-C0/15FB:	852B    	STA $2B
-C0/15FD:	DA      	PHX
-C0/15FE:	BF3686ED	LDA $ED8636,X
-C0/1602:	29FF01  	AND #$01FF
-C0/1605:	4A      	LSR A
-C0/1606:	4A      	LSR A
-C0/1607:	4A      	LSR A
-C0/1608:	A8      	TAY
-C0/1609:	BF3686ED	LDA $ED8636,X
-C0/160D:	290700  	AND #$0007
-C0/1610:	AA      	TAX
-C0/1611:	7B      	TDC 
-C0/1612:	E220    	SEP #$20      (8 bit accum./memory)
-C0/1614:	B9401E  	LDA $1E40,Y
-C0/1617:	3FFCBAC0	AND $C0BAFC,X
-C0/161B:	F010    	BEQ $162D
-C0/161D:	A62A    	LDX $2A
-C0/161F:	BF00007F	LDA $7F0000,X
-C0/1623:	C913    	CMP #$13
-C0/1625:	D006    	BNE $162D
-C0/1627:	A912    	LDA #$12
-C0/1629:	9F00007F	STA $7F0000,X
-C0/162D:	FA      	PLX
+C0/15D7:	C220    	REP #$20         ; 16-bit A
+C0/15D9:	A582    	LDA $82          ; map ID
+C0/15DB:	0A      	ASL A            ; x2
+C0/15DC:	AA      	TAX              ; index it
+C0/15DD:	BFF682ED	LDA $ED82F6,X    ; next map treasure data pointer
+C0/15E1:	851E    	STA $1E          ; save as EOF
+C0/15E3:	BFF482ED	LDA $ED82F4,X    ; this map treasure data pointer
+C0/15E7:	AA      	TAX              ; index it
+C0/15E8:	7B      	TDC              ; zero A/B
+C0/15E9:	E220    	SEP #$20         ; 8-bit A
+C0/15EB:	E41E    	CPX $1E          ; equal to EOF
+C0/15ED:	F048    	BEQ $1637        ; exit if no treasure data
+C0/15EF:	C220    	REP #$20         ; 16-bit A
+C0/15F1:	BF3486ED	LDA $ED8634,X    ; X-coordinate
+C0/15F5:	852A    	STA $2A          ; save ^
+C0/15F7:	BF3586ED	LDA $ED8635,X    ; Y-coordinate
+C0/15FB:	852B    	STA $2B          ; save ^ (overwrites 2C)
+C0/15FD:	DA      	PHX              ; store treasure data index
+C0/15FE:	BF3686ED	LDA $ED8636,X    ; event bit and type
+C0/1602:	29FF01  	AND #$01FF       ; isolate event bit
+C0/1605:	4A      	LSR A            ; / 2
+C0/1606:	4A      	LSR A            ; / 4
+C0/1607:	4A      	LSR A            ; / 8
+C0/1608:	A8      	TAY              ; index event byte
+C0/1609:	BF3686ED	LDA $ED8636,X    ; get event bit again
+C0/160D:	290700  	AND #$0007       ; isolate "bit" within byte
+C0/1610:	AA      	TAX              ; index it
+C0/1611:	7B      	TDC              ; zero A/B
+C0/1612:	E220    	SEP #$20         ; 8-bit A
+C0/1614:	B9401E  	LDA $1E40,Y      ; load treasure byte
+C0/1617:	3FFCBAC0	AND $C0BAFC,X    ; check whether bit is set
+C0/161B:	F010    	BEQ $162D        ; branch if not ^
+C0/161D:	A62A    	LDX $2A          ; coordinates
+C0/161F:	BF00007F	LDA $7F0000,X    ; map data at coordinates
+C0/1623:	C913    	CMP #$13         ; check for "treasure chest" tile
+C0/1625:	D006    	BNE $162D        ; branch if not ^
+C0/1627:	A912    	LDA #$12         ; load "opened chest" tile
+C0/1629:	9F00007F	STA $7F0000,X    ; replace tile
+
+C0/162D:	FA      	PLX              ; restore treasure data index
 C0/162E:	E8      	INX
 C0/162F:	E8      	INX
 C0/1630:	E8      	INX
 C0/1631:	E8      	INX
-C0/1632:	E8      	INX
-C0/1633:	E41E    	CPX $1E
-C0/1635:	D0B8    	BNE $15EF
+C0/1632:	E8      	INX              ; point to next treasure
+C0/1633:	E41E    	CPX $1E          ; at end of treasures
+C0/1635:	D0B8    	BNE $15EF        ; loop till done
 C0/1637:	60      	RTS
  
 C0/1638:	AD4005  	LDA $0540		(from C0/BF58)
@@ -3329,9 +3351,9 @@ C0/1A45:	60      	RTS
 C0/1A46:	DA      	PHX
 C0/1A47:	7B      	TDC 
 C0/1A48:	E220    	SEP #$20      (8 bit accum./memory)
-C0/1A4A:	ADD21F  	LDA $1FD2
+C0/1A4A:	ADD21F  	LDA $1FD2      ; parent facing direction
 C0/1A4D:	2903    	AND #$03
-C0/1A4F:	4902    	EOR #$02
+C0/1A4F:	4902    	EOR #$02       ; invert direction
 C0/1A51:	AA      	TAX
 C0/1A52:	4980    	EOR #$80
 C0/1A54:	8D681F  	STA $1F68
@@ -3630,26 +3652,27 @@ C0/1CA7:	8570    	STA $70
 C0/1CA9:	7B      	TDC 
 C0/1CAA:	E220    	SEP #$20      (8 bit accum./memory)
 C0/1CAC:	60      	RTS
- 
-C0/1CAD:	C220    	REP #$20      (16 bit accum./memory)
-C0/1CAF:	A582    	LDA $82
+
+; Load map/location properties to buffer
+C0/1CAD:	C220    	REP #$20       ; 16-bit A
+C0/1CAF:	A582    	LDA $82        ; map ID
 C0/1CB1:	0A      	ASL A
 C0/1CB2:	0A      	ASL A
 C0/1CB3:	0A      	ASL A
 C0/1CB4:	0A      	ASL A
-C0/1CB5:	0A      	ASL A
-C0/1CB6:	18      	CLC
-C0/1CB7:	6582    	ADC $82
-C0/1CB9:	AA      	TAX
-C0/1CBA:	7B      	TDC 
-C0/1CBB:	E220    	SEP #$20      (8 bit accum./memory)
-C0/1CBD:	A400    	LDY $00
-C0/1CBF:	BF008FED	LDA $ED8F00,X
-C0/1CC3:	992005  	STA $0520,Y
-C0/1CC6:	E8      	INX
-C0/1CC7:	C8      	INY 
-C0/1CC8:	C02100  	CPY #$0021
-C0/1CCB:	D0F2    	BNE $1CBF
+C0/1CB5:	0A      	ASL A          ; x32
+C0/1CB6:	18      	CLC            ; clear carry
+C0/1CB7:	6582    	ADC $82        ; x33
+C0/1CB9:	AA      	TAX            ; offset to map properties
+C0/1CBA:	7B      	TDC            ; zero A/B
+C0/1CBB:	E220    	SEP #$20       ; 8-bit A
+C0/1CBD:	A400    	LDY $00        ; zero Y
+C0/1CBF:	BF008FED	LDA $ED8F00,X  ; map property data
+C0/1CC3:	992005  	STA $0520,Y    ; copy to buffer (default bg at 0522)
+C0/1CC6:	E8      	INX            ; next index
+C0/1CC7:	C8      	INY            ; next index
+C0/1CC8:	C02100  	CPY #$0021     ; move #33 bytes
+C0/1CCB:	D0F2    	BNE $1CBF      ; loop till done
 C0/1CCD:	60      	RTS
  
 C0/1CCE:	AD2405  	LDA $0524	(from C0/BF73)
@@ -3804,68 +3827,78 @@ C0/1E2E:	8E0543  	STX $4305
 C0/1E31:	A901    	LDA #$01
 C0/1E33:	8D0B42  	STA $420B
 C0/1E36:	60      	RTS
- 
-C0/1E37:	AD5A05  	LDA $055A
-C0/1E3A:	F01D    	BEQ $1E59
-C0/1E3C:	C903    	CMP #$03
-C0/1E3E:	B019    	BCS $1E59
-C0/1E40:	3A      	DEC A
-C0/1E41:	D00E    	BNE $1E51
+
+; Handle pending BG updates [?]
+C0/1E37:	AD5A05  	LDA $055A         ; BG1 map data update status
+C0/1E3A:	F01D    	BEQ $1E59         ; branch if no changes
+C0/1E3C:	C903    	CMP #$03          ; requires VRAM change
+C0/1E3E:	B019    	BCS $1E59         ; branch if not ^
+C0/1E40:	3A      	DEC A             ; decrement change type
+C0/1E41:	D00E    	BNE $1E51         ; branch if "top->VRAM" change
 C0/1E43:	20241D  	JSR $1D24
 C0/1E46:	A55A    	LDA $5A
 C0/1E48:	0901    	ORA #$01
-C0/1E4A:	855A    	STA $5A
-C0/1E4C:	9C5A05  	STZ $055A
+C0/1E4A:	855A    	STA $5A           ; set BG1 needs flipping [?]
+C0/1E4C:	9C5A05  	STZ $055A         ; clear "BG1 needs update"
 C0/1E4F:	804A    	BRA $1E9B
+
 C0/1E51:	20F31C  	JSR $1CF3
 C0/1E54:	CE5A05  	DEC $055A
 C0/1E57:	8042    	BRA $1E9B
-C0/1E59:	AD5B05  	LDA $055B
-C0/1E5C:	F01D    	BEQ $1E7B
-C0/1E5E:	C903    	CMP #$03
-C0/1E60:	B019    	BCS $1E7B
-C0/1E62:	3A      	DEC A
-C0/1E63:	D00E    	BNE $1E73
+
+C0/1E59:	AD5B05  	LDA $055B         ; BG2 map data update status
+C0/1E5C:	F01D    	BEQ $1E7B         ; branch if no changes
+C0/1E5E:	C903    	CMP #$03          ; requires VRAM change
+C0/1E60:	B019    	BCS $1E7B         ; branch if not ^
+C0/1E62:	3A      	DEC A             ; decrement change type
+C0/1E63:	D00E    	BNE $1E73         ; branch if "top->VRAM" change
 C0/1E65:	20901D  	JSR $1D90
 C0/1E68:	A55A    	LDA $5A
 C0/1E6A:	0902    	ORA #$02
-C0/1E6C:	855A    	STA $5A
-C0/1E6E:	9C5B05  	STZ $055B
+C0/1E6C:	855A    	STA $5A           ; set BG2 needs flipping [?]
+C0/1E6E:	9C5B05  	STZ $055B         ; clear "BG2 needs update"
 C0/1E71:	8028    	BRA $1E9B
+
 C0/1E73:	205F1D  	JSR $1D5F
 C0/1E76:	CE5B05  	DEC $055B
 C0/1E79:	8020    	BRA $1E9B
-C0/1E7B:	AD5C05  	LDA $055C
-C0/1E7E:	F01B    	BEQ $1E9B
-C0/1E80:	C903    	CMP #$03
-C0/1E82:	B017    	BCS $1E9B
-C0/1E84:	3A      	DEC A
-C0/1E85:	D00E    	BNE $1E95
+
+C0/1E7B:	AD5C05  	LDA $055C         ; BG3 map data update status
+C0/1E7E:	F01B    	BEQ $1E9B         ; branch if no changes
+C0/1E80:	C903    	CMP #$03          ; requires VRAM change
+C0/1E82:	B017    	BCS $1E9B         ; branch if not ^
+C0/1E84:	3A      	DEC A             ; decrement change type
+C0/1E85:	D00E    	BNE $1E95         ; branch if "top->VRAM" change
 C0/1E87:	20FC1D  	JSR $1DFC
 C0/1E8A:	A55A    	LDA $5A
 C0/1E8C:	0904    	ORA #$04
-C0/1E8E:	855A    	STA $5A
-C0/1E90:	9C5C05  	STZ $055C
+C0/1E8E:	855A    	STA $5A           ; set BG3 needs flipping [?]
+C0/1E90:	9C5C05  	STZ $055C         ; clear "BG3 needs update"
 C0/1E93:	8006    	BRA $1E9B
+
 C0/1E95:	20CB1D  	JSR $1DCB
 C0/1E98:	CE5C05  	DEC $055C
-C0/1E9B:	AD5A05  	LDA $055A
-C0/1E9E:	0D5B05  	ORA $055B
-C0/1EA1:	0D5C05  	ORA $055C
-C0/1EA4:	D01D    	BNE $1EC3
-C0/1EA6:	A55A    	LDA $5A
-C0/1EA8:	2901    	AND #$01
-C0/1EAA:	F003    	BEQ $1EAF
-C0/1EAC:	205E3F  	JSR $3F5E
+
+C0/1E9B:	AD5A05  	LDA $055A         ; BG1 map data update status
+C0/1E9E:	0D5B05  	ORA $055B         ; BG2 map data update status
+C0/1EA1:	0D5C05  	ORA $055C         ; BG3 map data update status
+C0/1EA4:	D01D    	BNE $1EC3         ; exit if at least one change still
+
+C0/1EA6:	A55A    	LDA $5A           ; maps needing flip
+C0/1EA8:	2901    	AND #$01          ; BG1 needs flipping
+C0/1EAA:	F003    	BEQ $1EAF         ; branch if not
+C0/1EAC:	205E3F  	JSR $3F5E         ; flip BG1 [?]
+
 C0/1EAF:	A55A    	LDA $5A
-C0/1EB1:	2902    	AND #$02
-C0/1EB3:	F003    	BEQ $1EB8
-C0/1EB5:	207E3F  	JSR $3F7E
+C0/1EB1:	2902    	AND #$02          ; BG2 needs flipping
+C0/1EB3:	F003    	BEQ $1EB8         ; branch if not
+C0/1EB5:	207E3F  	JSR $3F7E         ; flip BG2 [?]
+
 C0/1EB8:	A55A    	LDA $5A
-C0/1EBA:	2904    	AND #$04
-C0/1EBC:	F003    	BEQ $1EC1
-C0/1EBE:	209E3F  	JSR $3F9E
-C0/1EC1:	645A    	STZ $5A
+C0/1EBA:	2904    	AND #$04          ; BG3 needs flipping
+C0/1EBC:	F003    	BEQ $1EC1         ; branch if not
+C0/1EBE:	209E3F  	JSR $3F9E         ; flip BG3 [?]
+C0/1EC1:	645A    	STZ $5A           ; clear "BG needs flipping"
 C0/1EC3:	60      	RTS
  
 C0/1EC4:	A97F    	LDA #$7F		(from C0/4D48)
@@ -5984,7 +6017,7 @@ C0/2FEA:	48      	PHA
 C0/2FEB:	AB      	PLB
 C0/2FEC:	60      	RTS
  
-C0/2FED:	AD4507  	LDA $0745      (from C0/4853, C0/4CDB, C0/7574, C0/8178, C0/BC5F)
+C0/2FED:	AD4507  	LDA $0745
 C0/2FF0:	F04D    	BEQ $303F
 C0/2FF2:	A97E    	LDA #$7E
 C0/2FF4:	48      	PHA
@@ -7391,7 +7424,7 @@ C0/3B96:	8D8021  	STA $2180
 C0/3B99:	7B      	TDC 
 C0/3B9A:	60      	RTS
  
-C0/3B9B:	AD6605  	LDA $0566		(from C0/0246, C0/3958)
+C0/3B9B:	AD6605  	LDA $0566	    ; window 2 frame counter [?]
 C0/3B9E:	4A      	LSR A
 C0/3B9F:	B02F    	BCS $3BD0
 C0/3BA1:	A97E    	LDA #$7E
@@ -8744,44 +8777,49 @@ C0/4727:	A506    	LDA $06           ; "Buttons Pressed"
 C0/4729:	3001    	BMI $472C         ; branch if pushing "A"
 C0/472B:	60      	RTS
 
-; Pushing A [?]
+; Pushing A [?] (FOOBAR 1EDB $40)
 C0/472C:	B97F08  	LDA $087F,Y       ; visible character's facing direction
-C0/472F:	1A      	INC A
-C0/4730:	20037D  	JSR $7D03
-C0/4733:	A61E    	LDX $1E
-C0/4735:	BF00207E	LDA $7E2000,X
-C0/4739:	3053    	BMI $478E
-C0/473B:	4A      	LSR A
+C0/472F:	1A      	INC A             ; convert to "movement type" (0=none)
+C0/4730:	20037D  	JSR $7D03         ; get tile to check coordinates
+C0/4733:	A61E    	LDX $1E           ; inspect tile X and Y coordinates
+C0/4735:	BF00207E	LDA $7E2000,X     ; load object ID (x2) at coordinates
+C0/4739:	3053    	BMI $478E         ; branch if null
+
+C0/473B:	4A      	LSR A             ; get object ID
 C0/473C:	CD1442  	CMP $4214         ; compare to visible character's object id
-C0/473F:	F04D    	BEQ $478E
-C0/4741:	0A      	ASL A
-C0/4742:	AA      	TAX
-C0/4743:	BC9907  	LDY $0799,X
-C0/4746:	B97C08  	LDA $087C,Y
-C0/4749:	2940    	AND #$40
-C0/474B:	D0DE    	BNE $472B
-C0/474D:	A5B8    	LDA $B8
+C0/473F:	F04D    	BEQ $478E         ; branch if matches charcter's ID
+
+C0/4741:	0A      	ASL A             ; object ID x2
+C0/4742:	AA      	TAX               ; index it
+C0/4743:	BC9907  	LDY $0799,X       ; pointer to this object's data
+C0/4746:	B97C08  	LDA $087C,Y       ; inspected object movement type
+C0/4749:	2940    	AND #$40          ; does event activate on collision
+C0/474B:	D0DE    	BNE $472B         ; exit if so ^
+
+C0/474D:	A5B8    	LDA $B8           ; current bottom tile properties
 C0/474F:	2907    	AND #$07
-C0/4751:	C901    	CMP #$01
-C0/4753:	F01C    	BEQ $4771
-C0/4755:	C902    	CMP #$02
-C0/4757:	F023    	BEQ $477C
-C0/4759:	C903    	CMP #$03
-C0/475B:	F028    	BEQ $4785
-C0/475D:	A5B2    	LDA $B2
-C0/475F:	D98808  	CMP $0888,Y
-C0/4762:	F068    	BEQ $47CC
-C0/4764:	C901    	CMP #$01
-C0/4766:	D026    	BNE $478E
-C0/4768:	B98808  	LDA $0888,Y
+C0/4751:	C901    	CMP #$01          ; "Passable on upper Z level" [?]
+C0/4753:	F01C    	BEQ $4771         ; branch if not ^
+C0/4755:	C902    	CMP #$02          ; "Passable on lower Z level" [?]
+C0/4757:	F023    	BEQ $477C         ; branch if not ^
+C0/4759:	C903    	CMP #$03          ; "Transition between upper and lower" [?]
+C0/475B:	F028    	BEQ $4785         ; branch if not ^
+C0/475D:	A5B2    	LDA $B2           ; party's Z level
+C0/475F:	D98808  	CMP $0888,Y       ; compare to object's Z level
+C0/4762:	F068    	BEQ $47CC         ; branch if match
+C0/4764:	C901    	CMP #$01          ; "Upper Z level"
+C0/4766:	D026    	BNE $478E         ; branch if not ^
+C0/4768:	B98808  	LDA $0888,Y       ; object's Z level
 C0/476B:	2904    	AND #$04
 C0/476D:	D05D    	BNE $47CC
 C0/476F:	801D    	BRA $478E
+
 C0/4771:	B98808  	LDA $0888,Y
 C0/4774:	2907    	AND #$07
 C0/4776:	C902    	CMP #$02
 C0/4778:	F014    	BEQ $478E
 C0/477A:	8050    	BRA $47CC
+
 C0/477C:	B98808  	LDA $0888,Y
 C0/477F:	2902    	AND #$02
 C0/4781:	D049    	BNE $47CC
@@ -8790,10 +8828,12 @@ C0/4785:	B98808  	LDA $0888,Y
 C0/4788:	2904    	AND #$04
 C0/478A:	D002    	BNE $478E
 C0/478C:	803E    	BRA $47CC
-C0/478E:	A61E    	LDX $1E
-C0/4790:	BF00007F	LDA $7F0000,X
-C0/4794:	AA      	TAX
-C0/4795:	BF00767E	LDA $7E7600,X
+
+; Inspecting empty tile [?]
+C0/478E:	A61E    	LDX $1E           ; tile coordinates to inspect
+C0/4790:	BF00007F	LDA $7F0000,X     ; map data at coordinate
+C0/4794:	AA      	TAX               ; index it
+C0/4795:	BF00767E	LDA $7E7600,X     ; tile properties [?]
 C0/4799:	C9F7    	CMP #$F7
 C0/479B:	F08E    	BEQ $472B
 C0/479D:	2907    	AND #$07
@@ -8818,123 +8858,126 @@ C0/47C5:	AA      	TAX
 C0/47C6:	BC9907  	LDY $0799,X
 C0/47C9:	8001    	BRA $47CC
 C0/47CB:	60      	RTS
- 
-C0/47CC:	B97C08  	LDA $087C,Y
-C0/47CF:	290F    	AND #$0F
-C0/47D1:	C904    	CMP #$04
-C0/47D3:	F0F6    	BEQ $47CB
-C0/47D5:	997D08  	STA $087D,Y
-C0/47D8:	A4DA    	LDY $DA
-C0/47DA:	B97F08  	LDA $087F,Y
+
+; Inspecting adjacent object (NPC) [?]
+C0/47CC:	B97C08  	LDA $087C,Y     ; object's movement type
+C0/47CF:	290F    	AND #$0F        ; isolate ^
+C0/47D1:	C904    	CMP #$04        ; "Activated" (facing something) [?]
+C0/47D3:	F0F6    	BEQ $47CB       ; exit if already ^
+C0/47D5:	997D08  	STA $087D,Y     ; backup movement type for NPC object
+C0/47D8:	A4DA    	LDY $DA         ; pointer to character object data
+C0/47DA:	B97F08  	LDA $087F,Y     ; character facing direction
 C0/47DD:	1A      	INC A
-C0/47DE:	1A      	INC A
-C0/47DF:	2903    	AND #$03
-C0/47E1:	851A    	STA $1A
-C0/47E3:	BC9907  	LDY $0799,X
-C0/47E6:	B97F08  	LDA $087F,Y
+C0/47DE:	1A      	INC A           ; +2
+C0/47DF:	2903    	AND #$03        ; Up: 0>2, Right: 1>3, Down: 2>0, Left: 3>1
+C0/47E1:	851A    	STA $1A         ; save inverted facing direction
+C0/47E3:	BC9907  	LDY $0799,X     ; pointer to inspected object NPC data
+C0/47E6:	B97F08  	LDA $087F,Y     ; object facing direction
 C0/47E9:	0A      	ASL A
 C0/47EA:	0A      	ASL A
-C0/47EB:	0A      	ASL A
-C0/47EC:	851B    	STA $1B
-C0/47EE:	B96808  	LDA $0868,Y
-C0/47F1:	29E7    	AND #$E7
-C0/47F3:	051B    	ORA $1B
-C0/47F5:	996808  	STA $0868,Y
-C0/47F8:	B97C08  	LDA $087C,Y
-C0/47FB:	2920    	AND #$20
-C0/47FD:	D00D    	BNE $480C
-C0/47FF:	A51A    	LDA $1A
-C0/4801:	997F08  	STA $087F,Y
-C0/4804:	AA      	TAX
-C0/4805:	BF2D58C0	LDA $C0582D,X
-C0/4809:	997708  	STA $0877,Y
-C0/480C:	B97C08  	LDA $087C,Y
-C0/480F:	29F0    	AND #$F0
-C0/4811:	0904    	ORA #$04
-C0/4813:	997C08  	STA $087C,Y
-C0/4816:	B98908  	LDA $0889,Y
-C0/4819:	85E5    	STA $E5
-C0/481B:	8DF405  	STA $05F4
-C0/481E:	B98A08  	LDA $088A,Y
-C0/4821:	85E6    	STA $E6
-C0/4823:	8DF505  	STA $05F5
-C0/4826:	B98B08  	LDA $088B,Y
-C0/4829:	18      	CLC
-C0/482A:	69CA    	ADC #$CA
-C0/482C:	85E7    	STA $E7
-C0/482E:	8DF605  	STA $05F6
-C0/4831:	A20000  	LDX #$0000
-C0/4834:	8E9405  	STX $0594
-C0/4837:	A9CA    	LDA #$CA
-C0/4839:	8D9605  	STA $0596
-C0/483C:	A901    	LDA #$01
-C0/483E:	8DC705  	STA $05C7
-C0/4841:	A20300  	LDX #$0003
-C0/4844:	86E8    	STX $E8
-C0/4846:	A4DA    	LDY $DA
-C0/4848:	B97C08  	LDA $087C,Y
-C0/484B:	997D08  	STA $087D,Y
-C0/484E:	A904    	LDA #$04
-C0/4850:	997C08  	STA $087C,Y
-C0/4853:	20ED2F  	JSR $2FED
+C0/47EB:	0A      	ASL A           ; shift up << 3
+C0/47EC:	851B    	STA $1B         ; save shifted facing direction
+C0/47EE:	B96808  	LDA $0868,Y     ; object sprite settings (backup)
+C0/47F1:	29E7    	AND #$E7        ; mask out previous facing direction
+C0/47F3:	051B    	ORA $1B         ; replace with current facing direction
+C0/47F5:	996808  	STA $0868,Y     ; update object sprite settings
+C0/47F8:	B97C08  	LDA $087C,Y     ; object's movement type
+C0/47FB:	2920    	AND #$20        ; "Don't face target when activated"
+C0/47FD:	D00D    	BNE $480C       ; branch if ^
+
+C0/47FF:	A51A    	LDA $1A         ; new facing direction (inverted party)
+C0/4801:	997F08  	STA $087F,Y     ; update NPC facing direction
+C0/4804:	AA      	TAX             ; index facing direction
+C0/4805:	BF2D58C0	LDA $C0582D,X   ; sprite index for facing direction
+C0/4809:	997708  	STA $0877,Y     ; update sprite index
+
+C0/480C:	B97C08  	LDA $087C,Y     ; object's movement data
+C0/480F:	29F0    	AND #$F0        ; mask out "Movement Mode"
+C0/4811:	0904    	ORA #$04        ; replace with "Activated"
+C0/4813:	997C08  	STA $087C,Y     ; update NPC movement data
+C0/4816:	B98908  	LDA $0889,Y     ; NPC's event script pointer (lo)
+C0/4819:	85E5    	STA $E5         ; save it in scratch
+C0/481B:	8DF405  	STA $05F4       ; save it on event stack for loops
+C0/481E:	B98A08  	LDA $088A,Y     ; NPC's event script pointer (hi)
+C0/4821:	85E6    	STA $E6         ; save it in scratch
+C0/4823:	8DF505  	STA $05F5       ; save it on event stack for loops
+C0/4826:	B98B08  	LDA $088B,Y     ; NPC's event script pointer (bank)
+C0/4829:	18      	CLC             ; clear carry
+C0/482A:	69CA    	ADC #$CA        ; add to base event bank
+C0/482C:	85E7    	STA $E7         ; save bank in scratch
+C0/482E:	8DF605  	STA $05F6       ; save it on event stack for loops
+C0/4831:	A20000  	LDX #$0000      ; null pointer
+C0/4834:	8E9405  	STX $0594       ; set in event stack for subroutines
+C0/4837:	A9CA    	LDA #$CA        ; first event bank
+C0/4839:	8D9605  	STA $0596       ; set in event stack for subroutines
+C0/483C:	A901    	LDA #$01        ; one loop count
+C0/483E:	8DC705  	STA $05C7       ; set loop count for next event [?]
+C0/4841:	A20300  	LDX #$0003      ;
+C0/4844:	86E8    	STX $E8         ; [?]
+C0/4846:	A4DA    	LDY $DA         ; pointer to character object data
+C0/4848:	B97C08  	LDA $087C,Y     ; character object movement data
+C0/484B:	997D08  	STA $087D,Y     ; backup
+C0/484E:	A904    	LDA #$04        ; "Activated" movement mode
+C0/4850:	997C08  	STA $087C,Y     ; set movement mode
+C0/4853:	20ED2F  	JSR $2FED       ;
 C0/4856:	60      	RTS
  
 C0/4857:	000100FF
 C0/485B:	FF000100
 
 C0/485F:	204450  	JSR $5044
-C0/4862:	A5B8    	LDA $B8
-C0/4864:	2903    	AND #$03
-C0/4866:	85B1    	STA $B1
-C0/4868:	20144F  	JSR $4F14
-C0/486B:	209F4F  	JSR $4F9F
-C0/486E:	A4DA    	LDY $DA
-C0/4870:	C220    	REP #$20      (16 bit accum./memory)
-C0/4872:	7B      	TDC 
-C0/4873:	997108  	STA $0871,Y
-C0/4876:	997308  	STA $0873,Y
-C0/4879:	8573    	STA $73
-C0/487B:	8575    	STA $75
-C0/487D:	8577    	STA $77
-C0/487F:	8579    	STA $79
-C0/4881:	857B    	STA $7B
-C0/4883:	857D    	STA $7D
-C0/4885:	E220    	SEP #$20      	(8 bit accum./memory)
-C0/4887:	B96808  	LDA $0868,Y
-C0/488A:	0901    	ORA #$01
-C0/488C:	996808  	STA $0868,Y
-C0/488F:	ADB91E  	LDA $1EB9
-C0/4892:	3028    	BMI $48BC
-C0/4894:	A584    	LDA $84
-C0/4896:	D024    	BNE $48BC
-C0/4898:	A559    	LDA $59
-C0/489A:	D020    	BNE $48BC
-C0/489C:	AD5E05  	LDA $055E
-C0/489F:	D01B    	BNE $48BC
-C0/48A1:	AD5A05  	LDA $055A
-C0/48A4:	F004    	BEQ $48AA
-C0/48A6:	C905    	CMP #$05
-C0/48A8:	D012    	BNE $48BC
-C0/48AA:	AD5B05  	LDA $055B
-C0/48AD:	F004    	BEQ $48B3
-C0/48AF:	C905    	CMP #$05
-C0/48B1:	D009    	BNE $48BC
-C0/48B3:	AD5C05  	LDA $055C
-C0/48B6:	F007    	BEQ $48BF
-C0/48B8:	C905    	CMP #$05
-C0/48BA:	F003    	BEQ $48BF
-C0/48BC:	4CEF49  	JMP $49EF	
+C0/4862:	A5B8    	LDA $B8         ; current tile properties
+C0/4864:	2903    	AND #$03        ; isolate "Passable" bits
+C0/4866:	85B1    	STA $B1         ; store them ^
+C0/4868:	20144F  	JSR $4F14       ; maybe update party priority to "normal"
+C0/486B:	209F4F  	JSR $4F9F       ; update visible character's sprite priority
+C0/486E:	A4DA    	LDY $DA         ; pointer to current object data
+C0/4870:	C220    	REP #$20        ; 16-bit A
+C0/4872:	7B      	TDC             ; zero A/B
+C0/4873:	997108  	STA $0871,Y     ; zero horizontal movement speed
+C0/4876:	997308  	STA $0873,Y     ; zero vertical movement speed
+C0/4879:	8573    	STA $73         ; zero BG1 X-scroll speed
+C0/487B:	8575    	STA $75         ; zero BG1 Y-scroll speed
+C0/487D:	8577    	STA $77         ; zero BG2 X-scroll speed
+C0/487F:	8579    	STA $79         ; zero BG2 Y-scroll speed
+C0/4881:	857B    	STA $7B         ; zero BG3 X-scroll speed
+C0/4883:	857D    	STA $7D         ; zero BG3 Y-scroll speed
+C0/4885:	E220    	SEP #$20      	; 8-bit A
+C0/4887:	B96808  	LDA $0868,Y     ; lead character sprite settings
+C0/488A:	0901    	ORA #$01        ; "Enable Walking Animation"
+C0/488C:	996808  	STA $0868,Y     ; update sprite settings
+C0/488F:	ADB91E  	LDA $1EB9       ; look at bit $80, "No player control"
+C0/4892:	3028    	BMI $48BC       ; branch to skip direction buttons if ^
+C0/4894:	A584    	LDA $84         ; "Map Loading"
+C0/4896:	D024    	BNE $48BC       ; branch to skip direction buttons if ^
+C0/4898:	A559    	LDA $59         ; "Menu Opening"
+C0/489A:	D020    	BNE $48BC       ; branch to skip direction buttons if ^
+C0/489C:	AD5E05  	LDA $055E       ; "Handling Collision"
+C0/489F:	D01B    	BNE $48BC       ; branch to skip direction buttons if ^
+C0/48A1:	AD5A05  	LDA $055A       ; BG1 Map Data update status
+C0/48A4:	F004    	BEQ $48AA       ; branch if no pending changes ^
+C0/48A6:	C905    	CMP #$05        ; check for specific Map status [?]
+C0/48A8:	D012    	BNE $48BC       ; branch to skip direction buttons if not ^
+C0/48AA:	AD5B05  	LDA $055B       ; BG2 Map Data update status
+C0/48AD:	F004    	BEQ $48B3       ; branch if no pending changes ^
+C0/48AF:	C905    	CMP #$05        ; check for specific Map status [?]
+C0/48B1:	D009    	BNE $48BC       ; branch to skip direction buttons if not ^
+C0/48B3:	AD5C05  	LDA $055C       ; BG3 Map Data update status
+C0/48B6:	F007    	BEQ $48BF       ; branch if no pending changes ^
+C0/48B8:	C905    	CMP #$05        ; check for specific Map status [?]
+C0/48BA:	F003    	BEQ $48BF       ; branch to check direction buttons if ^
+C0/48BC:	4CEF49  	JMP $49EF	      ; skip direction buttons
 	
-C0/48BF:	A5B8    	LDA $B8
-C0/48C1:	2904    	AND #$04
-C0/48C3:	F006    	BEQ $48CB
-C0/48C5:	A5B2    	LDA $B2
-C0/48C7:	C902    	CMP #$02
-C0/48C9:	F006    	BEQ $48D1
-C0/48CB:	A5B8    	LDA $B8
-C0/48CD:	29C0    	AND #$C0
-C0/48CF:	D003    	BNE $48D4
-C0/48D1:	4C7849  	JMP $4978
+C0/48BF:	A5B8    	LDA $B8         ; current tile properties
+C0/48C1:	2904    	AND #$04        ; isolate "On Bridge" property [?]
+C0/48C3:	F006    	BEQ $48CB       ; branch if not ^
+C0/48C5:	A5B2    	LDA $B2         ; party's Z level
+C0/48C7:	C902    	CMP #$02        ; at max [?]
+C0/48C9:	F006    	BEQ $48D1       ; continue if ^
+C0/48CB:	A5B8    	LDA $B8         ; current tile properties
+C0/48CD:	29C0    	AND #$C0        ; isolate stairs [?]
+C0/48CF:	D003    	BNE $48D4       ; branch if ^
+C0/48D1:	4C7849  	JMP $4978       ; continue handling button input
 
 ; Check pressing right
 C0/48D4:	A507    	LDA $07
@@ -8954,22 +8997,22 @@ C0/48F0:	F004    	BEQ $48F6       ; branch if not ^
 C0/48F2:	A905    	LDA #$05        ; "move Up/Right"
 C0/48F4:	8049    	BRA $493F
 
-C0/48F6:	4C7849  	JMP $4978	      ; handle direction buttons [?]
+C0/48F6:	4C7849  	JMP $4978	      ; continue handling button input
 
 ; Up/Left stairs
 C0/48F9:	A5AE    	LDA $AE
 C0/48FB:	AA      	TAX
 C0/48FC:	BF00767E	LDA $7E7600,X
-C0/4900:	1076    	BPL $4978
+C0/4900:	1076    	BPL $4978       ; continue handling button input
 C0/4902:	C9F7    	CMP #$F7
-C0/4904:	F072    	BEQ $4978
+C0/4904:	F072    	BEQ $4978       ; continue handling button input
 C0/4906:	A906    	LDA #$06
 C0/4908:	8035    	BRA $493F
 
 ; Check pressing left
 C0/490A:	A507    	LDA $07
 C0/490C:	2902    	AND #$02
-C0/490E:	F068    	BEQ $4978
+C0/490E:	F068    	BEQ $4978       ; continue handling button input
 C0/4910:	A903    	LDA #$03
 C0/4912:	997F08  	STA $087F,Y
 C0/4915:	A5B8    	LDA $B8
@@ -8979,9 +9022,9 @@ C0/491B:	1079    	BPL $4996
 C0/491D:	A5A6    	LDA $A6
 C0/491F:	AA      	TAX
 C0/4920:	BF00767E	LDA $7E7600,X
-C0/4924:	1052    	BPL $4978
+C0/4924:	1052    	BPL $4978       ; continue handling button input
 C0/4926:	C9F7    	CMP #$F7
-C0/4928:	F04E    	BEQ $4978
+C0/4928:	F04E    	BEQ $4978       ; continue handling button input
 C0/492A:	A908    	LDA #$08
 C0/492C:	8011    	BRA $493F
 
@@ -8989,9 +9032,9 @@ C0/492E:	A5AC    	LDA $AC
 C0/4930:	AA      	TAX
 C0/4931:	BF00767E	LDA $7E7600,X
 C0/4935:	C9F7    	CMP #$F7
-C0/4937:	F03F    	BEQ $4978
+C0/4937:	F03F    	BEQ $4978       ; continue handling button input
 C0/4939:	2940    	AND #$40
-C0/493B:	F03B    	BEQ $4978
+C0/493B:	F03B    	BEQ $4978       ; continue handling button input
 C0/493D:	A907    	LDA #$07
 
 ; Stair Movement [?]
@@ -9021,7 +9064,7 @@ C0/4972:	8557    	STA $57         ; "Battles Enabled"
 C0/4974:	9C8E07  	STZ $078E       ; clear "Party on Trigger"
 C0/4977:	60      	RTS
 
-; Handle directional buttons on field [?]
+; Handle directional buttons on field (non-stair)
 ; Check Right
 C0/4978:	A507    	LDA $07
 C0/497A:	2901    	AND #$01       (are you pressing right?)
@@ -9089,7 +9132,7 @@ C0/49F3:	997E08  	STA $087E,Y    ; clear moving direction for visible character
 C0/49F6:	9C8608  	STZ $0886      ; zero steps pending                             [BUG - first char only?]
 C0/49F9:	20A5C8  	JSR $C8A5      ; handle stairs [?]
 C0/49FC:	20F446  	JSR $46F4      ; handle pressing A
-C0/49FF:	20834B  	JSR $4B83      ; more handle pressing A (chest) [?]
+C0/49FF:	20834B  	JSR $4B83      ; more handle pressing A (chest)
 C0/4A02:	60      	RTS
  
 C0/4A03:	20604B  	JSR $4B60      ; increase step count
@@ -9307,72 +9350,77 @@ C0/4BAA:	1027    	BPL $4BD3        ; exit if not pressing A
 C0/4BAC:	AC0308  	LDY $0803        ; visible character object data offset
 C0/4BAF:	B97F08  	LDA $087F,Y      ; visible character facing direction
 C0/4BB2:	AA      	TAX              ; index it
-C0/4BB3:	B97A08  	LDA $087A,Y      ; pointer to location in map data (lo) [?]
+C0/4BB3:	B97A08  	LDA $087A,Y      ; visible character X coordinate in map
 C0/4BB6:	18      	CLC              ; clear carry
-C0/4BB7:	7F0F4DC0	ADC $C04D0F,X    ; add facing direction lo-byte offset
-C0/4BBB:	2586    	AND $86          ; mask by BG1 map horizontal clip [?]
-C0/4BBD:	852A    	STA $2A          ; save
-C0/4BBF:	B97B08  	LDA $087B,Y      ; pointer to location in map data (hi)
+C0/4BB7:	7F0F4DC0	ADC $C04D0F,X    ; add facing direction X coord diff
+C0/4BBB:	2586    	AND $86          ; ensure within map's tile width
+C0/4BBD:	852A    	STA $2A          ; store examined tile X-coordinate
+C0/4BBF:	B97B08  	LDA $087B,Y      ; visible character Y coordinate in map
 C0/4BC2:	18      	CLC              ; clear carry
-C0/4BC3:	7F134DC0	ADC $C04D13,X    ; add facing direction hi-byte offset
-C0/4BC7:	2587    	AND $87          ; mask by BG1 map horizontal clip [?]
-C0/4BC9:	852B    	STA $2B          ; save it
-C0/4BCB:	A62A    	LDX $2A          ; load full pointer
-C0/4BCD:	BF00207E	LDA $7E2000,X    ; get object at tile location [?]
-C0/4BD1:	3001    	BMI $4BD4        ; branch if exists [?]
+C0/4BC3:	7F134DC0	ADC $C04D13,X    ; add facing direction Y coord diff
+C0/4BC7:	2587    	AND $87          ; ensure within map's tile height
+C0/4BC9:	852B    	STA $2B          ; store examined tile Y-coordinate
+C0/4BCB:	A62A    	LDX $2A          ; load full coordinates (index to tile)
+C0/4BCD:	BF00207E	LDA $7E2000,X    ; get object at tile location
+C0/4BD1:	3001    	BMI $4BD4        ; branch to process object if exists
 C0/4BD3:	60      	RTS
- 
-C0/4BD4:	C220    	REP #$20      	(16 bit accum./memory)
+
+; Check if Examining a Chest
+C0/4BD4:	C220    	REP #$20         ; 16-bit A
 C0/4BD6:	A582    	LDA $82          ; current map index
 C0/4BD8:	0A      	ASL A            ; x2
 C0/4BD9:	AA      	TAX              ; index it
-C0/4BDA:	BFF682ED	LDA $ED82F6,X
-C0/4BDE:	851E    	STA $1E
-C0/4BE0:	BFF482ED	LDA $ED82F4,X
+C0/4BDA:	BFF682ED	LDA $ED82F6,X    ; end of chest data block
+C0/4BDE:	851E    	STA $1E          ; save end of range
+C0/4BE0:	BFF482ED	LDA $ED82F4,X    ; start of chest data block
 C0/4BE4:	AA      	TAX              ; index it
 C0/4BE5:	7B      	TDC              ; clear A/B
-C0/4BE6:	E220    	SEP #$20      	(8 bit accum./memory)
-C0/4BE8:	E41E    	CPX $1E          ;
-C0/4BEA:	F0E7    	BEQ $4BD3        ; exit if same
-C0/4BEC:	BF3486ED	LDA $ED8634,X
-C0/4BF0:	C52A    	CMP $2A
-C0/4BF2:	D008    	BNE $4BFC
-C0/4BF4:	BF3586ED	LDA $ED8635,X
-C0/4BF8:	C52B    	CMP $2B
-C0/4BFA:	F00A    	BEQ $4C06
+C0/4BE6:	E220    	SEP #$20         ; 8-bit A
+C0/4BE8:	E41E    	CPX $1E          ; same as end of range
+C0/4BEA:	F0E7    	BEQ $4BD3        ; exit if no treasure data for map
+C0/4BEC:	BF3486ED	LDA $ED8634,X    ; chest tile location (X coord)
+C0/4BF0:	C52A    	CMP $2A          ; check against examined tile
+C0/4BF2:	D008    	BNE $4BFC        ; branch if no match
+C0/4BF4:	BF3586ED	LDA $ED8635,X    ; chest tile location (Y coord)
+C0/4BF8:	C52B    	CMP $2B          ; check against examined tile
+C0/4BFA:	F00A    	BEQ $4C06        ; if match, decode treasure chest
 C0/4BFC:	E8      	INX
 C0/4BFD:	E8      	INX
 C0/4BFE:	E8      	INX
 C0/4BFF:	E8      	INX
-C0/4C00:	E8      	INX
-C0/4C01:	E41E    	CPX $1E
-C0/4C03:	D0E7    	BNE $4BEC
+C0/4C00:	E8      	INX              ; X += 5 (next chest data)
+C0/4C01:	E41E    	CPX $1E          ; check if at end of range
+C0/4C03:	D0E7    	BNE $4BEC        ; loop till all chests checked
 C0/4C05:	60      	RTS
  
-Treasure chest decoding function
+; Treasure chest decoding function
 C0/4C06:	C220    	REP #$20      	(16 bit accum./memory)
 C0/4C08:	BF3886ED	LDA $ED8638,X
 C0/4C0C:	851A    	STA $1A        (now the contents of the chest)
-C0/4C0E:	BF3686ED	LDA $ED8636,X
-C0/4C12:	851E    	STA $1E        (the bit of this chest)
-C0/4C14:	290700  	AND #$0007
-C0/4C17:	AA      	TAX
-C0/4C18:	A51E    	LDA $1E
-C0/4C1A:	29FF01  	AND #$01FF
+C0/4C0E:	BF3686ED	LDA $ED8636,X    ; chest identifier and type
+C0/4C12:	851E    	STA $1E          ; save chest id and type ($1F)
+
+C0/4C14:	290700  	AND #$0007       ; isolate bit only
+C0/4C17:	AA      	TAX              ; index it
+C0/4C18:	A51E    	LDA $1E          ; chest ID
+C0/4C1A:	29FF01  	AND #$01FF       ; isolate chest SRAM byte
 C0/4C1D:	4A      	LSR A
-C0/4C1E:	4A      	LSR A
-C0/4C1F:	4A      	LSR A
-C0/4C20:	A8      	TAY
-C0/4C21:	7B      	TDC 
-C0/4C22:	E220    	SEP #$20      	(8 bit accum./memory)
-C0/4C24:	B9401E  	LDA $1E40,Y    (treasure chest bits)
-C0/4C27:	3FFCBAC0	AND $C0BAFC,X  (is it this bit?)
-C0/4C2B:	D0A6    	BNE $4BD3      (branch and exit if not. interesting fail-safe)
-C0/4C2D:	B9401E  	LDA $1E40,Y    (treasure chest bits)
-C0/4C30:	1FFCBAC0	ORA $C0BAFC,X
-C0/4C34:	99401E  	STA $1E40,Y    (set this chest as now open)
-C0/4C37:	A51F    	LDA $1F
+C0/4C1E:	4A      	LSR A            ; TODO: This could use $BAED
+C0/4C1F:	4A      	LSR A            ; shift down (/ 8)
+C0/4C20:	A8      	TAY              ; index it
+C0/4C21:	7B      	TDC              ; zero A/B
+C0/4C22:	E220    	SEP #$20         ; 8-bit A
+
+C0/4C24:	B9401E  	LDA $1E40,Y      ; this treasure chest byte
+C0/4C27:	3FFCBAC0	AND $C0BAFC,X    ; check for this treasure bit
+C0/4C2B:	D0A6    	BNE $4BD3        ; exit if chest already opened
+C0/4C2D:	B9401E  	LDA $1E40,Y      ; this treasure chest byte
+C0/4C30:	1FFCBAC0	ORA $C0BAFC,X    ; add bit for this chest
+C0/4C34:	99401E  	STA $1E40,Y      ; update chest bits
+C0/4C37:	A51F    	LDA $1F          ; chest type
 C0/4C39:	1045    	BPL $4C80         (if high bit = 0 then it's not a GP chest)
+
+; GP Treasure Chest
 C0/4C3B:	A51A    	LDA $1A
 C0/4C3D:	8D0242  	STA $4202
 C0/4C40:	A964    	LDA #$64       (GP amount * 100)
@@ -9403,21 +9451,28 @@ C0/4C75:	8D6218  	STA $1862      (set max GP as 9999999, though why this is here
 C0/4C78:	20E502  	JSR $02E5      (get number grabbed ready for display purposes)
 C0/4C7B:	A21000  	LDX #$0010     (set CA/0010, event for "Found x GP!")
 C0/4C7E:	802C    	BRA $4CAC
+
 C0/4C80:	A51F    	LDA $1F        (would've been better to BIT all of these checks, so A would be intact throughout)
 C0/4C82:	2940    	AND #$40          (is it a item-containing chest?)
 C0/4C84:	F00D    	BEQ $4C93		(branch if not)
+
+; Item containing Chest
 C0/4C86:	A51A    	LDA $1A
 C0/4C88:	8D8305  	STA $0583		(item index)
 C0/4C8B:	20FCAC  	JSR $ACFC
 C0/4C8E:	A20800  	LDX #$0008     (set CA/0008, event for "Received x!")
 C0/4C91:	8019    	BRA $4CAC
+
 C0/4C93:	A51F    	LDA $1F
 C0/4C95:	2920    	AND #$20		(is it a monster-in-a-box?)
 C0/4C97:	F00A    	BEQ $4CA3		(branch if not)
+
+; Monster-in-a-Box Chest
 C0/4C99:	A51A    	LDA $1A		(load the "contents" byte)
 C0/4C9B:	8D8907  	STA $0789		(store that to $0789; now this is the stored monster set to use with gen. act. 0x8E)
 C0/4C9E:	A24000  	LDX #$0040     (set CA/0040, event for "Monster-in-a-box!")
 C0/4CA1:	8009    	BRA $4CAC
+
 C0/4CA3:	A51F    	LDA $1F
 C0/4CA5:	2910    	AND #$10         	(is it something else???)
 C0/4CA7:	F000    	BEQ $4CA9		(why check... this is a totally pointless line probably inserted in case they wanted to branch elsewhere to code for some other type of chest)
@@ -9466,11 +9521,15 @@ C0/4D0B:	60      	RTS
 C0/4D0C:	0101    	ORA ($01,X)
 C0/4D0E:	12
 
-; Offset for facing directions in map data [?]
-C0/4D0F:  00    	ORA ($00)
-C0/4D10:	0100    	ORA ($00,X)
-C0/4D12:	FFFF0001	SBC $0100FF,X
-C0/4D16:	00
+; Offset for facing directions
+C0/4D0F:  00    	; Up: X coord diff
+C0/4D10:	01      ; Right: X coord diff
+C0/4D11:	00      ; Down: X coord diff
+C0/4D12:	FF      ; Left: X coord diff
+C0/4D13:  FF      ; Up: Y coord diff
+C0/4D14:  00      ; Right: Y coord diff
+C0/4D15:  01      ; Down: Y coord diff
+C0/4D16:	00      ; Left: Y coord diff
 
 C0/4D17:	A400    	LDY $00		(from C0/BF6D)
 C0/4D19:	CC2711    	CPY $2711
@@ -9734,17 +9793,19 @@ Yet another set of mystery data
 C0/4F10:	0801      	
 C0/4F12:	0402    	
 
-C0/4F14:	A6B4    	LDX $B4
-C0/4F16:	E0F800    	CPX #$00F8
-C0/4F19:	F011    	BEQ $4F2C
-C0/4F1B:	A5B8    	LDA $B8
-C0/4F1D:	2904    	AND #$04
-C0/4F1F:	D00B    	BNE $4F2C
-C0/4F21:	A5B6    	LDA $B6
-C0/4F23:	2904    	AND #$04
-C0/4F25:	D005    	BNE $4F2C
-C0/4F27:	A2F800  	LDX #$00F8
-C0/4F2A:	86B4    	STX $B4
+; Update party object to "normal priority" if not on "Bridge Tile"
+
+C0/4F14:	A6B4    	LDX $B4          ; party object data pointer
+C0/4F16:	E0F800    CPX #$00F8       ; "normal priority" party data offset
+C0/4F19:	F011    	BEQ $4F2C        ; exit if ^
+C0/4F1B:	A5B8    	LDA $B8          ; current tile properties
+C0/4F1D:	2904    	AND #$04         ; "Bridge Tile"
+C0/4F1F:	D00B    	BNE $4F2C        ; exit if ^ [cannot be walked on?]
+C0/4F21:	A5B6    	LDA $B6          ; current top tile properties
+C0/4F23:	2904    	AND #$04         ; "Bridge Tile"
+C0/4F25:	D005    	BNE $4F2C        ; exit if ^ [cannot be walked on?]
+C0/4F27:	A2F800  	LDX #$00F8       ; "normal priority" party data offset
+C0/4F2A:	86B4    	STX $B4          ; update party object data pointer
 C0/4F2C:	60      	RTS
  
 C0/4F2D:	A6B4    	LDX $B4          ; party object data pointer
@@ -9812,30 +9873,35 @@ C0/4F9B:	0A      	ASL A
 C0/4F9C:	0906    	ORA #$06
 C0/4F9E:	03
 
-C0/4F9F:	AC0308    	LDY $0803
-C0/4FA2:	B96808  	LDA $0868,Y
-C0/4FA5:	2906    	AND #$06
-C0/4FA7:	F003    	BEQ $4FAC
-C0/4FA9:	4C697C  	JMP $7C69
-C0/4FAC:	A5B8    	LDA $B8
-C0/4FAE:	2904    	AND #$04
-C0/4FB0:	F010    	BEQ $4FC2
-C0/4FB2:	A5B2    	LDA $B2
-C0/4FB4:	C901    	CMP #$01
-C0/4FB6:	D02D    	BNE $4FE5
-C0/4FB8:	B98008  	LDA $0880,Y
-C0/4FBB:	0930    	ORA #$30
-C0/4FBD:	998008  	STA $0880,Y
-C0/4FC0:	8015    	BRA $4FD7
-C0/4FC2:	B98008  	LDA $0880,Y
-C0/4FC5:	2910    	AND #$10
-C0/4FC7:	D00E    	BNE $4FD7
-C0/4FC9:	A5B8    	LDA $B8
-C0/4FCB:	2908    	AND #$08
-C0/4FCD:	F008    	BEQ $4FD7
-C0/4FCF:	B98008  	LDA $0880,Y
+; Update visible character sprite tiles priority
+
+C0/4F9F:	AC0308   	LDY $0803           ; visible character object offset
+C0/4FA2:	B96808  	LDA $0868,Y         ; visible character sprite settings
+C0/4FA5:	2906    	AND #$06            ; isolate layer priority
+C0/4FA7:	F003    	BEQ $4FAC           ; branch if default ^
+C0/4FA9:	4C697C  	JMP $7C69           ; else, update flags to match priority
+
+C0/4FAC:	A5B8    	LDA $B8             ; current tile properties
+C0/4FAE:	2904    	AND #$04            ; isolate "Bridge Tile"
+C0/4FB0:	F010    	BEQ $4FC2           ; branch if not ^
+C0/4FB2:	A5B2    	LDA $B2             ; party Z-level bits
+C0/4FB4:	C901    	CMP #$01            ; on "upper level"
+C0/4FB6:	D02D    	BNE $4FE5           ; exit if ^
+C0/4FB8:	B98008  	LDA $0880,Y         ; visible character upper sprite
+C0/4FBB:	0930    	ORA #$30            ; set sprite tile priority to "3"
+C0/4FBD:	998008  	STA $0880,Y         ; update visible character sprite
+C0/4FC0:	8015    	BRA $4FD7           ; branch
+
+C0/4FC2:	B98008  	LDA $0880,Y         ; visible character upper sprite
+C0/4FC5:	2910    	AND #$10            ; check for "3" versus "2" [?]
+C0/4FC7:	D00E    	BNE $4FD7           ; branch if "3"
+C0/4FC9:	A5B8    	LDA $B8             ; current tile properties
+C0/4FCB:	2908    	AND #$08            ; "top sprite shown above BG1" [?]
+C0/4FCD:	F008    	BEQ $4FD7           ; branch if not ^
+C0/4FCF:	B98008  	LDA $0880,Y         
 C0/4FD2:	0930    	ORA #$30
 C0/4FD4:	998008  	STA $0880,Y
+
 C0/4FD7:	A5B8    	LDA $B8
 C0/4FD9:	2910    	AND #$10
 C0/4FDB:	F008    	BEQ $4FE5
@@ -9887,9 +9953,9 @@ C0/503E:	0920    	ORA #$20
 C0/5040:	998108  	STA $0881,Y
 C0/5043:	60      	RTS
  
-C0/5044:	AC0308  	LDY $0803
-C0/5047:	C220    	REP #$20      (16 bit accum./memory)
-C0/5049:	B96D08  	LDA $086D,Y
+C0/5044:	AC0308  	LDY $0803         ; currently showing character offset
+C0/5047:	C220    	REP #$20          ; 16-bit A
+C0/5049:	B96D08  	LDA $086D,Y       ; currently showing character's [?]
 C0/504C:	4A      	LSR A
 C0/504D:	4A      	LSR A
 C0/504E:	4A      	LSR A
@@ -10130,12 +10196,13 @@ C0/5222:	C09002  	CPY #$0290
 C0/5225:	D0E7    	BNE $520E
 C0/5227:	60      	RTS
  
-C0/5228:	A600    	LDX $00        (from C0/BE8D)
-C0/522A:	BFA0E0C0	LDA $C0E0A0,X
-C0/522E:	9DE01E  	STA $1EE0,X    (set presence bits)
-C0/5231:	E8      	INX
-C0/5232:	E08000  	CPX #$0080
-C0/5235:	D0F3    	BNE $522A
+; Initialize NPC presence bits
+C0/5228:	A600    	LDX $00          ; zero X
+C0/522A:	BFA0E0C0	LDA $C0E0A0,X    ; load initial presence bit values
+C0/522E:	9DE01E  	STA $1EE0,X      ; copy to SRAM
+C0/5231:	E8      	INX              ; next presence byte
+C0/5232:	E08000  	CPX #$0080       ; copy $80 (#128) bytes
+C0/5235:	D0F3    	BNE $522A        ; loop till done
 C0/5237:	60      	RTS
  
 C0/5238:	A400    	LDY $00
@@ -10187,121 +10254,123 @@ C0/52A2:	0A      	ASL A
 C0/52A3:	9F00207E	STA $7E2000,X
 C0/52A7:	60      	RTS
  
-C0/52A8:	A600    	LDX $00
-C0/52AA:	9EF70A  	STZ $0AF7,X
-C0/52AD:	E8      	INX
-C0/52AE:	E0D803  	CPX #$03D8
-C0/52B1:	D0F7    	BNE $52AA
-C0/52B3:	9C8F07  	STZ $078F
-C0/52B6:	C220    	REP #$20      (16 bit accum./memory)
-C0/52B8:	A582    	LDA $82
-C0/52BA:	0A      	ASL A
-C0/52BB:	AA      	TAX
-C0/52BC:	BF121AC4	LDA $C41A12,X	(Pointers to NPC data)
-C0/52C0:	851E    	STA $1E
-C0/52C2:	BF101AC4	LDA $C41A10,X	(Pointers to NPC data)
-C0/52C6:	AA      	TAX
-C0/52C7:	7B      	TDC 
-C0/52C8:	E220    	SEP #$20      (8 bit accum./memory)
-C0/52CA:	A09002  	LDY #$0290
-C0/52CD:	E41E    	CPX $1E
-C0/52CF:	D003    	BNE $52D4
-C0/52D1:	4C3454  	JMP $5434
+; Load NPC data for map
 
-C0/52D4:	BF101AC4	LDA $C41A10,X
-C0/52D8:	998908  	STA $0889,Y
-C0/52DB:	BF111AC4	LDA $C41A11,X
-C0/52DF:	998A08  	STA $088A,Y
-C0/52E2:	BF121AC4	LDA $C41A12,X
-C0/52E6:	2903    	AND #$03
-C0/52E8:	998B08  	STA $088B,Y
-C0/52EB:	BF121AC4	LDA $C41A12,X
-C0/52EF:	291C    	AND #$1C
-C0/52F1:	4A      	LSR A
-C0/52F2:	998008  	STA $0880,Y
-C0/52F5:	998108  	STA $0881,Y
-C0/52F8:	BF121AC4	LDA $C41A12,X
-C0/52FC:	2920    	AND #$20
+C0/52A8:	A600    	LDX $00          ; zero X
+C0/52AA:	9EF70A  	STZ $0AF7,X      ; clear some byte [?]
+C0/52AD:	E8      	INX              ; next byte to clear
+C0/52AE:	E0D803  	CPX #$03D8       ; clear 984 bytes
+C0/52B1:	D0F7    	BNE $52AA        ; loop till all clear
+C0/52B3:	9C8F07  	STZ $078F        ; zero number of active NPCs
+C0/52B6:	C220    	REP #$20         ; 16-bit A
+C0/52B8:	A582    	LDA $82          ; current map index
+C0/52BA:	0A      	ASL A            ; x2
+C0/52BB:	AA      	TAX              ; index it
+C0/52BC:	BF121AC4	LDA $C41A12,X    ; pointer to end of map's NPC data
+C0/52C0:	851E    	STA $1E          ; save end of range
+C0/52C2:	BF101AC4	LDA $C41A10,X    ; pointer to start of NPC data
+C0/52C6:	AA      	TAX              ; index it
+C0/52C7:	7B      	TDC              ; zero A/B
+C0/52C8:	E220    	SEP #$20         ; 8-bit A
+C0/52CA:	A09002  	LDY #$0290       ; [?]
+C0/52CD:	E41E    	CPX $1E          ; check for empty NPC data
+C0/52CF:	D003    	BNE $52D4        ; branch if NPC data exists
+C0/52D1:	4C3454  	JMP $5434        ; else jump past data unpacking
+
+C0/52D4:	BF101AC4	LDA $C41A10,X    ; NPC data byte $00
+C0/52D8:	998908  	STA $0889,Y      ; NPC event address lobyte
+C0/52DB:	BF111AC4	LDA $C41A11,X    ; NPC data byte $01
+C0/52DF:	998A08  	STA $088A,Y      ; NPC event address midbyte
+C0/52E2:	BF121AC4	LDA $C41A12,X    ; NPC data byte $02
+C0/52E6:	2903    	AND #$03         ; isolate event address hibyte
+C0/52E8:	998B08  	STA $088B,Y      ; store it
+C0/52EB:	BF121AC4	LDA $C41A12,X    ; NPC data byte $02
+C0/52EF:	291C    	AND #$1C         ; isolate NPC palette
+C0/52F1:	4A      	LSR A            ; shift down to (x2)
+C0/52F2:	998008  	STA $0880,Y      ; save palette
+C0/52F5:	998108  	STA $0881,Y      ; save palette backup
+C0/52F8:	BF121AC4	LDA $C41A12,X    ; NPC data byte $02
+C0/52FC:	2920    	AND #$20         ; background scrolls [?]
 C0/52FE:	0A      	ASL A
-C0/52FF:	0A      	ASL A
-C0/5300:	997C08  	STA $087C,Y
-C0/5303:	C220    	REP #$20      (16 bit accum./memory)
-C0/5305:	BF121AC4	LDA $C41A12,X
+C0/52FF:	0A      	ASL A            ; shift to N bit
+C0/5300:	997C08  	STA $087C,Y      ; save it
+C0/5303:	C220    	REP #$20         ; 16-bit A
+C0/5305:	BF121AC4	LDA $C41A12,X    ; NPC data bytes $02-$03
 C0/5309:	4A      	LSR A
 C0/530A:	4A      	LSR A
 C0/530B:	4A      	LSR A
 C0/530C:	4A      	LSR A
 C0/530D:	4A      	LSR A
-C0/530E:	4A      	LSR A
-C0/530F:	E220    	SEP #$20      (8 bit accum./memory)
-C0/5311:	DA      	PHX
-C0/5312:	5A      	PHY
-C0/5313:	20C1BA  	JSR $BAC1
-C0/5316:	7A      	PLY
-C0/5317:	FA      	PLX
-C0/5318:	C900    	CMP #$00
-C0/531A:	F002    	BEQ $531E
-C0/531C:	A9C0    	LDA #$C0
-C0/531E:	996708  	STA $0867,Y
-C0/5321:	BF141AC4	LDA $C41A14,X
-C0/5325:	2980    	AND #$80
-C0/5327:	996808  	STA $0868,Y
-C0/532A:	C220    	REP #$20      (16 bit accum./memory)
-C0/532C:	BF141AC4	LDA $C41A14,X
-C0/5330:	297F00  	AND #$007F
+C0/530E:	4A      	LSR A            ; shift down bit identifier
+C0/530F:	E220    	SEP #$20         ; 8-bit A
+C0/5311:	DA      	PHX              ; store X
+C0/5312:	5A      	PHY              ; store Y
+C0/5313:	20C1BA  	JSR $BAC1        ; check NPC event bit
+C0/5316:	7A      	PLY              ; restore Y
+C0/5317:	FA      	PLX              ; restore X
+C0/5318:	C900    	CMP #$00         ; is bit unset
+C0/531A:	F002    	BEQ $531E        ; branch if ^
+C0/531C:	A9C0    	LDA #$C0         ; set NPC "enabled" and "visible"
+C0/531E:	996708  	STA $0867,Y      ; set object settings
+C0/5321:	BF141AC4	LDA $C41A14,X    ; NPC data byte $04
+C0/5325:	2980    	AND #$80         ; "show in vehicle" [?]
+C0/5327:	996808  	STA $0868,Y      ; save flag
+C0/532A:	C220    	REP #$20         ; 16-bit A
+C0/532C:	BF141AC4	LDA $C41A14,X    ; NPC data bytes $04-$05
+C0/5330:	297F00  	AND #$007F       ; X coordinate (starting)
 C0/5333:	0A      	ASL A
 C0/5334:	0A      	ASL A
 C0/5335:	0A      	ASL A
-C0/5336:	0A      	ASL A
-C0/5337:	996A08  	STA $086A,Y
-C0/533A:	BF151AC4	LDA $C41A15,X
-C0/533E:	293F00  	AND #$003F
+C0/5336:	0A      	ASL A            ; x16 (shift up)
+C0/5337:	996A08  	STA $086A,Y      ; set object's initial X position (tiles)
+C0/533A:	BF151AC4	LDA $C41A15,X    ; NPC data bytes $05-$06
+C0/533E:	293F00  	AND #$003F       ; Y coordinate (starting)
 C0/5341:	0A      	ASL A
 C0/5342:	0A      	ASL A
 C0/5343:	0A      	ASL A
-C0/5344:	0A      	ASL A
-C0/5345:	996D08  	STA $086D,Y
-C0/5348:	7B      	TDC 
-C0/5349:	E220    	SEP #$20      (8 bit accum./memory)
-C0/534B:	996908  	STA $0869,Y
-C0/534E:	996C08  	STA $086C,Y
-C0/5351:	996F08  	STA $086F,Y
+C0/5344:	0A      	ASL A            ; x16 (shift up)
+C0/5345:	996D08  	STA $086D,Y      ; set object's initial Y position (tiles)
+C0/5348:	7B      	TDC              ; zero A/B
+C0/5349:	E220    	SEP #$20         ; 8-bit A
+C0/534B:	996908  	STA $0869,Y      ; zero X-pixels [?]
+C0/534E:	996C08  	STA $086C,Y      ; zero Y-pixels [?]
+C0/5351:	996F08  	STA $086F,Y      ; zero Y-shift for jumping
 C0/5354:	997008  	STA $0870,Y
-C0/5357:	998708  	STA $0887,Y
-C0/535A:	BF151AC4	LDA $C41A15,X
-C0/535E:	29C0    	AND #$C0
+C0/5357:	998708  	STA $0887,Y      ; zero jump properties
+C0/535A:	BF151AC4	LDA $C41A15,X    ; NPC data byte $05
+C0/535E:	29C0    	AND #$C0         ; isolate movement speed
 C0/5360:	4A      	LSR A
 C0/5361:	4A      	LSR A
 C0/5362:	4A      	LSR A
 C0/5363:	4A      	LSR A
 C0/5364:	4A      	LSR A
-C0/5365:	4A      	LSR A
-C0/5366:	997508  	STA $0875,Y
-C0/5369:	BF161AC4	LDA $C41A16,X
-C0/536D:	997808  	STA $0878,Y
-C0/5370:	997908  	STA $0879,Y
-C0/5373:	BF171AC4	LDA $C41A17,X
-C0/5377:	290F    	AND #$0F
-C0/5379:	197C08  	ORA $087C,Y
+C0/5365:	4A      	LSR A            ; x64
+C0/5366:	997508  	STA $0875,Y      ; save object velocity
+C0/5369:	BF161AC4	LDA $C41A16,X    ; NPC data byte $06
+C0/536D:	997808  	STA $0878,Y      ; actor index [?]
+C0/5370:	997908  	STA $0879,Y      ; graphic index [?]
+C0/5373:	BF171AC4	LDA $C41A17,X    ; NPC data byte $07
+C0/5377:	290F    	AND #$0F         ; isolate movement type
+C0/5379:	197C08  	ORA $087C,Y      ; set movement speed [why this way?]
 C0/537C:	997C08  	STA $087C,Y
-C0/537F:	BF171AC4	LDA $C41A17,X
-C0/5383:	2930    	AND #$30
+C0/537F:	BF171AC4	LDA $C41A17,X    ; NPC data byte $07
+C0/5383:	2930    	AND #$30         ; sprite priority [?]
 C0/5385:	0A      	ASL A
-C0/5386:	0A      	ASL A
-C0/5387:	998C08  	STA $088C,Y
-C0/538A:	BF171AC4	LDA $C41A17,X
-C0/538E:	29C0    	AND #$C0
-C0/5390:	4A      	LSR A
-C0/5391:	196808  	ORA $0868,Y
+C0/5386:	0A      	ASL A            ; x4
+C0/5387:	998C08  	STA $088C,Y      ; set sprite priority [?]
+C0/538A:	BF171AC4	LDA $C41A17,X    ; NPC data byte $07
+C0/538E:	29C0    	AND #$C0         ; vehicle
+C0/5390:	4A      	LSR A            ; shift down
+C0/5391:	196808  	ORA $0868,Y      ; set vehicle settings [why this way?]
 C0/5394:	996808  	STA $0868,Y
-C0/5397:	BF181AC4	LDA $C41A18,X
-C0/539B:	2903    	AND #$03
-C0/539D:	997F08  	STA $087F,Y
-C0/53A0:	DA      	PHX
-C0/53A1:	AA      	TAX
-C0/53A2:	BF2D58C0	LDA $C0582D,X
-C0/53A6:	997708  	STA $0877,Y
-C0/53A9:	997608  	STA $0876,Y
+C0/5397:	BF181AC4	LDA $C41A18,X    ; NPC data byte $08
+C0/539B:	2903    	AND #$03         ; facing direction
+C0/539D:	997F08  	STA $087F,Y      ; set facing direction
+C0/53A0:	DA      	PHX              ; store NPC data offset
+C0/53A1:	AA      	TAX              ; index facing direction
+C0/53A2:	BF2D58C0	LDA $C0582D,X    ; sprite index for facing direction
+C0/53A6:	997708  	STA $0877,Y      ; set initial graphic position
+C0/53A9:	997608  	STA $0876,Y      ; set initial graphic position
 C0/53AC:	FA      	PLX
 C0/53AD:	BF181AC4	LDA $C41A18,X
 C0/53B1:	2904    	AND #$04
@@ -10354,20 +10423,20 @@ C0/5412:	DA      	PHX
 C0/5413:	20E17C  	JSR $7CE1
 C0/5416:	201756  	JSR $5617
 C0/5419:	FA      	PLX
-C0/541A:	EE8F07  	INC $078F
+C0/541A:	EE8F07  	INC $078F       ; increment active NPC count
 C0/541D:	C221    	REP #$21
-C0/541F:	98      	TYA
-C0/5420:	692900  	ADC #$0029
-C0/5423:	A8      	TAY
-C0/5424:	8A      	TXA
-C0/5425:	18      	CLC
-C0/5426:	690900  	ADC #$0009
-C0/5429:	AA      	TAX
-C0/542A:	7B      	TDC 
-C0/542B:	E220    	SEP #$20      (8 bit accum./memory)
-C0/542D:	E41E    	CPX $1E
-C0/542F:	F003    	BEQ $5434
-C0/5431:	4CD452  	JMP $52D4
+C0/541F:	98      	TYA             ; this object buffer offset
+C0/5420:	692900  	ADC #$0029      ; point to next object buffer
+C0/5423:	A8      	TAY             ; index it
+C0/5424:	8A      	TXA             ; this NPC's data offset
+C0/5425:	18      	CLC             ; carry: clear
+C0/5426:	690900  	ADC #$0009      ; point to next NPC data block
+C0/5429:	AA      	TAX             ; index it
+C0/542A:	7B      	TDC             ; zero A/B
+C0/542B:	E220    	SEP #$20        ; 8-bit A
+C0/542D:	E41E    	CPX $1E         ; end of map's NPC data range
+C0/542F:	F003    	BEQ $5434       ; finish if ^
+C0/5431:	4CD452  	JMP $52D4       ; unpack NPC object data
 
 C0/5434:	C0B007  	CPY #$07B0
 C0/5437:	F017    	BEQ $5450
@@ -10875,8 +10944,11 @@ C0/5825:	0102    	ORA ($02,X)
 C0/5827:	0100    	ORA ($00,X)
 C0/5829:	0708    	ORA [$08]
 C0/582B:	0706    	ORA [$06]
-C0/582D:	0447    	TSB $47
-C0/582F:	0107    	ORA ($07,X)
+
+; Facing direction sprite index
+C0/582D:	0447                   ; up, right
+C0/582F:	0107                   ; down, left
+
 C0/5831:	0000    	BRK #$00
 C0/5833:	3228    	AND ($28)
 C0/5835:	0000    	BRK #$00
@@ -12694,47 +12766,54 @@ C0/6774:	FA      	PLX
 C0/6775:	68      	PLA
 C0/6776:	60      	RTS
  
-C0/6777:	000C    	BRK #$0C
-C0/6779:	18      	CLC
-C0/677A:	249C    	BIT $9C
-C0/677C:	0C42A9  	TSB $A942
-C0/677F:	418D    	EOR ($8D,X)
-C0/6781:	0043    	BRK #$43
-C0/6783:	A980    	LDA #$80
-C0/6785:	8D1521  	STA $2115
-C0/6788:	A918    	LDA #$18
-C0/678A:	8D0143  	STA $4301
-C0/678D:	A547    	LDA $47
-C0/678F:	2903    	AND #$03
-C0/6791:	AA      	TAX
-C0/6792:	BF7767C0	LDA $C06777,X
-C0/6796:	8548    	STA $48
-C0/6798:	6449    	STZ $49
-C0/679A:	8A      	TXA
-C0/679B:	0A      	ASL A
-C0/679C:	AA      	TAX
-C0/679D:	C220    	REP #$20      (16 bit accum./memory)
-C0/679F:	BF3C69C0	LDA $C0693C,X
-C0/67A3:	8514    	STA $14
-C0/67A5:	A90600  	LDA #$0006
-C0/67A8:	8518    	STA $18
-C0/67AA:	9C0B42  	STZ $420B      (turn off DMA)
-C0/67AD:	A648    	LDX $48
-C0/67AF:	BCF710  	LDY $10F7,X
-C0/67B2:	C0B007  	CPY #$07B0
-C0/67B5:	D003    	BNE $67BA
-C0/67B7:	4C6668  	JMP $6866
+; Data [?]
+C0/6777:	00
+          0C
+C0/6779:	18
+          24
 
-C0/67BA:	B97908  	LDA $0879,Y
-C0/67BD:	29FF00  	AND #$00FF
-C0/67C0:	0A      	ASL A
-C0/67C1:	AA      	TAX
-C0/67C2:	BFF2D0C0	LDA $C0D0F2,X
-C0/67C6:	850E    	STA $0E
+; Handle object animations (max 6)
+C0/677B:	9C0C42    STZ $420C       ; disable all HDMA channels
+C0/677F:	A941    	LDA #$41        ; HDMA flags (2 registers write once)
+C0/6781:	8D0043    STA $4300       ; set HDMA mode
+C0/6783:	A980    	LDA #$80        ; "Increment after writing"
+C0/6785:	8D1521  	STA $2115       ; set video port flags/mode [?]
+C0/6788:	A918    	LDA #$18        ; destination register $2118
+C0/678A:	8D0143  	STA $4301       ; set destination register (VRAM write)
+C0/678D:	A547    	LDA $47         ; event counter [??]
+C0/678F:	2903    	AND #$03        ; modulo 4
+C0/6791:	AA      	TAX             ; index it
+C0/6792:	BF7767C0	LDA $C06777,X   ; load data (offset) [?]
+C0/6796:	8548    	STA $48         ; offset of current animation [?]
+C0/6798:	6449    	STZ $49         ; offset of current animation [?] (hibyte)
+C0/679A:	8A      	TXA             ; offset in A
+C0/679B:	0A      	ASL A           ; x2
+C0/679C:	AA      	TAX             ; index it
+C0/679D:	C220    	REP #$20        ; 16-bit A
+C0/679F:	BF3C69C0	LDA $C0693C,X   ; same offset as before, x256
+C0/67A3:	8514    	STA $14         ; store temp
+C0/67A5:	A90600  	LDA #$0006      ; allow 6 animations max
+C0/67A8:	8518    	STA $18         ; set animation iterator
+
+; Begin animation loop
+C0/67AA:	9C0B42  	STZ $420B       ; disable all DMA channels
+C0/67AD:	A648    	LDX $48         ; offset of current animation [?]
+C0/67AF:	BCF710  	LDY $10F7,X     ; object animation - pointer to object data
+C0/67B2:	C0B007  	CPY #$07B0      ; is object empty
+C0/67B5:	D003    	BNE $67BA       ; perform animation if not
+C0/67B7:	4C6668  	JMP $6866       ; else, advance loop
+
+; Animate object [?]
+C0/67BA:	B97908  	LDA $0879,Y     ; object sprite graphic index
+C0/67BD:	29FF00  	AND #$00FF      ; isolate ^
+C0/67C0:	0A      	ASL A           ; x2
+C0/67C1:	AA      	TAX             ; index it
+C0/67C2:	BFF2D0C0	LDA $C0D0F2,X   ; address containing graphic data
+C0/67C6:	850E    	STA $0E         ; save address
 C0/67C8:	BF3CD2C0	LDA $C0D23C,X
-C0/67CC:	8510    	STA $10
+C0/67CC:	8510    	STA $10         ; save bank [?]
 C0/67CE:	A614    	LDX $14
-C0/67D0:	BF4469C0	LDA $C06944,X
+C0/67D0:	BF4469C0	LDA $C06944,X   ; VRAM read/write
 C0/67D4:	8D1621  	STA $2116
 C0/67D7:	18      	CLC
 C0/67D8:	690001  	ADC #$0100
@@ -12799,16 +12878,17 @@ C0/685D:	7B      	TDC
 C0/685E:	6510    	ADC $10
 C0/6860:	8D0443  	STA $4304
 C0/6863:	8C0B42  	STY $420B
-C0/6866:	E614    	INC $14
-C0/6868:	E614    	INC $14
-C0/686A:	E648    	INC $48
-C0/686C:	E648    	INC $48
-C0/686E:	C618    	DEC $18
-C0/6870:	F003    	BEQ $6875
-C0/6872:	4CAA67  	JMP $67AA
 
-C0/6875:	7B      	TDC 
-C0/6876:	E220    	SEP #$20      (8 bit accum./memory)
+C0/6866:	E614    	INC $14         ; increment offsetx256
+C0/6868:	E614    	INC $14         ; increment offsetx256
+C0/686A:	E648    	INC $48         ; increment offset
+C0/686C:	E648    	INC $48         ; increment offset
+C0/686E:	C618    	DEC $18         ; decrement animations remaining
+C0/6870:	F003    	BEQ $6875       ; exit if none left
+C0/6872:	4CAA67  	JMP $67AA       ; else, loop for next animation
+
+C0/6875:	7B      	TDC             ; clear A/B
+C0/6876:	E220    	SEP #$20        ; 8-bit A
 C0/6878:	60      	RTS
  
 C0/6879:	9C0C42  	STZ $420C
@@ -12894,14 +12974,15 @@ C0/6930:	7B      	TDC
 C0/6931:	E220    	SEP #$20      (8 bit accum./memory)
 C0/6933:	60      	RTS
  
-C0/6934:	0000    	BRK #$00
-C0/6936:	F600    	INC $00,X
-C0/6938:	EC01E2  	CPX $E201
-C0/693B:	0200    	COP #$00
-C0/693D:	000C    	BRK #$0C
-C0/693F:	0018    	BRK #$18
-C0/6941:	0024    	BRK #$24
-C0/6943:	00    	BRK #$00
+C0/6934:	0000  
+C0/6936:	F600  
+C0/6938:	EC01E2
+C0/693B:	02
+
+C0/693C:  0000
+C0/693E:	0C00
+C0/6940:	1800
+C0/6942:	2400
 
 C0/6944:	0060     
 C0/6946:	4060      
@@ -14326,6 +14407,7 @@ C0/757D:	BF0A73C0	LDA $C0730A,X
 C0/7581:	85DC    	STA $DC
 C0/7583:	A906    	LDA #$06
 C0/7585:	85DE    	STA $DE
+
 C0/7587:	7B      	TDC 
 C0/7588:	E220    	SEP #$20      (8 bit accum./memory)
 C0/758A:	A5DC    	LDA $DC
@@ -14334,7 +14416,7 @@ C0/758D:	BC0308  	LDY $0803,X
 C0/7590:	84DA    	STY $DA
 C0/7592:	C5DD    	CMP $DD
 C0/7594:	9003    	BCC $7599
-C0/7596:	4C5676  	JMP $7656
+C0/7596:	4C5676  	JMP $7656      ; continue execution without checking wait counter
 
 C0/7599:	B96908  	LDA $0869,Y
 C0/759C:	D0F8    	BNE $7596
@@ -14485,13 +14567,13 @@ C0/76DB:	4C5676  	JMP $7656
 
 C0/76DE:	ADB91E  	LDA $1EB9
 C0/76E1:	3003    	BMI $76E6
-C0/76E3:	205F48  	JSR $485F
+C0/76E3:	205F48  	JSR $485F         ; handle sprite tiles, movement [?]
 C0/76E6:	4C5676  	JMP $7656
 
-C0/76E9:	B98208  	LDA $0882,Y
-C0/76EC:	F00A    	BEQ $76F8
-C0/76EE:	3A      	DEC A
-C0/76EF:	998208  	STA $0882,Y
+C0/76E9:	B98208  	LDA $0882,Y       ; action queue wait counter
+C0/76EC:	F00A    	BEQ $76F8         ; branch if zero ^
+C0/76EE:	3A      	DEC A             ; else, decrement wait counter
+C0/76EF:	998208  	STA $0882,Y       ; update wait counter
 C0/76F2:	4C5676  	JMP $7656
 
 C0/76F5:	4C8377  	JMP $7783
@@ -14554,245 +14636,254 @@ C0/777C:	3A      	DEC A
 C0/777D:	998608  	STA $0886,Y
 C0/7780:	4C5676  	JMP $7656
 
-C0/7783:	C220    	REP #$20      (16 bit accum./memory)
-C0/7785:	B98308  	LDA $0883,Y
-C0/7788:	852A    	STA $2A
-C0/778A:	7B      	TDC 
-C0/778B:	E220    	SEP #$20      (8 bit accum./memory)
-C0/778D:	B98508  	LDA $0885,Y
-C0/7790:	852C    	STA $2C
-C0/7792:	A72A    	LDA [$2A]
-C0/7794:	3006    	BMI $779C
-C0/7796:	997708  	STA $0877,Y
-C0/7799:	4C0178  	JMP $7801
+; Execute pending action queue for object (if exists)
 
-C0/779C:	C9A0    	CMP #$A0		(from C0/7794)
-C0/779E:	9003    	BCC $77A3
-C0/77A0:	4CBF77  	JMP $77BF      (BRA fool!)
+C0/7783:	C220    	REP #$20       ; 16-bit A
+C0/7785:	B98308  	LDA $0883,Y    ; object pending action queue pointer
+C0/7788:	852A    	STA $2A        ; save pointer
+C0/778A:	7B      	TDC            ; zero A/B
+C0/778B:	E220    	SEP #$20       ; 8-bit A
+C0/778D:	B98508  	LDA $0885,Y    ; object pending action queue bank
+C0/7790:	852C    	STA $2C        ; save bank
+C0/7792:	A72A    	LDA [$2A]      ; get action op
+C0/7794:	3006    	BMI $779C      ; branch if $80 set
+C0/7796:	997708  	STA $0877,Y    ; set new object graphic index [?]
+C0/7799:	4C0178  	JMP $7801      ; advance queue and continue
 
-C0/77A3:	38      	SEC 			(from C0/779E)
-C0/77A4:	E980    	SBC #$80
-C0/77A6:	851A    	STA $1A
-C0/77A8:	2903    	AND #$03
-C0/77AA:	997F08  	STA $087F,Y
-C0/77AD:	1A      	INC A
-C0/77AE:	997E08  	STA $087E,Y
-C0/77B1:	A51A    	LDA $1A
-C0/77B3:	4A      	LSR A
-C0/77B4:	4A      	LSR A
-C0/77B5:	1A      	INC A
-C0/77B6:	998608  	STA $0886,Y
-C0/77B9:	209A7B  	JSR $7B9A
-C0/77BC:	4CE976  	JMP $76E9
+C0/779C:	C9A0    	CMP #$A0	     ; 0x80 <= op < 0xA0
+C0/779E:	9003    	BCC $77A3      ; branch if ^
+C0/77A0:	4CBF77  	JMP $77BF      ; else, jump
 
-C0/77BF:	C9B0    	CMP #$B0
-C0/77C1:	B01E    	BCS $77E1
-C0/77C3:	38      	SEC 
-C0/77C4:	E99C    	SBC #$9C
-C0/77C6:	851A    	STA $1A
-C0/77C8:	1A      	INC A
-C0/77C9:	997E08  	STA $087E,Y
-C0/77CC:	A51A    	LDA $1A
-C0/77CE:	AA      	TAX
-C0/77CF:	BF547FC0	LDA $C07F54,X
-C0/77D3:	997F08  	STA $087F,Y
-C0/77D6:	A901    	LDA #$01
-C0/77D8:	998608  	STA $0886,Y
-C0/77DB:	209A7B  	JSR $7B9A
-C0/77DE:	4CE976  	JMP $76E9
+; Move {0x1C >> 2} steps in direction {0x03}
+; Op >= 0x80 and < 0xA0
+C0/77A3:	38      	SEC 		       ; set carry
+C0/77A4:	E980    	SBC #$80       ; reduce op to 0x00-0x1F
+C0/77A6:	851A    	STA $1A        ; save op
+C0/77A8:	2903    	AND #$03       ; isolate "direction"
+C0/77AA:	997F08  	STA $087F,Y    ; set facing direction
+C0/77AD:	1A      	INC A          ; +1
+C0/77AE:	997E08  	STA $087E,Y    ; set moving direction
+C0/77B1:	A51A    	LDA $1A        ; get op
+C0/77B3:	4A      	LSR A          ; >> 1
+C0/77B4:	4A      	LSR A          ; >> 2
+C0/77B5:	1A      	INC A          ; + 1
+C0/77B6:	998608  	STA $0886,Y    ; number of steps
+C0/77B9:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/77BC:	4CE976  	JMP $76E9      ; continue
 
+; Op >= 0xA0
+C0/77BF:	C9B0    	CMP #$B0       ; op >= 0xB0
+C0/77C1:	B01E    	BCS $77E1      ; branch if so ^
+
+; Move Diagonally one Step
+C0/77C3:	38      	SEC            ; set carry
+C0/77C4:	E99C    	SBC #$9C       ; reduce op to 0x04-0x13
+C0/77C6:	851A    	STA $1A        ; save op
+C0/77C8:	1A      	INC A          ; +1
+C0/77C9:	997E08  	STA $087E,Y    ; set complex moving direction
+C0/77CC:	A51A    	LDA $1A        ; get op
+C0/77CE:	AA      	TAX            ; index it
+C0/77CF:	BF547FC0	LDA $C07F54,X  ; facing direction based on movement
+C0/77D3:	997F08  	STA $087F,Y    ; set facing direction
+C0/77D6:	A901    	LDA #$01       ; one step
+C0/77D8:	998608  	STA $0886,Y    ; set ^ steps to take
+C0/77DB:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/77DE:	4CE976  	JMP $76E9      ; continue
+
+; Op >= 0xB0
 C0/77E1:	C9C6    	CMP #$C6
 C0/77E3:	B009    	BCS $77EE
-C0/77E5:	38      	SEC 
-C0/77E6:	E9C0    	SBC #$C0
-C0/77E8:	997508  	STA $0875,Y
-C0/77EB:	4C0178  	JMP $7801
 
-C0/77EE:	38      	SEC 
-C0/77EF:	E9C6    	SBC #$C6
-C0/77F1:	0A      	ASL A
-C0/77F2:	AA      	TAX
-C0/77F3:	C220    	REP #$20      (16 bit accum./memory)
-C0/77F5:	BF0778C0	LDA $C07807,X
-C0/77F9:	852D    	STA $2D
-C0/77FB:	7B      	TDC 
-C0/77FC:	E220    	SEP #$20      (8 bit accum./memory)
-C0/77FE:	6C2D00  	JMP ($002D)
+; Set object speed (negative moves backwards)
+C0/77E5:	38      	SEC            ; set carry
+C0/77E6:	E9C0    	SBC #$C0       ; reduce op to -0x10 - 0x06
+C0/77E8:	997508  	STA $0875,Y    ; set object speed
+C0/77EB:	4C0178  	JMP $7801      ; advance queue and continue
 
-C0/7801:	209A7B  	JSR $7B9A
-C0/7804:	4CE976  	JMP $76E9
+; Op >= 0xC6
+C0/77EE:	38      	SEC            ; set carry
+C0/77EF:	E9C6    	SBC #$C6       ; reduce to 0x00-0x39
+C0/77F1:	0A      	ASL A          ; x2
+C0/77F2:	AA      	TAX            ; index to jump table
+C0/77F3:	C220    	REP #$20       ; 16-bit A
+C0/77F5:	BF0778C0	LDA $C07807,X  ; command routine address
+C0/77F9:	852D    	STA $2D        ; save address
+C0/77FB:	7B      	TDC            ; zero A/B
+C0/77FC:	E220    	SEP #$20       ; 8-bit A
+C0/77FE:	6C2D00  	JMP ($002D)    ; jump to routine
 
+C0/7801:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7804:	4CE976  	JMP $76E9      ; continue queue execution
 
-Movement Action's Jump Table:
+; Object Action Queue Special Commands
 
-C0/7807:	7B78
-C0/7809:	8678
-C0/780B:	9178
-C0/780D:	057A
-C0/780F:	0000
-C0/7811:	0000
-C0/7813:	AB78
-C0/7815:	B778
-C0/7817:	C478
-C0/7819:	D178
-C0/781B:	DE78
-C0/781D:	2879
-C0/781F:	0000
-C0/7821:	0000
-C0/7823:	0000
-C0/7825:	1E7A
-C0/7827:	0000
-C0/7829:	657A
-C0/782B:	0000
-C0/782D:	0000
-C0/782F:	0000
-C0/7831:	0000
-C0/7833:	947A
-C0/7835:	9C7A
-C0/7837:	0000
-C0/7839:	0000
-C0/783B:	A47A
-C0/783D:	6979
-C0/783F:	8379
-C0/7841:	9D79
-C0/7843:	B779
-C0/7845:	D179
-C0/7847:	EB79
-C0/7849:	0000
-C0/784B:	0000
-C0/784D:	0000
-C0/784F:	0000
-C0/7851:	0000
-C0/7853:	0000
-C0/7855:	0000
-C0/7857:	0000
-C0/7859:	0000
-C0/785B:	0000
-C0/785D:	0000
-C0/785F:	0000
-C0/7861:	0000
-C0/7863:	0000
-C0/7865:	0000
-C0/7867:	0000
-C0/7869:	0000
-C0/786B:	0000
-C0/786D:	CF7A
-C0/786F:	0C7B
-C0/7871:	197B
-C0/7873:	267B
-C0/7875:	4B7B
-C0/7877:	0000
+C0/7807:	7B78 ; $C6 - $787B: Enable walking animation when moving
+C0/7809:	8678 ; $C7 - $7886: Disable walking animation when moving
+C0/780B:	9178 ; $C8 - $7891: Set entity layering priority to {A}
+C0/780D:	057A ; $C9 - $7A05: Place entity on vehicle {A}
+C0/780F:	0000 ; $CA - null
+C0/7811:	0000 ; $CB - null
+C0/7813:	AB78 ; $CC - $78AB: Face up
+C0/7815:	B778 ; $CD - $78B7: Face right
+C0/7817:	C478 ; $CE - $78C4: Face down
+C0/7819:	D178 ; $CF - $78D1: Face left
+C0/781B:	DE78 ; $D0 - $78DE: Unhide
+C0/781D:	2879 ; $D1 - $7928: Hide
+C0/781F:	0000 ; $D2 - null
+C0/7821:	0000 ; $D3 - null
+C0/7823:	0000 ; $D4 - null
+C0/7825:	1E7A ; $D5 - $7A1E: Set position to X,Y {A,B}
+C0/7827:	0000 ; $D6 - null
+C0/7829:	657A ; $D7 - $7A65: Center entity on screen
+C0/782B:	0000 ; $D8 - null
+C0/782D:	0000 ; $D9 - null
+C0/782F:	0000 ; $DA - null
+C0/7831:	0000 ; $DB - null
+C0/7833:	947A ; $DC - $7A94: Jump (low)
+C0/7835:	9C7A ; $DD - $7A9C: Jump (high)
+C0/7837:	0000 ; $DE - null
+C0/7839:	0000 ; $DF - null
+C0/783B:	A47A ; $E0 - $7AA4: Pause for {A} frames
+C0/783D:	6979 ; $E1 - $7969: Set $1E80 event bit {A}
+C0/783F:	8379 ; $E2 - $7983: Set $1EA0 event bit {A}
+C0/7841:	9D79 ; $E3 - $799D: Set $1EC0 event bit {A}
+C0/7843:	B779 ; $E4 - $79B7: Clear $1E80 event bit {A}
+C0/7845:	D179 ; $E5 - $79D1: Clear $1EA0 event bit {A}
+C0/7847:	EB79 ; $E6 - $79EB: Clear $1EC0 event bit {A}
+C0/7849:	0000 ; $E7 - null
+C0/784B:	0000 ; $E8 - null
+C0/784D:	0000 ; $E9 - null
+C0/784F:	0000 ; $EA - null
+C0/7851:	0000 ; $EB - null
+C0/7853:	0000 ; $EC - null
+C0/7855:	0000 ; $ED - null
+C0/7857:	0000 ; $EE - null
+C0/7859:	0000 ; $EF - null
+C0/785B:	0000 ; $F0 - null
+C0/785D:	0000 ; $F1 - null
+C0/785F:	0000 ; $F2 - null
+C0/7861:	0000 ; $F3 - null
+C0/7863:	0000 ; $F4 - null
+C0/7865:	0000 ; $F5 - null
+C0/7867:	0000 ; $F6 - null
+C0/7869:	0000 ; $F7 - null
+C0/786B:	0000 ; $F8 - null
+C0/786D:	CF7A ; $F9 - $7ACF: Jump out of queue to subroutine ${C}/${B,A}
+C0/786F:	0C7B ; $FA - $7B0C: 50% chance branch backwards {A} bytes
+C0/7871:	197B ; $FB - $7B19: 50% chance branch forward {A} bytes
+C0/7873:	267B ; $FC - $7B26: Branch backwards {A} bytes
+C0/7875:	4B7B ; $FD - $7B4B: Branch forwards {A} bytes
+C0/7877:	0000 ; $FE - null
 
 C0/7879:	70
 
 
-Set entity to walk when moving
+; Enable walking animation
 
 C0/787B:	B96808  	LDA $0868,Y
 C0/787E:	0901    	ORA #$01
 C0/7880:	996808  	STA $0868,Y
-C0/7883:	4C0178  	JMP $7801
+C0/7883:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Set entity to stay still when moving
+; Disable walking animation
 
 C0/7886:	B96808  	LDA $0868,Y
 C0/7889:	29FE    	AND #$FE
 C0/788B:	996808  	STA $0868,Y
-C0/788E:	4C0178  	JMP $7801
+C0/788E:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Set entity layering priority
+; Set entity layering priority
 
-C0/7891:	A00100  	LDY #$0001
-C0/7894:	B72A    	LDA [$2A],Y
+C0/7891:	A00100  	LDY #$0001     ; first arg index
+C0/7894:	B72A    	LDA [$2A],Y    ; load first arg
 C0/7896:	0A      	ASL A
 C0/7897:	851A    	STA $1A
-C0/7899:	A4DA    	LDY $DA
-C0/789B:	B96808  	LDA $0868,Y
-C0/789E:	29F9    	AND #$F9
-C0/78A0:	051A    	ORA $1A
-C0/78A2:	996808  	STA $0868,Y
-C0/78A5:	209A7B  	JSR $7B9A
-C0/78A8:	4C0178  	JMP $7801
+C0/7899:	A4DA    	LDY $DA        ; pointer to object data
+C0/789B:	B96808  	LDA $0868,Y    ; object sprite settings
+C0/789E:	29F9    	AND #$F9       ; mask out layer priority
+C0/78A0:	051A    	ORA $1A        ; add new priority
+C0/78A2:	996808  	STA $0868,Y    ; update sprite settings
+C0/78A5:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/78A8:	4C0178  	JMP $7801       ; advance queue and continue
 
 
-Turn current entity up
+; Face up
 
 C0/78AB:	7B      	TDC 
 C0/78AC:	997F08  	STA $087F,Y
 C0/78AF:	A904    	LDA #$04
 C0/78B1:	997708  	STA $0877,Y
-C0/78B4:	4C0178  	JMP $7801
+C0/78B4:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Turn current entity right
+; Face right
 
 C0/78B7:	A901    	LDA #$01
 C0/78B9:	997F08  	STA $087F,Y
 C0/78BC:	A947    	LDA #$47
 C0/78BE:	997708  	STA $0877,Y
-C0/78C1:	4C0178  	JMP $7801
+C0/78C1:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Turn current entity down
+; Face down
 
 C0/78C4:	A902    	LDA #$02
 C0/78C6:	997F08  	STA $087F,Y
 C0/78C9:	A901    	LDA #$01
 C0/78CB:	997708  	STA $0877,Y
-C0/78CE:	4C0178  	JMP $7801
+C0/78CE:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Turn current entity left
+; Face left
 
 C0/78D1:	A903    	LDA #$03
 C0/78D3:	997F08  	STA $087F,Y
 C0/78D6:	A907    	LDA #$07
 C0/78D8:	997708  	STA $0877,Y
-C0/78DB:	4C0178  	JMP $7801
+C0/78DB:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Unhide current entity?
-(move. act. D0)
+; Unhide object ($D0)
 
-C0/78DE:	B96708  	LDA $0867,Y
-C0/78E1:	3041    	BMI $7924
-C0/78E3:	0980    	ORA #$80
-C0/78E5:	996708  	STA $0867,Y
-C0/78E8:	B96808  	LDA $0868,Y
-C0/78EB:	29F9    	AND #$F9
-C0/78ED:	996808  	STA $0868,Y
-C0/78F0:	B98008  	LDA $0880,Y
-C0/78F3:	29CF    	AND #$CF
-C0/78F5:	0920    	ORA #$20
-C0/78F7:	998008  	STA $0880,Y
-C0/78FA:	B98108  	LDA $0881,Y
-C0/78FD:	29CF    	AND #$CF
-C0/78FF:	0920    	ORA #$20
-C0/7901:	998108  	STA $0881,Y
-C0/7904:	5A      	PHY
-C0/7905:	8C0442  	STY $4204
-C0/7908:	A929    	LDA #$29
-C0/790A:	8D0642  	STA $4206
+C0/78DE:	B96708  	LDA $0867,Y     ; object settings
+C0/78E1:	3041    	BMI $7924       ; branch if visible TODO BUG - Will corrupt stack. Should be BMI $7925
+C0/78E3:	0980    	ORA #$80        ; set "Visible" flag
+C0/78E5:	996708  	STA $0867,Y     ; update object settings
+C0/78E8:	B96808  	LDA $0868,Y     ; sprite settings
+C0/78EB:	29F9    	AND #$F9        ; set layer priority to "Default"
+C0/78ED:	996808  	STA $0868,Y     ; update sprite settings
+C0/78F0:	B98008  	LDA $0880,Y     ; upper sprite flags
+C0/78F3:	29CF    	AND #$CF        ; mask out layer priority
+C0/78F5:	0920    	ORA #$20        ; set priority to 2
+C0/78F7:	998008  	STA $0880,Y     ; update upper sprite flags
+C0/78FA:	B98108  	LDA $0881,Y     ; lower sprite flags
+C0/78FD:	29CF    	AND #$CF        ; mask out layer priority
+C0/78FF:	0920    	ORA #$20        ; set priority to 2
+C0/7901:	998108  	STA $0881,Y     ; update lower sprite flags
+C0/7904:	5A      	PHY             ; save object data offset
+C0/7905:	8C0442  	STY $4204       ; set dividend
+C0/7908:	A929    	LDA #$29        ; size of object data block
+C0/790A:	8D0642  	STA $4206       ; set divisor
 C0/790D:	EA      	NOP
 C0/790E:	EA      	NOP
 C0/790F:	EA      	NOP
 C0/7910:	EA      	NOP
 C0/7911:	EA      	NOP
 C0/7912:	EA      	NOP
-C0/7913:	EA      	NOP
-C0/7914:	AC1442  	LDY $4214
-C0/7917:	C01000  	CPY #$0010
-C0/791A:	B008    	BCS $7924
-C0/791C:	B95018  	LDA $1850,Y
-C0/791F:	0980    	ORA #$80
-C0/7921:	995018  	STA $1850,Y
-C0/7924:	7A      	PLY
-C0/7925:	4C0178  	JMP $7801
+C0/7913:	EA      	NOP             ; wait for division
+C0/7914:	AC1442  	LDY $4214       ; get object slot index
+C0/7917:	C01000  	CPY #$0010      ; compare to "character" range
+C0/791A:	B008    	BCS $7924       ; finish if not a character
+C0/791C:	B95018  	LDA $1850,Y     ; character flags
+C0/791F:	0980    	ORA #$80        ; set "Visible"
+C0/7921:	995018  	STA $1850,Y     ; update character flags
+C0/7924:	7A      	PLY             ; restore object data offset
+C0/7925:	4C0178  	JMP $7801       ; advance queue and continue
 
 
-Hide current entity
+; Hide current entity
 
 C0/7928:	B96708  	LDA $0867,Y
 C0/792B:	297F    	AND #$7F
@@ -14823,7 +14914,7 @@ C0/795D:	B95018  	LDA $1850,Y
 C0/7960:	297F    	AND #$7F
 C0/7962:	995018  	STA $1850,Y
 C0/7965:	7A      	PLY
-C0/7966:	4C0178  	JMP $7801
+C0/7966:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Set event bit $1E80 + xx ($1E80 + $0xx)
@@ -14836,8 +14927,8 @@ C0/7972:	B9801E  	LDA $1E80,Y
 C0/7975:	1FFCBAC0	ORA $C0BAFC,X
 C0/7979:	99801E  	STA $1E80,Y
 C0/797C:	7A      	PLY
-C0/797D:	209A7B  	JSR $7B9A
-C0/7980:	4C0178  	JMP $7801
+C0/797D:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7980:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Set event bit $1EA0 + xx ($1E80 + $1xx)
@@ -14850,8 +14941,8 @@ C0/798C:	B9A01E  	LDA $1EA0,Y
 C0/798F:	1FFCBAC0	ORA $C0BAFC,X
 C0/7993:	99A01E  	STA $1EA0,Y
 C0/7996:	7A      	PLY
-C0/7997:	209A7B  	JSR $7B9A
-C0/799A:	4C0178  	JMP $7801
+C0/7997:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/799A:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Set event bit $1EC0 + xx ($1E80 + $2xx)
@@ -14864,8 +14955,8 @@ C0/79A6:	B9C01E  	LDA $1EC0,Y
 C0/79A9:	1FFCBAC0	ORA $C0BAFC,X
 C0/79AD:	99C01E  	STA $1EC0,Y
 C0/79B0:	7A      	PLY
-C0/79B1:	209A7B  	JSR $7B9A
-C0/79B4:	4C0178  	JMP $7801
+C0/79B1:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/79B4:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Clear event bit $1E80 + xx ($1E80 + $0xx)
@@ -14878,8 +14969,8 @@ C0/79C0:	B9801E  	LDA $1E80,Y
 C0/79C3:	3F04BBC0	AND $C0BB04,X
 C0/79C7:	99801E  	STA $1E80,Y
 C0/79CA:	7A      	PLY
-C0/79CB:	209A7B  	JSR $7B9A
-C0/79CE:	4C0178  	JMP $7801
+C0/79CB:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/79CE:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Clear event bit $1EA0 + xx ($1E80 + $1xx)
@@ -14892,8 +14983,8 @@ C0/79DA:	B9A01E  	LDA $1EA0,Y
 C0/79DD:	3F04BBC0	AND $C0BB04,X
 C0/79E1:	99A01E  	STA $1EA0,Y
 C0/79E4:	7A      	PLY
-C0/79E5:	209A7B  	JSR $7B9A
-C0/79E8:	4C0178  	JMP $7801
+C0/79E5:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/79E8:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Clear event bit $1EC0 + xx ($1E80 + $2xx)
@@ -14906,11 +14997,11 @@ C0/79F4:	B9C01E  	LDA $1EC0,Y
 C0/79F7:	3F04BBC0	AND $C0BB04,X
 C0/79FB:	99C01E  	STA $1EC0,Y
 C0/79FE:	7A      	PLY
-C0/79FF:	209A7B  	JSR $7B9A
-C0/7A02:	4C0178  	JMP $7801
+C0/79FF:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7A02:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Place entity on vehicle xx
+; Place entity on vehicle xx
 
 C0/7A05:	A00100  	LDY #$0001
 C0/7A08:	B72A    	LDA [$2A],Y
@@ -14920,49 +15011,49 @@ C0/7A0E:	A4DA    	LDY $DA
 C0/7A10:	B96808  	LDA $0868,Y
 C0/7A13:	051A    	ORA $1A
 C0/7A15:	996808  	STA $0868,Y
-C0/7A18:	209A7B  	JSR $7B9A
-C0/7A1B:	4C0178  	JMP $7801
+C0/7A18:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7A1B:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Set position to (xx, yy)
+; Set position to (xx, yy)
 
-C0/7A1E:	BE7A08  	LDX $087A,Y
-C0/7A21:	A9FF    	LDA #$FF
-C0/7A23:	9F00207E	STA $7E2000,X
-C0/7A27:	A00100  	LDY #$0001
-C0/7A2A:	B72A    	LDA [$2A],Y
-C0/7A2C:	C220    	REP #$20      (16 bit accum./memory)
+C0/7A1E:	BE7A08  	LDX $087A,Y    ; pointer to current position in map data
+C0/7A21:	A9FF    	LDA #$FF       ; null
+C0/7A23:	9F00207E	STA $7E2000,X  ; set map data position to "null" (no obj)
+C0/7A27:	A00100  	LDY #$0001     ; first arg
+C0/7A2A:	B72A    	LDA [$2A],Y    ; X coord
+C0/7A2C:	C220    	REP #$20       ; 16-bit A
 C0/7A2E:	0A      	ASL A
 C0/7A2F:	0A      	ASL A
 C0/7A30:	0A      	ASL A
-C0/7A31:	0A      	ASL A
-C0/7A32:	851E    	STA $1E
-C0/7A34:	7B      	TDC 
-C0/7A35:	E220    	SEP #$20      (8 bit accum./memory)
-C0/7A37:	C8      	INY 
-C0/7A38:	B72A    	LDA [$2A],Y
-C0/7A3A:	A4DA    	LDY $DA
-C0/7A3C:	C220    	REP #$20      (16 bit accum./memory)
+C0/7A31:	0A      	ASL A          ; << 4 (x16)
+C0/7A32:	851E    	STA $1E        ; save
+C0/7A34:	7B      	TDC            ; clear A/B
+C0/7A35:	E220    	SEP #$20       ; 8-bit A
+C0/7A37:	C8      	INY            ; second arg index
+C0/7A38:	B72A    	LDA [$2A],Y    ; Y coord
+C0/7A3A:	A4DA    	LDY $DA        ; object data offset
+C0/7A3C:	C220    	REP #$20       ; 16-bit A
 C0/7A3E:	0A      	ASL A
 C0/7A3F:	0A      	ASL A
 C0/7A40:	0A      	ASL A
-C0/7A41:	0A      	ASL A
-C0/7A42:	996D08  	STA $086D,Y
-C0/7A45:	A51E    	LDA $1E
-C0/7A47:	996A08  	STA $086A,Y
-C0/7A4A:	E220    	SEP #$20      (8 bit accum./memory)
-C0/7A4C:	7B      	TDC 
-C0/7A4D:	996C08  	STA $086C,Y
-C0/7A50:	996908  	STA $0869,Y
-C0/7A53:	20E17C  	JSR $7CE1
-C0/7A56:	201756  	JSR $5617
-C0/7A59:	209A7B  	JSR $7B9A
-C0/7A5C:	209A7B  	JSR $7B9A
-C0/7A5F:	209A7B  	JSR $7B9A
-C0/7A62:	4C5676  	JMP $7656
+C0/7A41:	0A      	ASL A          ; << 4 (x16)
+C0/7A42:	996D08  	STA $086D,Y    ; set Y position
+C0/7A45:	A51E    	LDA $1E        ; X coord * 16
+C0/7A47:	996A08  	STA $086A,Y    ; set X position
+C0/7A4A:	E220    	SEP #$20       ; 8-bit A
+C0/7A4C:	7B      	TDC            ; clear A/B
+C0/7A4D:	996C08  	STA $086C,Y    ; zero tile position (Y)
+C0/7A50:	996908  	STA $0869,Y    ; zero tile position (X)
+C0/7A53:	20E17C  	JSR $7CE1      ; set new pointer to map data position
+C0/7A56:	201756  	JSR $5617      ; update sprite layer priorities [?]
+C0/7A59:	209A7B  	JSR $7B9A      ; advance action queue pointer (skip arg1)
+C0/7A5C:	209A7B  	JSR $7B9A      ; advance action queue pointer (skip arg2)
+C0/7A5F:	209A7B  	JSR $7B9A      ; advance action queue pointer (for next op)
+C0/7A62:	4C5676  	JMP $7656      ; continue execution without checking wait counter
 
 
-Center entity on screen
+; Center entity on screen
 
 C0/7A65:	BE7A08  	LDX $087A,Y
 C0/7A68:	A9FF    	LDA #$FF
@@ -14977,24 +15068,24 @@ C0/7A7F:	7B      	TDC
 C0/7A80:	E220    	SEP #$20      (8 bit accum./memory)
 C0/7A82:	996C08  	STA $086C,Y
 C0/7A85:	996908  	STA $0869,Y
-C0/7A88:	20E17C  	JSR $7CE1
+C0/7A88:	20E17C  	JSR $7CE1    
 C0/7A8B:	201756  	JSR $5617
-C0/7A8E:	209A7B  	JSR $7B9A
-C0/7A91:	4C5676  	JMP $7656
+C0/7A8E:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7A91:	4C5676  	JMP $7656      ; continue execution without checking wait counter
 
 
-Make entity jump (low)
+; Make entity jump (low)
 
 C0/7A94:	A90F    	LDA #$0F
 C0/7A96:	998708  	STA $0887,Y
-C0/7A99:	4C0178  	JMP $7801
+C0/7A99:	4C0178  	JMP $7801      ; advance queue and continue
 
 
-Make entity jump (high)
+; Make entity jump (high)
 
 C0/7A9C:	A95F    	LDA #$5F
 C0/7A9E:	998708  	STA $0887,Y
-C0/7AA1:	4C0178  	JMP $7801
+C0/7AA1:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Pause for xx/60 seconds
@@ -15014,12 +15105,12 @@ C0/7ABD:	A00100  	LDY #$0001
 C0/7AC0:	B72A    	LDA [$2A],Y
 C0/7AC2:	7A      	PLY
 C0/7AC3:	998208  	STA $0882,Y
-C0/7AC6:	209A7B  	JSR $7B9A
-C0/7AC9:	209A7B  	JSR $7B9A
-C0/7ACC:	4C5676  	JMP $7656
+C0/7AC6:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7AC9:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7ACC:	4C5676  	JMP $7656      ; continue execution without checking wait counter
 
 
-Jump out of the queue to $aaaaaa+$CA0000
+; Jump out of the queue to $aaaaaa+$CA0000
 
 C0/7ACF:	AD5E05  	LDA $055E
 C0/7AD2:	D035    	BNE $7B09
@@ -15042,13 +15133,13 @@ C0/7AF1:	18      	CLC
 C0/7AF2:	69CA    	ADC #$CA
 C0/7AF4:	85E7    	STA $E7
 C0/7AF6:	A00300  	LDY #$0003
-C0/7AF9:	8CE800  	STY $00E8
+C0/7AF9:	8CE800  	STY $00E8      ; add current thread to event stack [?]
 C0/7AFC:	7A      	PLY
-C0/7AFD:	209A7B  	JSR $7B9A
-C0/7B00:	209A7B  	JSR $7B9A
-C0/7B03:	209A7B  	JSR $7B9A
-C0/7B06:	209A7B  	JSR $7B9A
-C0/7B09:	4C5676  	JMP $7656
+C0/7AFD:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7B00:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7B03:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7B06:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7B09:	4C5676  	JMP $7656      ; continue execution without checking wait counter
 
 
 Randomly branch backward xx bytes in the queue
@@ -15056,8 +15147,8 @@ Randomly branch backward xx bytes in the queue
 C0/7B0C:	202E06  	JSR $062E          (Random number generator)
 C0/7B0F:	C980    	CMP #$80
 C0/7B11:	B013    	BCS $7B26
-C0/7B13:	209A7B  	JSR $7B9A
-C0/7B16:	4C0178  	JMP $7801
+C0/7B13:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7B16:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Randomly branch forward xx bytes in the queue
@@ -15065,8 +15156,8 @@ Randomly branch forward xx bytes in the queue
 C0/7B19:	202E06  	JSR $062E          (Random number generator)
 C0/7B1C:	C980    	CMP #$80
 C0/7B1E:	B02B    	BCS $7B4B
-C0/7B20:	209A7B  	JSR $7B9A
-C0/7B23:	4C0178  	JMP $7801
+C0/7B20:	209A7B  	JSR $7B9A      ; advance action queue pointer
+C0/7B23:	4C0178  	JMP $7801      ; advance queue and continue
 
 
 Branch backward xx bytes in the queue
@@ -15125,18 +15216,20 @@ C0/7B8D:	F005    	BEQ $7B94
 C0/7B8F:	CC0308  	CPY $0803
 C0/7B92:	D003    	BNE $7B97
 C0/7B94:	20087E  	JSR $7E08
-C0/7B97:	4C5676  	JMP $7656
+C0/7B97:	4C5676  	JMP $7656      ; continue execution without checking wait counter
 
 
-C0/7B9A:	C221    	REP #$21
-C0/7B9C:	B98308  	LDA $0883,Y
-C0/7B9F:	690100  	ADC #$0001
-C0/7BA2:	998308  	STA $0883,Y
-C0/7BA5:	7B      	TDC 
-C0/7BA6:	E220    	SEP #$20      (8 bit accum./memory)
-C0/7BA8:	B98508  	LDA $0885,Y
-C0/7BAB:	6900    	ADC #$00
-C0/7BAD:	998508  	STA $0885,Y
+; Advance action queue pointer by 1
+
+C0/7B9A:	C221    	REP #$21        ; 16-bit A, clear carry
+C0/7B9C:	B98308  	LDA $0883,Y     ; action queue pointer
+C0/7B9F:	690100  	ADC #$0001      ; add one
+C0/7BA2:	998308  	STA $0883,Y     ; advance pointer
+C0/7BA5:	7B      	TDC             ; zero A/B
+C0/7BA6:	E220    	SEP #$20        ; 8-bit A
+C0/7BA8:	B98508  	LDA $0885,Y     ; action queue bank
+C0/7BAB:	6900    	ADC #$00        ; add overflow
+C0/7BAD:	998508  	STA $0885,Y     ; update bank
 C0/7BB0:	60      	RTS
 
  
@@ -15286,48 +15379,58 @@ C0/7CDB:	0920    	ORA #$20
 C0/7CDD:	998108  	STA $0881,Y
 C0/7CE0:	60      	RTS
  
+; Update X/Y based on map BG-1 clip [?]
 
-C0/7CE1:	C220    	REP #$20      	(from C0/5263, C0/5299, C0/5413, C0/75EF, C0/7A53, C0/7A88, C0/7D04)(16 bit accum./memory)
-C0/7CE3:	B96A08  	LDA $086A,Y
-C0/7CE6:	4A      	LSR A
-C0/7CE7:	4A      	LSR A
-C0/7CE8:	4A      	LSR A
-C0/7CE9:	4A      	LSR A
-C0/7CEA:	E220    	SEP #$20      (8 bit accum./memory)
-C0/7CEC:	2586    	AND $86
-C0/7CEE:	997A08  	STA $087A,Y
-C0/7CF1:	C220    	REP #$20      (16 bit accum./memory)
-C0/7CF3:	B96D08  	LDA $086D,Y
-C0/7CF6:	4A      	LSR A
-C0/7CF7:	4A      	LSR A
-C0/7CF8:	4A      	LSR A
-C0/7CF9:	4A      	LSR A
-C0/7CFA:	E220    	SEP #$20      (8 bit accum./memory)
-C0/7CFC:	2587    	AND $87
-C0/7CFE:	997B08  	STA $087B,Y
-C0/7D01:	7B      	TDC 
+C0/7CE1:	C220    	REP #$20       ; 16-bit A
+C0/7CE3:	B96A08  	LDA $086A,Y    ; X-position data [?]
+C0/7CE6:	4A      	LSR A          ;
+C0/7CE7:	4A      	LSR A          ;
+C0/7CE8:	4A      	LSR A          ;
+C0/7CE9:	4A      	LSR A          ; shift down upper nibble
+C0/7CEA:	E220    	SEP #$20       ; 8-bit A
+C0/7CEC:	2586    	AND $86        ; BG-1 horizontal clip
+C0/7CEE:	997A08  	STA $087A,Y    ; set X-position [?]
+C0/7CF1:	C220    	REP #$20       ; 16-bit A
+C0/7CF3:	B96D08  	LDA $086D,Y    ; Y-position data [?]
+C0/7CF6:	4A      	LSR A          ;
+C0/7CF7:	4A      	LSR A          ;
+C0/7CF8:	4A      	LSR A          ;
+C0/7CF9:	4A      	LSR A          ; shift down upper nibble
+C0/7CFA:	E220    	SEP #$20       ; 8-bit A
+C0/7CFC:	2587    	AND $87        ; BG-2 vertical clip
+C0/7CFE:	997B08  	STA $087B,Y    ; set Y-position [?]
+C0/7D01:	7B      	TDC            ; zero A/B
 C0/7D02:	60      	RTS
  
+; Get coords of tile to check in $1E,$1F
 
-C0/7D03:	AA      	TAX			(from C0/4730, C0/4EA0, C0/770D, C0/770D)
-C0/7D04:	20E17C  	JSR $7CE1
-C0/7D07:	B97A08  	LDA $087A,Y
-C0/7D0A:	18      	CLC
-C0/7D0B:	7F207DC0	ADC $C07D20,X
-C0/7D0F:	2586    	AND $86
-C0/7D11:	851E    	STA $1E
-C0/7D13:	B97B08  	LDA $087B,Y
-C0/7D16:	18      	CLC
-C0/7D17:	7F257DC0	ADC $C07D25,X
-C0/7D1B:	2587    	AND $87
-C0/7D1D:	851F    	STA $1F
+C0/7D03:	AA      	TAX			       ; index movement type
+C0/7D04:	20E17C  	JSR $7CE1      ; update X/Y position based on BG-1 clip [?]
+C0/7D07:	B97A08  	LDA $087A,Y    ; X-position [?]
+C0/7D0A:	18      	CLC            ; clear carry
+C0/7D0B:	7F207DC0	ADC $C07D20,X  ; add or subtract 1 based on direction
+C0/7D0F:	2586    	AND $86        ; mask by BG-1 horizontal clip [?]
+C0/7D11:	851E    	STA $1E        ; save X-coord of tile to inspect
+C0/7D13:	B97B08  	LDA $087B,Y    ; Y-position [?]
+C0/7D16:	18      	CLC            ; clear carry
+C0/7D17:	7F257DC0	ADC $C07D25,X  ; add or subtract 1 based on direction
+C0/7D1B:	2587    	AND $87        ; mask by BG-1 vertical clip [?]
+C0/7D1D:	851F    	STA $1F        ; save Y-coord of tile to inspect
 C0/7D1F:	60      	RTS
  
+; Some movement data
 
-C0/7D20:	0000    	
-C0/7D22:	0100    	
-C0/7D24:	FF00FF00	
-C0/7D28:	0100    	
+C0/7D20:	00 ; $00 - Not moving
+C0/7D21:	00 ; $01 - Up
+C0/7D22:	01 ; $02 - Right
+C0/7D23:	00 ; $03 - Down
+C0/7D24:	FF ; $04 - Left
+
+C0/7D25:  00 ; $00 - Not moving
+C0/7D26:	FF ; $01 - Up
+C0/7D27:	00 ; $02 - Right
+C0/7D28:	01 ; $03 - Down
+C0/7D29:	00 ; $04 - Left
 
 ; Background Scroll Speeds
 
@@ -15638,15 +15741,24 @@ C0/7F4C:	0000  ; $0D - "Left/Down 1x2"
 C0/7F4E:	0000  ; $0E - "Left/Down 2x1"  
 C0/7F50:	FFFF  ; $0F - "Left/Up 2x1"    
 C0/7F52:	FFFF  ; $10 - "Left/Up 1x2"   
-                
-C0/7F54   0001
-C0/7F56:	0203  	
-C0/7F58:	0101  	
-C0/7F5A:	0303  	
-C0/7F5C:	0001  	
-C0/7F5E:	0102  	
-C0/7F60:	0203  	
-C0/7F62:	0300  	
+
+; Facing direction by moving direction
+C0/7F54:  00 ; up, faces up
+C0/7F55:  01 ; right, faces right
+C0/7F56:	02 ; down, faces down
+C0/7F57:	03 ; left, faces left
+C0/7F58:	01 ; up/right, faces right
+C0/7F59:	01 ; down/right, faces right
+C0/7F5A:	03 ; down/left, faces left
+C0/7F5B:	03 ; up/left, faces left
+C0/7F5C:	00 ; right/up/up, faces up
+C0/7F5D:	01 ; right/right/up, faces right
+C0/7F5E:	01 ; right/right/down, faces right
+C0/7F5F:	02 ; right/down/down, faces down
+C0/7F60:	02 ; left/down/down, faces down
+C0/7F61:	03 ; left/left/down, faces left
+C0/7F62:	03 ; left/left/up, faces left
+C0/7F63:	00 ; left/up/up, faces up
 
 Dialogue initializing, this is called when a map is loaded/refreshed
 C0/7F64:	9C6805    	STZ $0568      (from C0/BF7C)
@@ -16466,8 +16578,8 @@ C0/85AA:	A901    	LDA #$01
 C0/85AC:	8D0B42  	STA $420B      (turn on channel 1 of DMA)
 C0/85AF:	60      	RTS
  
-C0/85B0:	A5CC    	LDA $CC
-C0/85B2:	F03E    	BEQ $85F2
+C0/85B0:	A5CC    	LDA $CC        ; region of dialogue window needed cleared
+C0/85B2:	F03E    	BEQ $85F2      ; exit if no clear needed
 C0/85B4:	C909    	CMP #$09
 C0/85B6:	F03A    	BEQ $85F2
 C0/85B8:	3A      	DEC A
@@ -16507,10 +16619,10 @@ C0/85FD:	003A
 C0/85FF:	E038
 C0/8501:	0038
 
-C0/8603:	A5C5    	LDA $C5
-C0/8605:	F03A    	BEQ $8641
-C0/8607:	64C5    	STZ $C5
-C0/8609:	9C0B42  	STZ $420B      (turn off DMA)
+C0/8603:	A5C5    	LDA $C5       ; pending text graphics update
+C0/8605:	F03A    	BEQ $8641     ; exit if none
+C0/8607:	64C5    	STZ $C5       ; clear text graphics update flag
+C0/8609:	9C0B42  	STZ $420B     ; disable all DMA channels
 C0/860C:	A980    	LDA #$80
 C0/860E:	8D1521  	STA $2115
 C0/8611:	C221    	REP #$21
@@ -16716,14 +16828,14 @@ C0/8838:	3E3C38  	ROL $383C,X
 C0/883B:	3020    	BMI $885D
 C0/883D:	00
 
-C0/883E:	AD8205  	LDA $0582
-C0/8841:	F065    	
-C0/8842:	9C    	ADC $9C
-C0/8844:	8205A9  	BRL $314C
-C0/8847:	808D    	BRA $87D6
-C0/8849:	1521    	ORA $21,X
+; Handle dialogue window updates
+C0/883E:	AD8205  	LDA $0582       ; "update dialogue"
+C0/8841:	F065    	BEQ $88A8       ; exit if not ^
+C0/8843:	9C8205    STZ $0582       ; clear "update dialogue" flag
+C0/8844:	A980      LDA #$80        ; videoport address increment mode
+C0/8847:	8D1521 	  STA $2115       ; set VMAIN video port mode
 
-C0/884B:	9C0B42  	STZ $420B      (turn off DMA)
+C0/884B:	9C0B42  	STZ $420B       ; disable all DMA channels
 C0/884E:	C221    	REP #$21
 C0/8850:	A5C3    	LDA $C3
 C0/8852:	690038  	ADC #$3800
@@ -17665,14 +17777,15 @@ C0/9036:	A97E    	LDA #$7E
 C0/9038:	85F8    	STA $F8
 C0/903A:	226C04C0	JSL $C0046C    (LZ decompression)
 C0/903E:	60      	RTS
- 
-C0/903F:	AD3B05  	LDA $053B
-C0/9042:	D00C    	BNE $9050
-C0/9044:	A20800  	LDX #$0008
-C0/9047:	CA      	DEX
-C0/9048:	D0FD    	BNE $9047
+
+; Every other IRQ
+C0/903F:	AD3B05  	LDA $053B      ; BG1/2/3 animation index [?]
+C0/9042:	D00C    	BNE $9050      ; branch if set
+C0/9044:	A20800  	LDX #$0008     ;
+C0/9047:	CA      	DEX            ; decrement loop
+C0/9048:	D0FD    	BNE $9047      ; loop 8 times (why?)
 C0/904A:	A980    	LDA #$80
-C0/904C:	8D0021  	STA $2100
+C0/904C:	8D0021  	STA $2100      ; set "Force Blank"
 C0/904F:	60      	RTS
  
 C0/9050:	9C0B42  	STZ $420B		(from C0/9042)
@@ -17817,44 +17930,44 @@ C0/9175:	2B      	PLD
 C0/9176:	7B      	TDC 
 C0/9177:	60      	RTS
  
-C0/9178:	9C0B42  	STZ $420B      (turn off DMA)
+C0/9178:	9C0B42  	STZ $420B      ; diaable all DMA channels
 C0/917B:	A980    	LDA #$80
-C0/917D:	8D1521  	STA $2115
+C0/917D:	8D1521  	STA $2115      ; set VDATA address increment mode
 C0/9180:	A20030  	LDX #$3000
-C0/9183:	8E1621  	STX $2116
+C0/9183:	8E1621  	STX $2116      ; VRAM address
 C0/9186:	A941    	LDA #$41
-C0/9188:	8D0043  	STA $4300
+C0/9188:	8D0043  	STA $4300      ; HDMA mode: 2 registers, write 1
 C0/918B:	A918    	LDA #$18
-C0/918D:	8D0143  	STA $4301
+C0/918D:	8D0143  	STA $4301      ; HDMA destination $2118
 C0/9190:	A20500  	LDX #$0005
 C0/9193:	CA      	DEX
-C0/9194:	D0FD    	BNE $9193
+C0/9194:	D0FD    	BNE $9193      ; 5 loops (why?)
 C0/9196:	A980    	LDA #$80
-C0/9198:	8D0021  	STA $2100
-C0/919B:	AD3B05  	LDA $053B
+C0/9198:	8D0021  	STA $2100      ; force blank [?]
+C0/919B:	AD3B05  	LDA $053B      ; BG animation index
 C0/919E:	29E0    	AND #$E0
-C0/91A0:	F032    	BEQ $91D4
+C0/91A0:	F032    	BEQ $91D4      ; exit if empty [?]
 C0/91A2:	C221    	REP #$21
-C0/91A4:	ADD510  	LDA $10D5
-C0/91A7:	8D0543  	STA $4305
-C0/91AA:	ADD110  	LDA $10D1
-C0/91AD:	6DD310  	ADC $10D3
-C0/91B0:	8DD110  	STA $10D1
-C0/91B3:	7B      	TDC 
-C0/91B4:	E220    	SEP #$20      (8 bit accum./memory)
+C0/91A4:	ADD510  	LDA $10D5      ; animation data size
+C0/91A7:	8D0543  	STA $4305      ; HDMA number of bytes to transfer
+C0/91AA:	ADD110  	LDA $10D1      ; animation counter
+C0/91AD:	6DD310  	ADC $10D3      ; add animation speed
+C0/91B0:	8DD110  	STA $10D1      ; store new counter
+C0/91B3:	7B      	TDC            ; clear A/B
+C0/91B4:	E220    	SEP #$20       ; 8-bit A
 C0/91B6:	ADD210  	LDA $10D2
 C0/91B9:	290E    	AND #$0E
 C0/91BB:	AA      	TAX
 C0/91BC:	C221    	REP #$21
-C0/91BE:	BDD710  	LDA $10D7,X
+C0/91BE:	BDD710  	LDA $10D7,X    ; frame pointer
 C0/91C1:	6900BF  	ADC #$BF00
-C0/91C4:	8D0243  	STA $4302
-C0/91C7:	7B      	TDC 
-C0/91C8:	E220    	SEP #$20      (8 bit accum./memory)
+C0/91C4:	8D0243  	STA $4302      ; set HDMA source address
+C0/91C7:	7B      	TDC            ; clear A/B
+C0/91C8:	E220    	SEP #$20       ; 8-bit A
 C0/91CA:	A97E    	LDA #$7E
-C0/91CC:	8D0443  	STA $4304
+C0/91CC:	8D0443  	STA $4304      ; set HDMA source bank
 C0/91CF:	A901    	LDA #$01
-C0/91D1:	8D0B42  	STA $420B
+C0/91D1:	8D0B42  	STA $420B      ; enable DMA channel 1
 C0/91D4:	60      	RTS
  
 Data, pointers for the block of data below this
@@ -18657,9 +18770,9 @@ C0/98E8:	039D    	(gen. act. 47)
 C0/98EA:	75A4    	(gen. act. 48)
 C0/98EC:	A6A4    	(gen. act. 49)
 C0/98EE:	B0A4    	(gen. act. 4A)
-C0/98F0:	BCA4    	(gen. act. 4B)
+C0/98F0:	BCA4    	(gen. act. 4B) ; Display dialogue
 C0/98F2:	91A5    	(gen. act. 4C)
-C0/98F4:	78A5    	(gen. act. 4D)
+C0/98F4:	78A5    	(gen. act. 4D) ; Invoke battle
 C0/98F6:	F9A4    	(gen. act. 4E)
 C0/98F8:	F3A5    	(gen. act. 4F)
 C0/98FA:	FDA5    	(gen. act. 50)
@@ -18690,9 +18803,9 @@ C0/9928:	1AB9    	(gen. act. 67)
 
 C0/992A:	1AB9    	(gen. act. 68)
 C0/992C:	1AB9    	(gen. act. 69)
-C0/992E:	47AB    	(gen. act. 6A)
-C0/9930:	55AB    	(gen. act. 6B)
-C0/9932:	0BAC    	(gen. act. 6C)
+C0/992E:	47AB    	(gen. act. 6A) ; Load map after fade
+C0/9930:	55AB    	(gen. act. 6B) ; Loap map instantly
+C0/9932:	0BAC    	(gen. act. 6C) ; Load parent map
 C0/9934:	1AB9    	(gen. act. 6D)
 C0/9936:	1AB9    	(gen. act. 6E)
 C0/9938:	1AB9    	(gen. act. 6F)
@@ -18726,7 +18839,7 @@ C0/996E:	61AE    	(gen. act. 8A)
 C0/9970:	7BAE    	(gen. act. 8B)
 C0/9972:	3EAF    	(gen. act. 8C)
 C0/9974:	CE9F    	(gen. act. 8D)
-C0/9976:	4EA5    	(gen. act. 8E)
+C0/9976:	4EA5    	(gen. act. 8E)      ; Monster in a box ($A54E)
 C0/9978:	F8AF    	(gen. act. 8F)
 C0/997A:	02B0    	(gen. act. 90)
 C0/997C:	3FB2    	(gen. act. 91)
@@ -18752,12 +18865,12 @@ C0/99A2:	1AB9    	(gen. act. A4)
 C0/99A4:	1AB9    	(gen. act. A5)
 C0/99A6:	09BA    	(gen. act. A6)
 C0/99A8:	14BA    	(gen. act. A7)
-C0/99AA:	51BA    	(gen. act. A8)
+C0/99AA:	51BA    	(gen. act. A8)     ; show floating continent rise ($BA51)
 C0/99AC:	66B9    	(gen. act. A9)
 C0/99AE:	92B9    	(gen. act. AA)
 C0/99B0:	1BB9    	(gen. act. AB)
 C0/99B2:	5EB9    	(gen. act. AC)
-C0/99B4:	69BA    	(gen. act. AD)
+C0/99B4:	69BA    	(gen. act. AD)     ; show world getting torn apart ($BA69)
 C0/99B6:	C5B9    	(gen. act. AE)
 C0/99B8:	03A5    	(gen. act. AF)
 C0/99BA:	38B1    	(gen. act. B0)
@@ -18776,7 +18889,7 @@ C0/99D2:	6FB1    	(gen. act. BC)
 C0/99D4:	71B2    	(gen. act. BD)
 C0/99D6:	F7B6    	(gen. act. BE)
 C0/99D8:	E7B9    	(gen. act. BF)
-C0/99DA:	C8B2    	(gen. act. C0)
+C0/99DA:	C8B2    	(gen. act. C0)    ; if event bit set... ($B2C8)
 C0/99DC:	C8B2    	(gen. act. C1)
 C0/99DE:	C8B2    	(gen. act. C2)
 C0/99E0:	C8B2    	(gen. act. C3)
@@ -18792,7 +18905,7 @@ C0/99F2:	2DB3    	(gen. act. CC)
 C0/99F4:	2DB3    	(gen. act. CD)
 C0/99F6:	2DB3    	(gen. act. CE)
 C0/99F8:	2DB3    	(gen. act. CF)
-C0/99FA:	93B5    	(gen. act. D0)
+C0/99FA:	93B5    	(gen. act. D0)    ; set event bit ($B593)
 C0/99FC:	CFB5    	(gen. act. D1)
 C0/99FE:	A7B5    	(gen. act. D2)
 C0/9A00:	E3B5    	(gen. act. D3)
@@ -18842,7 +18955,7 @@ C0/9A56:	D7B8    	(gen. act. FE)
 C0/9A58:	1AB9    	(gen. act. FF)
 (End of General Actions' pointers)
 
-; General actions
+; General actions TODO
 
 C0/9A5A:	E647    	INC $47	         ; increment event counter
 C0/9A5C:	A584    	LDA $84          ; "new map loading"
@@ -18852,8 +18965,9 @@ C0/9A62:	D006    	BNE $9A6A        ; branch if ^
 C0/9A64:	A547    	LDA $47          ; event counter
 C0/9A66:	2903    	AND #$03         ; 0-3
 C0/9A68:	D003    	BNE $9A6D        ; branch 75% of the time
-
 C0/9A6A:	204A71  	JSR $714A        ; [?] runs when reloading map or 25% of time
+
+; Execute next general action
 
 C0/9A6D:	A6E3    	LDX $E3	         ; event pause wait
 C0/9A6F:	F004    	BEQ $9A75        ; branch if zero
@@ -18971,7 +19085,7 @@ C0/9B37:	B7E5    	LDA [$E5],Y      ; event opcode
 C0/9B39:	85EA    	STA $EA          ; save it
 C0/9B3B:	C931    	CMP #$31         ; object event range (NPCs)
 C0/9B3D:	B003    	BCS $9B42        ; branch if not an NPC event
-C0/9B3F:	4CA59B  	JMP $9BA5        ; process object event
+C0/9B3F:	4CA59B  	JMP $9BA5        ; process NPC object event
 
 C0/9B42:	C935    	CMP #$35         ; object event range (Party Characters)
 C0/9B44:	B003    	BCS $9B49        ; branch if not an object event
@@ -18988,19 +19102,21 @@ C0/9B56:	7B      	TDC              ; clear A/B
 C0/9B57:	E220    	SEP #$20         ; 8-bit A
 C0/9B59:	6C2A00  	JMP ($002A)      ; execute general action
 
-Advance the event queue by various bytes, A holds the amount coming in
-C0/9B5C:	18      	CLC		(Called from various, below)
-C0/9B5D:	65E5    	ADC $E5
+; Advance the event queue by various bytes, A holds the amount coming in
+
+C0/9B5C:	18      	CLC	             ; clear carry
+C0/9B5D:	65E5    	ADC $E5          ; add to event pointer (low)
 C0/9B5F:	85E5    	STA $E5
 C0/9B61:	A5E6    	LDA $E6
 C0/9B63:	6900    	ADC #$00
-C0/9B65:	85E6    	STA $E6
+C0/9B65:	85E6    	STA $E6          ; carry overflow to (hi)
 C0/9B67:	A5E7    	LDA $E7
 C0/9B69:	6900    	ADC #$00
-C0/9B6B:	85E7    	STA $E7
-C0/9B6D:	4C6D9A  	JMP $9A6D
+C0/9B6B:	85E7    	STA $E7          ; carry overflow to (bank)
+C0/9B6D:	4C6D9A  	JMP $9A6D        ; execute next general action
 
-Advance the event queue by various bytes, A holds the amount coming in
+; Advance the event queue by various bytes, A holds the amount coming in
+
 C0/9B70:	18      	CLC		(Called from various, below)
 C0/9B71:	65E5    	ADC $E5
 C0/9B73:	85E5    	STA $E5
@@ -19040,25 +19156,29 @@ C0/9BAE:	EA      	NOP
 C0/9BAF:	EA      	NOP
 C0/9BB0:	EA      	NOP
 C0/9BB1:	AC1642  	LDY $4216
+
+; Read object action queue
+
 C0/9BB4:	B97C08  	LDA $087C,Y
 C0/9BB7:	29F0    	AND #$F0
 C0/9BB9:	0901    	ORA #$01
 C0/9BBB:	997C08  	STA $087C,Y
 C0/9BBE:	7B      	TDC 
 C0/9BBF:	998608  	STA $0886,Y
-C0/9BC2:	A5E5    	LDA $E5
+C0/9BC2:	A5E5    	LDA $E5          ; this event address
 C0/9BC4:	18      	CLC
-C0/9BC5:	6902    	ADC #$02
-C0/9BC7:	998308  	STA $0883,Y
+C0/9BC5:	6902    	ADC #$02         ; skip object ID and control (length)
+C0/9BC7:	998308  	STA $0883,Y      ; set pointer low-byte (pending action queue)
 C0/9BCA:	A5E6    	LDA $E6
 C0/9BCC:	6900    	ADC #$00
-C0/9BCE:	998408  	STA $0884,Y
+C0/9BCE:	998408  	STA $0884,Y      ; set pointer mid-byte (pending action queue)
 C0/9BD1:	A5E7    	LDA $E7
 C0/9BD3:	6900    	ADC #$00
-C0/9BD5:	998508  	STA $0885,Y
-C0/9BD8:	A5EB    	LDA $EB
-C0/9BDA:	1026    	BPL $9C02
-C0/9BDC:	A5EA    	LDA $EA
+C0/9BD5:	998508  	STA $0885,Y      ; set pointer top-byte (pending action queue)
+C0/9BD8:	A5EB    	LDA $EB          ; action queue control byte
+C0/9BDA:	1026    	BPL $9C02        ; branch if "asynchronous" execution
+
+C0/9BDC:	A5EA    	LDA $EA          ; object ID
 C0/9BDE:	C931    	CMP #$31
 C0/9BE0:	901A    	BCC $9BFC
 C0/9BE2:	38      	SEC 
@@ -19080,10 +19200,11 @@ C0/9BF9:	AD1442  	LDA $4214
 C0/9BFC:	85E2    	STA $E2
 C0/9BFE:	A980    	LDA #$80
 C0/9C00:	85E1    	STA $E1
-C0/9C02:	A5EB    	LDA $EB
-C0/9C04:	297F    	AND #$7F
-C0/9C06:	1A      	INC A
-C0/9C07:	1A      	INC A
+
+C0/9C02:	A5EB    	LDA $EB          ; action queue control byte
+C0/9C04:	297F    	AND #$7F         ; isolate "Queue Length"
+C0/9C06:	1A      	INC A            ; +1
+C0/9C07:	1A      	INC A            ; +2
 C0/9C08:	4C5C9B  	JMP $9B5C
 
 ; Party Character Object Event
@@ -20393,11 +20514,11 @@ C0/A5BC:	BF0050CF	LDA $CF5000,X  (Monster formations used in event scripts)
 C0/A5C0:	8FE01100	STA $0011E0    (save formation)
 C0/A5C4:	7B      	TDC 
 C0/A5C5:	E220    	SEP #$20       (8 bit accum./memory)
-C0/A5C7:	A5EC    	LDA $EC
-C0/A5C9:	29C0    	AND #$C0
-C0/A5CB:	8D8A07  	STA $078A
+C0/A5C7:	A5EC    	LDA $EC        ; background type, props
+C0/A5C9:	29C0    	AND #$C0       ; isolate "Disable Blur", "Disable SFX"
+C0/A5CB:	8D8A07  	STA $078A      ; set ^
 C0/A5CE:	A5EC    	LDA $EC        (Load the background parameter)
-C0/A5D0:	293F    	AND #$3F       (Zero out the upper 3 bits)
+C0/A5D0:	293F    	AND #$3F       (Zero out the upper A bits)
 C0/A5D2:	C93F    	CMP #$3F       (Is it #$3F [the area default]?)
 C0/A5D4:	D005    	BNE $A5DB      (Branch if not)
 C0/A5D6:	AD2205  	LDA $0522      (Apparently this holds the area default background index)
@@ -21310,98 +21431,112 @@ C0/AB51:	85E1    	STA $E1
 C0/AB53:	8005    	BRA $AB5A
 
 
-Loads map nnnn, positions party at (xx, yy)
-(gen. act. 6B)
+; Loads map nnnn, positions party at (xx, yy)
+; (gen. act. 6B)
 
-C0/AB55:	20886E  	JSR $6E88	
+C0/AB55:	20886E  	JSR $6E88	    ; handle character positions [?]
 C0/AB58:	644A    	STZ $4A
+
 C0/AB5A:	A901    	LDA #$01
 C0/AB5C:	8584    	STA $84
-C0/AB5E:	A5EF    	LDA $EF
-C0/AB60:	8DFA11  	STA $11FA
-C0/AB63:	C220    	REP #$20      (16 bit accum./memory)
-C0/AB65:	A5EB    	LDA $EB
-C0/AB67:	290002  	AND #$0200
-C0/AB6A:	F00D    	BEQ $AB79
-C0/AB6C:	A5EB    	LDA $EB
-C0/AB6E:	29FF01  	AND #$01FF
-C0/AB71:	8D691F  	STA $1F69
-C0/AB74:	A5ED    	LDA $ED
-C0/AB76:	8D6B1F  	STA $1F6B
-C0/AB79:	A5EB    	LDA $EB
-C0/AB7B:	8D641F  	STA $1F64
-C0/AB7E:	29FF01  	AND #$01FF
-C0/AB81:	C9FF01  	CMP #$01FF
-C0/AB84:	F047    	BEQ $ABCD
-C0/AB86:	C9FE01  	CMP #$01FE
-C0/AB89:	F047    	BEQ $ABD2
-C0/AB8B:	AA      	TAX
-C0/AB8C:	7B      	TDC 
-C0/AB8D:	E220    	SEP #$20      (8 bit accum./memory)
-C0/AB8F:	E00300  	CPX #$0003
-C0/AB92:	B01B    	BCS $ABAF
-C0/AB94:	A6ED    	LDX $ED
-C0/AB96:	8E601F  	STX $1F60
-C0/AB99:	C221    	REP #$21
-C0/AB9B:	A5E5    	LDA $E5
-C0/AB9D:	690600  	ADC #$0006
-C0/ABA0:	8DFD11  	STA $11FD
-C0/ABA3:	E220    	SEP #$20      (8 bit accum./memory)
-C0/ABA5:	A5E7    	LDA $E7
-C0/ABA7:	6900    	ADC #$00
-C0/ABA9:	8DFF11  	STA $11FF
-C0/ABAC:	7B      	TDC 
-C0/ABAD:	8057    	BRA $AC06
-C0/ABAF:	A5ED    	LDA $ED
-C0/ABB1:	8DC01F  	STA $1FC0
-C0/ABB4:	A5EE    	LDA $EE
-C0/ABB6:	8DC11F  	STA $1FC1
-C0/ABB9:	A5EC    	LDA $EC
-C0/ABBB:	2930    	AND #$30
+C0/AB5E:	A5EF    	LDA $EF       ; special map loading flags
+C0/AB60:	8DFA11  	STA $11FA     ; save ^
+C0/AB63:	C220    	REP #$20      ; 16-bit A
+C0/AB65:	A5EB    	LDA $EB       ; map ID + flags
+C0/AB67:	290002  	AND #$0200    ; isolate "Parent Map" flag
+C0/AB6A:	F00D    	BEQ $AB79     ; branch if no ^
+C0/AB6C:	A5EB    	LDA $EB       ; map ID + flags
+C0/AB6E:	29FF01  	AND #$01FF    ; isolate "Map ID"
+C0/AB71:	8D691F  	STA $1F69     ; save as parent map
+C0/AB74:	A5ED    	LDA $ED       ; party coordinates
+C0/AB76:	8D6B1F  	STA $1F6B     ; save as parent map coordinates
+
+C0/AB79:	A5EB    	LDA $EB       ; map ID + flags
+C0/AB7B:	8D641F  	STA $1F64     ; save current map and flags ^
+C0/AB7E:	29FF01  	AND #$01FF    ; isolate "Map ID"
+C0/AB81:	C9FF01  	CMP #$01FF    ; "World Map"
+C0/AB84:	F047    	BEQ $ABCD     ; branch if ^
+C0/AB86:	C9FE01  	CMP #$01FE    ; "Previous World Map"
+C0/AB89:	F047    	BEQ $ABD2     ; branch if ^
+C0/AB8B:	AA      	TAX           ; index map ID
+C0/AB8C:	7B      	TDC           ; zero A/B
+C0/AB8D:	E220    	SEP #$20      ; 8-bit A
+C0/AB8F:	E00300  	CPX #$0003    ; Map ID >= 3 (non-overworld)
+C0/AB92:	B01B    	BCS $ABAF     ; branch if ^
+
+; World of Balance, World of Ruin, and Serpent Trench
+
+C0/AB94:	A6ED    	LDX $ED       ; party coordinates
+C0/AB96:	8E601F  	STX $1F60     ; save ^
+
+C0/AB99:	C221    	REP #$21      ; 16-bit A, clear carry
+C0/AB9B:	A5E5    	LDA $E5       ; event address
+C0/AB9D:	690600  	ADC #$0006    ; skip op and args
+C0/ABA0:	8DFD11  	STA $11FD     ; save as map event pointer
+C0/ABA3:	E220    	SEP #$20      ; 8-bit A
+C0/ABA5:	A5E7    	LDA $E7       ; event bank
+C0/ABA7:	6900    	ADC #$00      ; add overflow
+C0/ABA9:	8DFF11  	STA $11FF     ; save as map event bank
+C0/ABAC:	7B      	TDC           ; zero A/B
+C0/ABAD:	8057    	BRA $AC06     ; finish and advance event queue
+
+; All other maps (not 1FF or 1FE)
+
+C0/ABAF:	A5ED    	LDA $ED       ; party X coordinate
+C0/ABB1:	8DC01F  	STA $1FC0     ; save ^
+C0/ABB4:	A5EE    	LDA $EE       ; party Y coordinate
+C0/ABB6:	8DC11F  	STA $1FC1     ; save ^
+
+C0/ABB9:	A5EC    	LDA $EC       ; map properties
+C0/ABBB:	2930    	AND #$30      ; isolate "Facing Direction"
 C0/ABBD:	4A      	LSR A
 C0/ABBE:	4A      	LSR A
 C0/ABBF:	4A      	LSR A
-C0/ABC0:	4A      	LSR A
-C0/ABC1:	8D4307  	STA $0743
-C0/ABC4:	A5EC    	LDA $EC
-C0/ABC6:	2908    	AND #$08
-C0/ABC8:	8D4507  	STA $0745      (set location name to appear when map loads)
-C0/ABCB:	8039    	BRA $AC06
+C0/ABC0:	4A      	LSR A         ; >> 4 (0-3)
+C0/ABC1:	8D4307  	STA $0743     ; set party facing direction
+C0/ABC4:	A5EC    	LDA $EC       ; map properties
+C0/ABC6:	2908    	AND #$08      ; isolate "Display Location Name"
+C0/ABC8:	8D4507  	STA $0745     ; set location name to appear when map loads
+C0/ABCB:	8039    	BRA $AC06     ; finish and advance event queue
 
 Fork: Map #$01FF jumps here
 
-C0/ABCD:	20461A  	JSR $1A46
-C0/ABD0:	8009    	BRA $ABDB
+C0/ABCD:	20461A  	JSR $1A46     ; some facing direction handling [?]
+C0/ABD0:	8009    	BRA $ABDB     ; branch
 
 Fork: Map #$01FE jumps here
 
-C0/ABD2:	7B      	TDC 
-C0/ABD3:	E220    	SEP #$20      (8 bit accum./memory)
-C0/ABD5:	ADD21F  	LDA $1FD2
-C0/ABD8:	8D681F  	STA $1F68
-C0/ABDB:	C220    	REP #$20      (16 bit accum./memory)
-C0/ABDD:	A5EB    	LDA $EB
-C0/ABDF:	2900FE  	AND #$FE00
-C0/ABE2:	0D691F  	ORA $1F69
-C0/ABE5:	8D641F  	STA $1F64
-C0/ABE8:	29FF01  	AND #$01FF
-C0/ABEB:	C90300  	CMP #$0003
-C0/ABEE:	B00B    	BCS $ABFB
-C0/ABF0:	AD6B1F  	LDA $1F6B
-C0/ABF3:	8D601F  	STA $1F60
-C0/ABF6:	7B      	TDC 
-C0/ABF7:	E220    	SEP #$20      (8 bit accum./memory)
-C0/ABF9:	809E    	BRA $AB99
-C0/ABFB:	AD6B1F  	LDA $1F6B
-C0/ABFE:	8DC01F  	STA $1FC0
-C0/AC01:	7B      	TDC 
-C0/AC02:	E220    	SEP #$20      (8 bit accum./memory)
-C0/AC04:	80B3    	BRA $ABB9
-C0/AC06:	A906    	LDA #$06
-C0/AC08:	4C709B  	JMP $9B70
+C0/ABD2:	7B      	TDC           ; zero A/B
+C0/ABD3:	E220    	SEP #$20      ; 8-bit A
+C0/ABD5:	ADD21F  	LDA $1FD2     ; parent facing direction
+C0/ABD8:	8D681F  	STA $1F68     ; set facing direction
 
-Set parent map to nnnn, position (xx, yy), flags z
-(gen. act. 6C)
+C0/ABDB:	C220    	REP #$20      ; 16-bit A
+C0/ABDD:	A5EB    	LDA $EB       ; map ID and properties
+C0/ABDF:	2900FE  	AND #$FE00    ; mask out map ID
+C0/ABE2:	0D691F  	ORA $1F69     ; replace with parent map ID
+C0/ABE5:	8D641F  	STA $1F64     ; save current map ID + props
+C0/ABE8:	29FF01  	AND #$01FF    ; isolate map ID
+C0/ABEB:	C90300  	CMP #$0003    ; overworld map range
+C0/ABEE:	B00B    	BCS $ABFB     ; branch if not ^
+
+C0/ABF0:	AD6B1F  	LDA $1F6B     ; parent XY position
+C0/ABF3:	8D601F  	STA $1F60     ; set world XY position
+C0/ABF6:	7B      	TDC           ; zero A/B
+C0/ABF7:	E220    	SEP #$20      ; 8-bit A
+C0/ABF9:	809E    	BRA $AB99     ; set event script address
+
+C0/ABFB:	AD6B1F  	LDA $1F6B     ; parent XY
+C0/ABFE:	8DC01F  	STA $1FC0     ; set party XY
+C0/AC01:	7B      	TDC           ; zero A/B
+C0/AC02:	E220    	SEP #$20      ; 8-bit A
+C0/AC04:	80B3    	BRA $ABB9     ; finish up facing direction, etc
+
+C0/AC06:	A906    	LDA #$06      ; length of map op and args
+C0/AC08:	4C709B  	JMP $9B70     ; advance event queue by 6 bytes
+
+; Set parent map to nnnn, position (xx, yy), flags z
+; (gen. act. 6C)
 
 C0/AC0B:	A4EB    	LDY $EB
 C0/AC0D:	8C691F  	STY $1F69
@@ -22178,7 +22313,7 @@ C0/B138:	A902    	LDA #$02
 C0/B13A:	20829B  	JSR $9B82
 C0/B13D:	A5EB    	LDA $EB
 C0/B13F:	9DC405  	STA $05C4,X
-C0/B142:	4C6D9A  	JMP $9A6D
+C0/B142:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 
 End block of commands to repeat (ends repeat)
@@ -22195,7 +22330,7 @@ C0/B155:	BDF205  	LDA $05F2,X
 C0/B158:	85E6    	STA $E6
 C0/B15A:	BDF305  	LDA $05F3,X
 C0/B15D:	85E7    	STA $E7
-C0/B15F:	4C6D9A  	JMP $9A6D
+C0/B15F:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 C0/B162:	A6E8    	LDX $E8		
 C0/B164:	CA      	DEX
@@ -22224,7 +22359,7 @@ C0/B187:	BDF205  	LDA $05F2,X
 C0/B18A:	85E6    	STA $E6
 C0/B18C:	BDF305  	LDA $05F3,X
 C0/B18F:	85E7    	STA $E7
-C0/B191:	4C6D9A  	JMP $9A6D
+C0/B191:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 C0/B194:	A6E8    	LDX $E8
 C0/B196:	CA      	DEX
@@ -22252,7 +22387,7 @@ C0/B1B2:	A5E7    	LDA $E7
 C0/B1B4:	6900    	ADC #$00
 C0/B1B6:	9D9605  	STA $0596,X
 C0/B1B9:	A5EB    	LDA $EB
-C0/B1BB:	85E5    	STA $E5
+C0/B1BB:	85E5    	STA $E5        ; set pointer to graphic index data [?]
 C0/B1BD:	9DF405  	STA $05F4,X
 C0/B1C0:	A5EC    	LDA $EC
 C0/B1C2:	85E6    	STA $E6
@@ -22268,7 +22403,7 @@ C0/B1D4:	E8      	INX
 C0/B1D5:	86E8    	STX $E8
 C0/B1D7:	A901    	LDA #$01
 C0/B1D9:	9DC405  	STA $05C4,X
-C0/B1DC:	4C6D9A  	JMP $9A6D
+C0/B1DC:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 Jump to subroutine aaaaaa (+$CA0000/$0A0200), repeat XX times
 (gen. act. B3)
@@ -22301,7 +22436,7 @@ C0/B212:	E8      	INX
 C0/B213:	86E8    	STX $E8
 C0/B215:	A5EB    	LDA $EB
 C0/B217:	9DC405  	STA $05C4,X
-C0/B21A:	4C6D9A  	JMP $9A6D
+C0/B21A:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 
 Pause for xx units
@@ -22391,7 +22526,7 @@ C0/B281:	7B      	TDC
 C0/B282:	E220    	SEP #$20      (8 bit accum./memory)
 C0/B284:	65E7    	ADC $E7
 C0/B286:	85E7    	STA $E7
-C0/B288:	4C6D9A  	JMP $9A6D
+C0/B288:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 C0/B28B:	A6EB    	LDX $EB
 C0/B28D:	86E5    	STX $E5
@@ -22399,7 +22534,7 @@ C0/B28F:	A5ED    	LDA $ED
 C0/B291:	18      	CLC
 C0/B292:	69CA    	ADC #$CA
 C0/B294:	85E7    	STA $E7
-C0/B296:	4C6D9A  	JMP $9A6D
+C0/B296:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 
 Branch to aaaaaa (+$CA0000/$0A0200) if bit $1DC9 + $xx is clear
@@ -22418,7 +22553,7 @@ C0/B2B0:	7B      	TDC
 C0/B2B1:	E220    	SEP #$20      (8 bit accum./memory)
 C0/B2B3:	65E7    	ADC $E7
 C0/B2B5:	85E7    	STA $E7
-C0/B2B7:	4C6D9A  	JMP $9A6D
+C0/B2B7:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 C0/B2BA:	A6EC    	LDX $EC
 C0/B2BC:	86E5    	STX $E5
@@ -22426,7 +22561,7 @@ C0/B2BE:	A5EE    	LDA $EE
 C0/B2C0:	18      	CLC
 C0/B2C1:	69CA    	ADC #$CA
 C0/B2C3:	85E7    	STA $E7
-C0/B2C5:	4C6D9A  	JMP $9A6D
+C0/B2C5:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 
 If (t1 || t2 || ... || t8) branch; else continue
@@ -22471,7 +22606,7 @@ C0/B308:	A5E7    	LDA $E7
 C0/B30A:	6900    	ADC #$00
 C0/B30C:	85E7    	STA $E7
 C0/B30E:	7B      	TDC 
-C0/B30F:	4C6D9A  	JMP $9A6D
+C0/B30F:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 C0/B312:	A420    	LDY $20
 C0/B314:	C220    	REP #$20      (16 bit accum./memory)
@@ -22487,7 +22622,7 @@ C0/B322:	69CA    	ADC #$CA
 C0/B324:	85E7    	STA $E7
 C0/B326:	A42A    	LDY $2A
 C0/B328:	84E5    	STY $E5
-C0/B32A:	4C6D9A  	JMP $9A6D
+C0/B32A:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 
 If (t1 && t2 && ... && t8) branch; else continue
@@ -22534,7 +22669,7 @@ C0/B371:	69CA    	ADC #$CA
 C0/B373:	85E7    	STA $E7
 C0/B375:	A42A    	LDY $2A
 C0/B377:	84E5    	STY $E5
-C0/B379:	4C6D9A  	JMP $9A6D
+C0/B379:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 C0/B37C:	A420    	LDY $20
 C0/B37E:	C8      	INY 
@@ -22549,7 +22684,7 @@ C0/B38A:	A5E7    	LDA $E7
 C0/B38C:	6900    	ADC #$00
 C0/B38E:	85E7    	STA $E7
 C0/B390:	7B      	TDC 
-C0/B391:	4C6D9A  	JMP $9A6D
+C0/B391:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 Display character portrait
 (gen. act. E7)
@@ -23074,7 +23209,7 @@ C0/B6EB:	85E7    	STA $E7
 C0/B6ED:	A41E    	LDY $1E
 C0/B6EF:	84E5    	STY $E5
 C0/B6F1:	9C6E05  	STZ $056E
-C0/B6F4:	4C6D9A  	JMP $9A6D
+C0/B6F4:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 
 Jump to indexed subroutine based on the state of bit $1EB4(x)
@@ -23121,7 +23256,7 @@ C0/B736:	A5E7    	LDA $E7
 C0/B738:	6900    	ADC #$00
 C0/B73A:	85E7    	STA $E7
 C0/B73C:	7B      	TDC 
-C0/B73D:	4C6D9A  	JMP $9A6D
+C0/B73D:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 C0/B740:	A6E8    	LDX $E8		(from C0/B726)
 C0/B742:	A51E    	LDA $1E
@@ -23152,7 +23287,7 @@ C0/B775:	E8      	INX
 C0/B776:	86E8    	STX $E8
 C0/B778:	A901    	LDA #$01
 C0/B77A:	9DC405  	STA $05C4,X
-C0/B77D:	4C6D9A  	JMP $9A6D
+C0/B77D:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 
 Play song xx
@@ -23331,36 +23466,36 @@ C0/B8D2:	A901    	LDA #$01
 C0/B8D4:	4C709B  	JMP $9B70
 
 (gen. act. FE)
-C0/B8D7:	A6E8    	LDX $E8        (Return)
+C0/B8D7:	A6E8    	LDX $E8         ; event stack pointer
 C0/B8D9:	BDC405  	LDA $05C4,X
 C0/B8DC:	3A      	DEC A
-C0/B8DD:	9DC405  	STA $05C4,X    (this could be accomplished with DEC $05C4,X)
-C0/B8E0:	F012    	BEQ $B8F4
+C0/B8DD:	9DC405  	STA $05C4,X     ; decrease loop count for current event
+C0/B8E0:	F012    	BEQ $B8F4       ; branch if no more loops
 C0/B8E2:	BDF105  	LDA $05F1,X
 C0/B8E5:	85E5    	STA $E5
 C0/B8E7:	BDF205  	LDA $05F2,X
 C0/B8EA:	85E6    	STA $E6
 C0/B8EC:	BDF305  	LDA $05F3,X
-C0/B8EF:	85E7    	STA $E7
-C0/B8F1:	4C6D9A  	JMP $9A6D
+C0/B8EF:	85E7    	STA $E7         ; set event PC [?]
+C0/B8F1:	4C6D9A  	JMP $9A6D       ; execute next general action
 
-C0/B8F4:	A6E8    	LDX $E8        (from C0/B8E0)
+C0/B8F4:	A6E8    	LDX $E8         ; event stack pointer
 C0/B8F6:	CA      	DEX
 C0/B8F7:	CA      	DEX
-C0/B8F8:	CA      	DEX
-C0/B8F9:	86E8    	STX $E8
-C0/B8FB:	BD9405  	LDA $0594,X
-C0/B8FE:	85E5    	STA $E5
+C0/B8F8:	CA      	DEX             ; point to last event on stack
+C0/B8F9:	86E8    	STX $E8         ; save reduced pointer position
+C0/B8FB:	BD9405  	LDA $0594,X     ; previous event pointer
+C0/B8FE:	85E5    	STA $E5         ; save for next general action
 C0/B900:	BD9505  	LDA $0595,X
 C0/B903:	85E6    	STA $E6
 C0/B905:	BD9605  	LDA $0596,X
 C0/B908:	85E7    	STA $E7
-C0/B90A:	E400    	CPX $00
-C0/B90C:	D009    	BNE $B917
-C0/B90E:	AC0308  	LDY $0803
-C0/B911:	B97D08  	LDA $087D,Y
-C0/B914:	997C08  	STA $087C,Y
-C0/B917:	4C6D9A  	JMP $9A6D
+C0/B90A:	E400    	CPX $00         ; is this a subevent [?]
+C0/B90C:	D009    	BNE $B917       ; branch if so
+C0/B90E:	AC0308  	LDY $0803       ; visible character object's data offset
+C0/B911:	B97D08  	LDA $087D,Y     ; backup movement type for character
+C0/B914:	997C08  	STA $087C,Y     ; restore character mvmt type
+C0/B917:	4C6D9A  	JMP $9A6D       ; execute next general action
 
 (gen. act. 66)
 (gen. act. 67)
@@ -23553,8 +23688,7 @@ C0/BA4C:	A902    	LDA #$02
 C0/BA4E:	4C5C9B  	JMP $9B5C
 
 
-Show Floating Island soaring into the sky
-(gen. act. A8)
+; Show Floating Island Rise (General Action $A8)
 
 C0/BA51:	200505  	JSR $0505		
 C0/BA54:	207403  	JSR $0374      (turn off H/DMA, auto joypad read, NMI, and the screen)
@@ -23566,17 +23700,18 @@ C0/BA64:	A901    	LDA #$01
 C0/BA66:	4C5C9B  	JMP $9B5C
 
 
-Show Title screen
-(gen. act. AD)
+; Show World Getting Torn Apart (General Action $AD)
 
-C0/BA69:	200505  	JSR $0505		
-C0/BA6C:	207403  	JSR $0374      (turn off H/DMA, auto joypad read, NMI, and the screen)
+C0/BA69:	200505  	JSR $0505		     ; backup direct page bytes to $7E1200
+C0/BA6C:	207403  	JSR $0374        ; turn off H/DMA, joypad read, NMI, screen
 C0/BA6F:	220968C2	JSL $C26809
-C0/BA73:	201505  	JSR $0515      (BRA $BA5B... >_>)
-C0/BA76:	207403  	JSR $0374      (turn off H/DMA, auto joypad read, NMI, and the screen)
-C0/BA79:	207305  	JSR $0573
-C0/BA7C:	A901    	LDA #$01
-C0/BA7E:	4C5C9B  	JMP $9B5C
+C0/BA73:	201505  	JSR $0515        ; restore direct page bytes from $7E1200
+C0/BA76:	207403  	JSR $0374        ; turn off H/DMA, joypad read, NMI, screen
+C0/BA79:	207305  	JSR $0573        ; set/enable NMI, IRQ
+C0/BA7C:	A901    	LDA #$01         ; advance by one byte
+C0/BA7E:	4C5C9B  	JMP $9B5C        ; advance event queue by one byte
+
+; Update facing direction
 
 C0/BA81:	AC0308  	LDY $0803        ; visible character's object data offset
 C0/BA84:	B97F08  	LDA $087F,Y      ; facing direction
@@ -23606,9 +23741,10 @@ C0/BAB9:	B9A01E  	LDA $1EA0,Y
 C0/BABC:	3FFCBAC0	AND $C0BAFC,X
 C0/BAC0:	60      	RTS
  
-C0/BAC1:	20EDBA  	JSR $BAED
-C0/BAC4:	B9E01E  	LDA $1EE0,Y
-C0/BAC7:	3FFCBAC0	AND $C0BAFC,X
+; Check n-th NPC event bit
+C0/BAC1:	20EDBA  	JSR $BAED         ; Y: byte index, X: bit index
+C0/BAC4:	B9E01E  	LDA $1EE0,Y       ; NPC event byte
+C0/BAC7:	3FFCBAC0	AND $C0BAFC,X     ; isolate X-th event bit
 C0/BACB:	60      	RTS
  
 C0/BACC:	20EDBA  	JSR $BAED
@@ -23625,18 +23761,19 @@ C0/BAE2:	20EDBA  	JSR $BAED
 C0/BAE5:	B9401F  	LDA $1F40,Y
 C0/BAE8:	3FFCBAC0	AND $C0BAFC,X
 C0/BAEC:	60      	RTS
- 
-C0/BAED:	C220    	REP #$20      (16 bit accum./memory)
-C0/BAEF:	AA      	TAX
+
+; Get byte and bit indexes for Nth item
+C0/BAED:	C220    	REP #$20          ; 16-bit A
+C0/BAEF:	AA      	TAX               ; bit number
 C0/BAF0:	4A      	LSR A
 C0/BAF1:	4A      	LSR A
-C0/BAF2:	4A      	LSR A
-C0/BAF3:	A8      	TAY
-C0/BAF4:	7B      	TDC 
-C0/BAF5:	E220    	SEP #$20      (8 bit accum./memory)
-C0/BAF7:	8A      	TXA
-C0/BAF8:	2907    	AND #$07
-C0/BAFA:	AA      	TAX
+C0/BAF2:	4A      	LSR A             ; / 8 (8 bits per byte)
+C0/BAF3:	A8      	TAY               ; index byte
+C0/BAF4:	7B      	TDC               ; zero A/B
+C0/BAF5:	E220    	SEP #$20          ; 8-bit A
+C0/BAF7:	8A      	TXA               ; bit number
+C0/BAF8:	2907    	AND #$07          ; modulo 8
+C0/BAFA:	AA      	TAX               ; index bit
 C0/BAFB:	60      	RTS
  
 Data: bit LUT used by many, many things
@@ -23820,84 +23957,89 @@ C0/BC68:	C8      	INY
 C0/BC69:	C01800  	CPY #$0018
 C0/BC6C:	D085    	BNE $BBF3
 C0/BC6E:	60      	RTS
- 
-C0/BC6F:	A584    	LDA $84        (from C0/00D4)
-C0/BC71:	D05C    	BNE $BCCF
-C0/BC73:	A559    	LDA $59
-C0/BC75:	D058    	BNE $BCCF
-C0/BC77:	AC0308  	LDY $0803
-C0/BC7A:	B96A08  	LDA $086A,Y
-C0/BC7D:	290F    	AND #$0F
-C0/BC7F:	D04E    	BNE $BCCF
-C0/BC81:	B96908  	LDA $0869,Y
-C0/BC84:	D049    	BNE $BCCF
-C0/BC86:	B96D08  	LDA $086D,Y
-C0/BC89:	290F    	AND #$0F
-C0/BC8B:	D042    	BNE $BCCF
-C0/BC8D:	B96C08  	LDA $086C,Y
-C0/BC90:	D03D    	BNE $BCCF
-C0/BC92:	A6E5    	LDX $E5
-C0/BC94:	E00000  	CPX #$0000
-C0/BC97:	D036    	BNE $BCCF
-C0/BC99:	A5E7    	LDA $E7
-C0/BC9B:	C9CA    	CMP #$CA
-C0/BC9D:	D030    	BNE $BCCF
-C0/BC9F:	B97C08  	LDA $087C,Y
-C0/BCA2:	290F    	AND #$0F
-C0/BCA4:	C902    	CMP #$02
-C0/BCA6:	D027    	BNE $BCCF
-C0/BCA8:	C220    	REP #$20      (16 bit accum./memory)
-C0/BCAA:	A582    	LDA $82
-C0/BCAC:	0A      	ASL A
-C0/BCAD:	AA      	TAX
-C0/BCAE:	BF0200C4	LDA $C40002,X
-C0/BCB2:	851E    	STA $1E
-C0/BCB4:	BF0000C4	LDA $C40000,X
-C0/BCB8:	C51E    	CMP $1E
-C0/BCBA:	F013    	BEQ $BCCF
-C0/BCBC:	AA      	TAX
-C0/BCBD:	BF0000C4	LDA $C40000,X
-C0/BCC1:	C5AF    	CMP $AF
-C0/BCC3:	F00E    	BEQ $BCD3
-C0/BCC5:	8A      	TXA
-C0/BCC6:	18      	CLC
-C0/BCC7:	690500  	ADC #$0005
-C0/BCCA:	AA      	TAX
-C0/BCCB:	E41E    	CPX $1E
-C0/BCCD:	D0EE    	BNE $BCBD
-C0/BCCF:	7B      	TDC 
-C0/BCD0:	E220    	SEP #$20      (8 bit accum./memory)
+
+; Check current tile for events (runs in main loop)
+
+C0/BC6F:	A584    	LDA $84           ; "Map Loading"
+C0/BC71:	D05C    	BNE $BCCF         ; exit if ^
+C0/BC73:	A559    	LDA $59           ; "Menu Opening"
+C0/BC75:	D058    	BNE $BCCF         ; exit if ^
+C0/BC77:	AC0308  	LDY $0803         ; showing character's object data offset
+C0/BC7A:	B96A08  	LDA $086A,Y       ; x coords
+C0/BC7D:	290F    	AND #$0F          ; isolate pixel coords
+C0/BC7F:	D04E    	BNE $BCCF         ; exit if null
+C0/BC81:	B96908  	LDA $0869,Y       ; x coords (pixels/4096)
+C0/BC84:	D049    	BNE $BCCF         ; exit if null
+C0/BC86:	B96D08  	LDA $086D,Y       ; y coords
+C0/BC89:	290F    	AND #$0F          ; isolate pixel coords
+C0/BC8B:	D042    	BNE $BCCF         ; exit if null
+C0/BC8D:	B96C08  	LDA $086C,Y       ; y coords (pixels/4096)
+C0/BC90:	D03D    	BNE $BCCF         ; exit if null
+C0/BC92:	A6E5    	LDX $E5           ; event stack pointer
+C0/BC94:	E00000  	CPX #$0000        ; empty
+C0/BC97:	D036    	BNE $BCCF         ; exit if event executing already
+C0/BC99:	A5E7    	LDA $E7           ; event stack pointer bank
+C0/BC9B:	C9CA    	CMP #$CA          ; base
+C0/BC9D:	D030    	BNE $BCCF         ; exit if event executing already
+C0/BC9F:	B97C08  	LDA $087C,Y       ; movement flags
+C0/BCA2:	290F    	AND #$0F          ; isolate "Movement Type"
+C0/BCA4:	C902    	CMP #$02          ; "User Controlled"
+C0/BCA6:	D027    	BNE $BCCF         ; exit if not ^
+C0/BCA8:	C220    	REP #$20          ; 16-bit A
+C0/BCAA:	A582    	LDA $82           ; current map id
+C0/BCAC:	0A      	ASL A             ; x2
+C0/BCAD:	AA      	TAX               ; index it
+C0/BCAE:	BF0200C4	LDA $C40002,X     ; get address of next map's tile data
+C0/BCB2:	851E    	STA $1E           ; save it
+C0/BCB4:	BF0000C4	LDA $C40000,X     ; get address of this map's tile data
+C0/BCB8:	C51E    	CMP $1E           ; are they the same (no tile data)
+C0/BCBA:	F013    	BEQ $BCCF         ; exit if ^
+C0/BCBC:	AA      	TAX               ; index starting tile offset
+
+C0/BCBD:	BF0000C4	LDA $C40000,X     ; tile XY position
+C0/BCC1:	C5AF    	CMP $AF           ; compare to party's XY position
+C0/BCC3:	F00E    	BEQ $BCD3         ; if match, branch and add tile event
+C0/BCC5:	8A      	TXA               ; prepare increment
+C0/BCC6:	18      	CLC               ; clear carry
+C0/BCC7:	690500  	ADC #$0005        ; +5 (size of event tile struct)
+C0/BCCA:	AA      	TAX               ; index it
+C0/BCCB:	E41E    	CPX $1E           ; have we reached the next map's tiles
+C0/BCCD:	D0EE    	BNE $BCBD         ; loop until end of this map's tiles
+C0/BCCF:	7B      	TDC               ; clear A/B
+C0/BCD0:	E220    	SEP #$20          ; 8-bit A
 C0/BCD2:	60      	RTS
- 
-C0/BCD3:	BF0200C4	LDA $C40002,X
-C0/BCD7:	85E5    	STA $E5
-C0/BCD9:	8DF405  	STA $05F4
-C0/BCDC:	7B      	TDC 
-C0/BCDD:	997108  	STA $0871,Y
-C0/BCE0:	997308  	STA $0873,Y
-C0/BCE3:	E220    	SEP #$20      (8 bit accum./memory)
-C0/BCE5:	997E08  	STA $087E,Y
-C0/BCE8:	A901    	LDA #$01
-C0/BCEA:	8D8E07  	STA $078E
-C0/BCED:	BF0400C4	LDA $C40004,X
-C0/BCF1:	18      	CLC
-C0/BCF2:	69CA    	ADC #$CA
-C0/BCF4:	85E7    	STA $E7
-C0/BCF6:	8DF605  	STA $05F6
-C0/BCF9:	A20000  	LDX #$0000
-C0/BCFC:	8E9405  	STX $0594
-C0/BCFF:	A9CA    	LDA #$CA
-C0/BD01:	8D9605  	STA $0596
-C0/BD04:	A901    	LDA #$01
-C0/BD06:	8DC705  	STA $05C7
-C0/BD09:	A20300  	LDX #$0003
-C0/BD0C:	86E8    	STX $E8
-C0/BD0E:	B97C08  	LDA $087C,Y
-C0/BD11:	997D08  	STA $087D,Y
-C0/BD14:	A904    	LDA #$04
-C0/BD16:	997C08  	STA $087C,Y
-C0/BD19:	20087E  	JSR $7E08
-C0/BD1C:	20ED2F  	JSR $2FED
+
+; Add Event to Stack (Tile event)
+
+C0/BCD3:	BF0200C4	LDA $C40002,X     ; event pointer
+C0/BCD7:	85E5    	STA $E5           ; set event address
+C0/BCD9:	8DF405  	STA $05F4         ; add to event loops
+C0/BCDC:	7B      	TDC               ; clear A/B
+C0/BCDD:	997108  	STA $0871,Y       ; clear horizontal mvmt speed
+C0/BCE0:	997308  	STA $0873,Y       ; clear vertical mvmt speed
+C0/BCE3:	E220    	SEP #$20          ; 8-bit A
+C0/BCE5:	997E08  	STA $087E,Y       ; clear mvmt direction
+C0/BCE8:	A901    	LDA #$01          ; "on"
+C0/BCEA:	8D8E07  	STA $078E         ; party is on a trigger
+C0/BCED:	BF0400C4	LDA $C40004,X     ; event bank
+C0/BCF1:	18      	CLC               ; clear carry
+C0/BCF2:	69CA    	ADC #$CA          ; add to base event bank
+C0/BCF4:	85E7    	STA $E7           ; set event bank
+C0/BCF6:	8DF605  	STA $05F6         ; add to event loops
+C0/BCF9:	A20000  	LDX #$0000        ; clear X
+C0/BCFC:	8E9405  	STX $0594         ; zero event stack
+C0/BCFF:	A9CA    	LDA #$CA          ; base event bank
+C0/BD01:	8D9605  	STA $0596         ; zero event stack (treated as empty)
+C0/BD04:	A901    	LDA #$01          ; one loop
+C0/BD06:	8DC705  	STA $05C7         ; set event loop count [?]
+C0/BD09:	A20300  	LDX #$0003        ; 3 bytes
+C0/BD0C:	86E8    	STX $E8           ; set event stack pointer
+C0/BD0E:	B97C08  	LDA $087C,Y       ; current movement flags
+C0/BD11:	997D08  	STA $087D,Y       ; back them up
+C0/BD14:	A904    	LDA #$04          ; "Facing Something" (user-controlled)
+C0/BD16:	997C08  	STA $087C,Y       ; set movement type
+C0/BD19:	20087E  	JSR $7E08         ; handle screen movement
+C0/BD1C:	20ED2F  	JSR $2FED         ; [?]
 C0/BD1F:	60      	RTS
  
 C0/BD20:	6458    	STZ $58
@@ -24071,19 +24213,19 @@ C0/BEB6:	8D7D08  	STA $087D
 C0/BEB9:	6447    	STZ $47
 C0/BEBB:	60      	RTS
  
-"Do everything when a map is loaded"
+; "Do everything when a map is loaded"
 C0/BEBC:	207403  	JSR $0374     (from C0/00A4)
 C0/BEBF:	208A84  	JSR $848A
 C0/BEC2:	A558    	LDA $58
 C0/BEC4:	D032    	BNE $BEF8
-C0/BEC6:	C220    	REP #$20      (16 bit accum./memory)
-C0/BEC8:	AD641F  	LDA $1F64      (load current map)
-C0/BECB:	29FF01  	AND #$01FF
-C0/BECE:	8D641F  	STA $1F64      (store the map)
-C0/BED1:	8582    	STA $82        (store map for encounters?)
-C0/BED3:	7B      	TDC 
-C0/BED4:	E220    	SEP #$20      (8 bit accum./memory)
-C0/BED6:	20AD1C  	JSR $1CAD
+C0/BEC6:	C220    	REP #$20       ; 16-bit A
+C0/BEC8:	AD641F  	LDA $1F64      ; current map id, settings
+C0/BECB:	29FF01  	AND #$01FF     ; isolate map id (index)
+C0/BECE:	8D641F  	STA $1F64      ; update to only map index
+C0/BED1:	8582    	STA $82        ; store index for encounters, chests [?]
+C0/BED3:	7B      	TDC            ; zero A/B
+C0/BED4:	E220    	SEP #$20       ; 8-bit A
+C0/BED6:	20AD1C  	JSR $1CAD      ; load map properties to 0520 buffer
 C0/BED9:	6447    	STZ $47
 C0/BEDB:	9C7B07  	STZ $077B
 C0/BEDE:	A901    	LDA #$01
@@ -24093,8 +24235,8 @@ C0/BEE4:	8E2711  	STX $1127
 C0/BEE7:	20B670  	JSR $70B6
 C0/BEEA:	207F17  	JSR $177F
 C0/BEED:	A600    	LDX $00
-C0/BEEF:	8E8C07  	STX $078C
-C0/BEF2:	9C8B07  	STZ $078B
+C0/BEEF:	8E8C07  	STX $078C      ; zero number of steps taken [?]
+C0/BEF2:	9C8B07  	STZ $078B      ; zero number of battles encountered
 C0/BEF5:	20DA6E  	JSR $6EDA
 C0/BEF8:	204A71  	JSR $714A
 C0/BEFB:	202746  	JSR $4627
@@ -24175,21 +24317,21 @@ C0/BFC6:	20C155  	JSR $55C1
 C0/BFC9:	205454  	JSR $5454
 C0/BFCC:	200451  	JSR $5104
 C0/BFCF:	203852  	JSR $5238
-C0/BFD2:	ADFA11  	LDA $11FA
-C0/BFD5:	3003    	BMI $BFDA
+C0/BFD2:	ADFA11  	LDA $11FA      ; map flags
+C0/BFD5:	3003    	BMI $BFDA      ; branch if "Enable startup"
 C0/BFD7:	4CA4C0  	JMP $C0A4
 
 Map is loaded, trigger an event (most of the time it's CA/5EB3)
 C0/BFDA:	C220    	REP #$20      (16 bit accum./memory)
-C0/BFDC:	AD641F  	LDA $1F64      (load map)
-C0/BFDF:	29FF01  	AND #$01FF
-C0/BFE2:	851E    	STA $1E
-C0/BFE4:	0A      	ASL A
+C0/BFDC:	AD641F  	LDA $1F64      ; map properties
+C0/BFDF:	29FF01  	AND #$01FF     ; isolate map index
+C0/BFE2:	851E    	STA $1E        ; store
+C0/BFE4:	0A      	ASL A          ; x2
 C0/BFE5:	18      	CLC
-C0/BFE6:	651E    	ADC $1E
-C0/BFE8:	AA      	TAX           (pointer is 1.5x the map)
-C0/BFE9:	7B      	TDC 
-C0/BFEA:	E220    	SEP #$20      (8 bit accum./memory)
+C0/BFE6:	651E    	ADC $1E        ; +index
+C0/BFE8:	AA      	TAX            ; index by map ID * 3
+C0/BFE9:	7B      	TDC            ; clear A/B
+C0/BFEA:	E220    	SEP #$20       ; 8-bit A
 C0/BFEC:	A9B2    	LDA #$B2
 C0/BFEE:	8D2406  	STA $0624      (B2 = "call subroutine" for events)
 C0/BFF1:	BF00FAD1	LDA $D1FA00,X  (event pointer, low byte)
@@ -24299,25 +24441,26 @@ C0/C0E9:	E647    	INC $47
 C0/C0EB:	207B67  	JSR $677B      (JMP fool!)
 C0/C0EE:	60      	RTS
  
-C0/C0EF:	AD8A07  	LDA $078A
-C0/C0F2:	2940    	AND #$40
-C0/C0F4:	D005    	BNE $C0FB
-C0/C0F6:	A9C1    	LDA #$C1
-C0/C0F8:	20D302  	JSR $02D3
-C0/C0FB:	AD8A07  	LDA $078A
-C0/C0FE:	303D    	BMI $C13D
-C0/C100:	6446    	STZ $46
-C0/C102:	206405  	JSR $0564
-C0/C105:	A546    	LDA $46
-C0/C107:	C910    	CMP #$10
-C0/C109:	B004    	BCS $C10F
+C0/C0EF:	AD8A07  	LDA $078A       ; "Disable Battle Blur/SFX"
+C0/C0F2:	2940    	AND #$40        ; isolate "Disable Battle SFX"
+C0/C0F4:	D005    	BNE $C0FB       ; branch if ^
+C0/C0F6:	A9C1    	LDA #$C1        ; encounter sound effect
+C0/C0F8:	20D302  	JSR $02D3       ; play sound effect
+
+C0/C0FB:	AD8A07  	LDA $078A       ; "Disable Battle Blur/SFX"
+C0/C0FE:	303D    	BMI $C13D       ; exit if blur disabled
+C0/C100:	6446    	STZ $46         ; zero frame counter
+C0/C102:	206405  	JSR $0564       ; wait until after next NMI
+C0/C105:	A546    	LDA $46         ; how many frames waited
+C0/C107:	C910    	CMP #$10        ; waited 16 frames
+C0/C109:	B004    	BCS $C10F       ; branch if 16+ frames (NMIs)
 C0/C10B:	2907    	AND #$07
 C0/C10D:	8002    	BRA $C111
 C0/C10F:	290F    	AND #$0F
 C0/C111:	0A      	ASL A
 C0/C112:	0A      	ASL A
 C0/C113:	0A      	ASL A
-C0/C114:	0A      	ASL A
+C0/C114:	0A      	ASL A           ; x16
 C0/C115:	090F    	ORA #$0F
 C0/C117:	8F33827E	STA $7E8233
 C0/C11B:	8F37827E	STA $7E8237
@@ -24337,18 +24480,18 @@ C0/C141:	207403  	JSR $0374
 C0/C144:	200505  	JSR $0505
 C0/C147:	209170  	JSR $7091
 C0/C14A:	AE0308  	LDX $0803
-C0/C14D:	8EA61F  	STX $1FA6
+C0/C14D:	8EA61F  	STX $1FA6      ; backup current showing object data offset
 C0/C150:	BD7F08  	LDA $087F,X
-C0/C153:	8D681F  	STA $1F68
+C0/C153:	8D681F  	STA $1F68      ; backup party facing direction
 C0/C156:	A5B2    	LDA $B2
-C0/C158:	8D4407  	STA $0744
-C0/C15B:	08      	PHP 
-C0/C15C:	8B      	PHB
-C0/C15D:	0B      	PHD
-C0/C15E:	220000C2	JSR $C20000
-C0/C162:	2B      	PLD 
-C0/C163:	AB      	PLB
-C0/C164:	28      	PLP 
+C0/C158:	8D4407  	STA $0744      ; backup party Z-level
+C0/C15B:	08      	PHP            ; store flags
+C0/C15C:	8B      	PHB            ; store Bank
+C0/C15D:	0B      	PHD            ; store Direct Page
+C0/C15E:	220000C2	JSR $C20000    ; enter battle
+C0/C162:	2B      	PLD            ; restore Direct Page
+C0/C163:	AB      	PLB            ; restore Bank
+C0/C164:	28      	PLP            ; restore flags
 C0/C165:	207403  	JSR $0374
 C0/C168:	201505  	JSR $0515
 C0/C16B:	207770  	JSR $7077
@@ -24356,143 +24499,150 @@ C0/C16E:	A901    	LDA #$01
 C0/C170:	8558    	STA $58
 C0/C172:	207305  	JSR $0573
 C0/C175:	60      	RTS
- 
-C0/C176:	7B      	TDC 
-C0/C177:	201505  	JSR $0515      (Copy 256 bytes..  from $1200-12FF to $0000-$00FF)
-C0/C17A:	AD641F  	LDA $1F64      (load current map, low byte)
-C0/C17D:	0A      	ASL A
-C0/C17E:	0A      	ASL A
-C0/C17F:	0A      	ASL A
-C0/C180:	851A    	STA $1A        ($1A will be 0 or 8)
-C0/C182:	ADF911  	LDA $11F9
-C0/C185:	2907    	AND #$07
-C0/C187:	051A    	ORA $1A
-C0/C189:	AA      	TAX
-C0/C18A:	BF7FC2C0	LDA $C0C27F,X  (load background)
-C0/C18E:	8FE21100	STA $0011E2    (store background)
-C0/C192:	7B      	TDC 
-C0/C193:	8FE31100	STA $0011E3
-C0/C197:	8A      	TXA
-C0/C198:	2907    	AND #$07
-C0/C19A:	AA      	TAX
-C0/C19B:	BF8FC2C0	LDA $C0C28F,X
-C0/C19F:	8522    	STA $22
-C0/C1A1:	6423    	STZ $23
-C0/C1A3:	BF97C2C0	LDA $C0C297,X
-C0/C1A7:	8520    	STA $20
-C0/C1A9:	6421    	STZ $21
-C0/C1AB:	AD641F  	LDA $1F64      (load current map, low byte)
-C0/C1AE:	851F    	STA $1F
-C0/C1B0:	641E    	STZ $1E
-C0/C1B2:	AD611F  	LDA $1F61      (load map Y position)
-C0/C1B5:	29E0    	AND #$E0
-C0/C1B7:	851E    	STA $1E
-C0/C1B9:	AD601F  	LDA $1F60      (load map X position)
-C0/C1BC:	4A      	LSR A
-C0/C1BD:	4A      	LSR A
-C0/C1BE:	4A      	LSR A
-C0/C1BF:	291C    	AND #$1C
-C0/C1C1:	051E    	ORA $1E
-C0/C1C3:	851E    	STA $1E
-C0/C1C5:	C220    	REP #$20      (16 bit accum./memory)
-C0/C1C7:	A51E    	LDA $1E
-C0/C1C9:	0520    	ORA $20
-C0/C1CB:	AA      	TAX
-C0/C1CC:	7B      	TDC 
-C0/C1CD:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C1CF:	BF0054CF	LDA $CF5400,X  (load overworld 4-packs)
-C0/C1D3:	8524    	STA $24
-C0/C1D5:	C9FF    	CMP #$FF       (is it a Veldt pack?)
-C0/C1D7:	D006    	BNE $C1DF      (branch if not)
-C0/C1D9:	A90F    	LDA #$0F
-C0/C1DB:	8FE41100	STA $0011E4    (set "no winning stand" and other flags)
-C0/C1DF:	C220    	REP #$20      (16 bit accum./memory)
-C0/C1E1:	A51E    	LDA $1E
-C0/C1E3:	4A      	LSR A
-C0/C1E4:	4A      	LSR A
-C0/C1E5:	AA      	TAX
-C0/C1E6:	7B      	TDC 
-C0/C1E7:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C1E9:	BF0058CF	LDA $CF5800,X  (load encounter frequency)
-C0/C1ED:	A422    	LDY $22
-C0/C1EF:	F005    	BEQ $C1F6
-C0/C1F1:	4A      	LSR A
-C0/C1F2:	4A      	LSR A
-C0/C1F3:	88      	DEY 
-C0/C1F4:	D0FB    	BNE $C1F1
-C0/C1F6:	2903    	AND #$03
-C0/C1F8:	C903    	CMP #$03
-C0/C1FA:	F07C    	BEQ $C278
-C0/C1FC:	851A    	STA $1A
-C0/C1FE:	ADDF11  	LDA $11DF      (load party-wide effects)
-C0/C201:	2903    	AND #$03       (keep Moogle Charm and Charm Bangle)
-C0/C203:	0A      	ASL A
-C0/C204:	0A      	ASL A
-C0/C205:	051A    	ORA $1A
-C0/C207:	0A      	ASL A
-C0/C208:	AA      	TAX
-C0/C209:	BF9FC2C0	LDA $C0C29F,X
-C0/C20D:	1FA0C2C0	ORA $C0C2A0,X
-C0/C211:	F065    	BEQ $C278
-C0/C213:	C220    	REP #$20      (16 bit accum./memory)
-C0/C215:	AD6E1F  	LDA $1F6E      (load encounter counter)
-C0/C218:	18      	CLC
-C0/C219:	7F9FC2C0	ADC $C0C29F,X
-C0/C21D:	9003    	BCC $C222
-C0/C21F:	A900FF  	LDA #$FF00     (force an encounter)
-C0/C222:	8D6E1F  	STA $1F6E      (store encounter counter)
-C0/C225:	7B      	TDC 
-C0/C226:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C228:	2079C4  	JSR $C479      (determine when you'll trigger the next encounter)
-C0/C22B:	CD6F1F  	CMP $1F6F
-C0/C22E:	B048    	BCS $C278
-C0/C230:	9C6E1F  	STZ $1F6E
-C0/C233:	9C6F1F  	STZ $1F6F
-C0/C236:	A524    	LDA $24
-C0/C238:	C9FF    	CMP #$FF       (was it an invalid/Veldt pack?)
-C0/C23A:	D003    	BNE $C23F      (continue if not)
-C0/C23C:	4CDFC2  	JMP $C2DF      (if it was, go pick a Veldt formation instead)
 
-C0/C23F:	C220    	REP #$20      (16 bit accum./memory)
-C0/C241:	0A      	ASL A
-C0/C242:	0A      	ASL A
-C0/C243:	0A      	ASL A
-C0/C244:	AA      	TAX
-C0/C245:	7B      	TDC 
-C0/C246:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C248:	2096C4  	JSR $C496
-C0/C24B:	C950    	CMP #$50
-C0/C24D:	900E    	BCC $C25D      (if random number is less than 50h, skip all incrementations.)
+; Overworld Encounter Check
+
+C0/C176:	7B      	TDC            ; zero A/B
+C0/C177:	201505  	JSR $0515      ; restore field direct page from $1200-$12FF
+C0/C17A:	AD641F  	LDA $1F64      ; current map index
+C0/C17D:	0A      	ASL A          ; x2
+C0/C17E:	0A      	ASL A          ; x4
+C0/C17F:	0A      	ASL A          ; x8
+C0/C180:	851A    	STA $1A        ; (0 for WoB Overworld, 8 for WoR Overworld)
+C0/C182:	ADF911  	LDA $11F9      ; world map terrain type [?]
+C0/C185:	2907    	AND #$07       ; isolate background index
+C0/C187:	051A    	ORA $1A        ; add map index to top bits
+C0/C189:	AA      	TAX            ; index it
+C0/C18A:	BF7FC2C0	LDA $C0C27F,X  ; battle background for map
+C0/C18E:	8FE21100	STA $0011E2    ; save (for dance check in C2)
+C0/C192:	7B      	TDC            ; zero A/B
+C0/C193:	8FE31100	STA $0011E3    ; allows reading background in 16-bit [?]
+C0/C197:	8A      	TXA            ; get index again
+C0/C198:	2907    	AND #$07       ; isolate "background index"
+C0/C19A:	AA      	TAX            ; index it
+C0/C19B:	BF8FC2C0	LDA $C0C28F,X  ; encounter danger for terrain [?]
+C0/C19F:	8522    	STA $22        ; save it
+C0/C1A1:	6423    	STZ $23        ; zero top byte
+C0/C1A3:	BF97C2C0	LDA $C0C297,X  ; enemy pack(s) group for terrain
+C0/C1A7:	8520    	STA $20        ; save it
+C0/C1A9:	6421    	STZ $21        ; zero top byte
+C0/C1AB:	AD641F  	LDA $1F64      ; current map index
+C0/C1AE:	851F    	STA $1F        ; save it (0 for WoB, 1 for WoR)
+C0/C1B0:	641E    	STZ $1E        ; [?] not necessary (see below)
+C0/C1B2:	AD611F  	LDA $1F61      ; Y position on world map (at map load time)
+C0/C1B5:	29E0    	AND #$E0       ; which group of 32
+C0/C1B7:	851E    	STA $1E        ; save it
+C0/C1B9:	AD601F  	LDA $1F60      ; X position on world map (at map load time)
+C0/C1BC:	4A      	LSR A          ; / 2
+C0/C1BD:	4A      	LSR A          ; / 4
+C0/C1BE:	4A      	LSR A          ; / 8
+C0/C1BF:	291C    	AND #$1C       ; which group of 32 (shifted down)
+C0/C1C1:	051E    	ORA $1E        ; combine with Y group
+C0/C1C3:	851E    	STA $1E        ; this is which 32x32 region we're in
+C0/C1C5:	C220    	REP #$20       ; 16-bit A
+C0/C1C7:	A51E    	LDA $1E        ; full region index (WoB/WoR) [x4]
+C0/C1C9:	0520    	ORA $20        ; add offset based on terrain type
+C0/C1CB:	AA      	TAX            ; index it
+C0/C1CC:	7B      	TDC            ; zero A/B
+C0/C1CD:	E220    	SEP #$20       ; 8-bit A
+C0/C1CF:	BF0054CF	LDA $CF5400,X  ; load enemy pack(s) for region + terrain
+C0/C1D3:	8524    	STA $24        ; save
+C0/C1D5:	C9FF    	CMP #$FF       ; is it a Veldt pack
+C0/C1D7:	D006    	BNE $C1DF      ; branch if not ^
+C0/C1D9:	A90F    	LDA #$0F       ; "Leap Command", "Gau can return", etc
+C0/C1DB:	8FE41100	STA $0011E4    ; set Veldt flags (leap, gau, music)
+
+C0/C1DF:	C220    	REP #$20       ; 16-bit A
+C0/C1E1:	A51E    	LDA $1E        ; region index (x4)
+C0/C1E3:	4A      	LSR A          ; / 2
+C0/C1E4:	4A      	LSR A          ; / 4
+C0/C1E5:	AA      	TAX            ; plain region index (32x32 tile section)
+C0/C1E6:	7B      	TDC            ; zero A/B
+C0/C1E7:	E220    	SEP #$20       ; 8-bit A
+C0/C1E9:	BF0058CF	LDA $CF5800,X  ; encounter rate for this region
+C0/C1ED:	A422    	LDY $22        ; encounter rate for terrain type
+C0/C1EF:	F005    	BEQ $C1F6      ; branch if zero (used bottom two bits)
+C0/C1F1:	4A      	LSR A          ; >> 1
+C0/C1F2:	4A      	LSR A          ; >> 2 (get next two bits)
+C0/C1F3:	88      	DEY            ; decrement counter
+C0/C1F4:	D0FB    	BNE $C1F1      ; loop till this terrain's encounter rate
+
+C0/C1F6:	2903    	AND #$03       ; isolate rate for this region/terrain
+C0/C1F8:	C903    	CMP #$03       ; "null" rate (no encounters)
+C0/C1FA:	F07C    	BEQ $C278      ; exit if ^
+C0/C1FC:	851A    	STA $1A        ; save rate
+C0/C1FE:	ADDF11  	LDA $11DF      ; field effects (from equipment, etc)
+C0/C201:	2903    	AND #$03       ; isolate "Moogle Charm", "Charm Bangle"
+C0/C203:	0A      	ASL A          ; << 1
+C0/C204:	0A      	ASL A          ; << 2
+C0/C205:	051A    	ORA $1A        ; add to encounter rate index
+C0/C207:	0A      	ASL A          ; x2
+C0/C208:	AA      	TAX            ; index to rate for terrain/region/effects
+C0/C209:	BF9FC2C0	LDA $C0C29F,X  ; low byte of rate
+C0/C20D:	1FA0C2C0	ORA $C0C2A0,X  ; hi byte of rate
+C0/C211:	F065    	BEQ $C278      ; exit if no encounters
+C0/C213:	C220    	REP #$20       ; 16-bit A
+C0/C215:	AD6E1F  	LDA $1F6E      ; encounter counter
+C0/C218:	18      	CLC            ; clear carry
+C0/C219:	7F9FC2C0	ADC $C0C29F,X  ; add full encounter rate
+C0/C21D:	9003    	BCC $C222      ; branch if no overflow
+C0/C21F:	A900FF  	LDA #$FF00     ; else, load max
+C0/C222:	8D6E1F  	STA $1F6E      ; save updated counter value
+C0/C225:	7B      	TDC            ; zero A/B
+C0/C226:	E220    	SEP #$20       ; 8-bit A
+C0/C228:	2079C4  	JSR $C479      ; special random(255) getter
+C0/C22B:	CD6F1F  	CMP $1F6F      ; compare to hibyte of counter
+C0/C22E:	B048    	BCS $C278      ; exit if higher than counter (no encounter)
+
+C0/C230:	9C6E1F  	STZ $1F6E      ; else, zero counter
+C0/C233:	9C6F1F  	STZ $1F6F      ; else, zero counter
+C0/C236:	A524    	LDA $24        ; enemy pack(s) index
+C0/C238:	C9FF    	CMP #$FF       ; Veldt pack [?]
+C0/C23A:	D003    	BNE $C23F      ; branch if not ^
+C0/C23C:	4CDFC2  	JMP $C2DF      ; else, pick a Veldt formation
+
+C0/C23F:	C220    	REP #$20       ; 16-bit A
+C0/C241:	0A      	ASL A          ; x2
+C0/C242:	0A      	ASL A          ; x4
+C0/C243:	0A      	ASL A          ; x8
+C0/C244:	AA      	TAX            ; index to first formation
+C0/C245:	7B      	TDC            ; zero A/B
+C0/C246:	E220    	SEP #$20       ; 8-bit A
+C0/C248:	2096C4  	JSR $C496      ; another special random(255) getter
+C0/C24B:	C950    	CMP #$50       ; 31%
+C0/C24D:	900E    	BCC $C25D      ; branch if in first 31%
 C0/C24F:	E8      	INX
-C0/C250:	E8      	INX           (point to second formation in 4-pack)
-C0/C251:	C9A0    	CMP #$A0
-C0/C253:	9008    	BCC $C25D      (if 50h <= random number < A0h, don't increment index anymore)
+C0/C250:	E8      	INX            ; point to next formation
+C0/C251:	C9A0    	CMP #$A0       ; next 31%
+C0/C253:	9008    	BCC $C25D      ; branch if in next 31%
 C0/C255:	E8      	INX
-C0/C256:	E8      	INX           (point to third formation in 4-pack)
-
-C0/C257:	C9F0    	CMP #$F0
-
-C0/C259:	9002    	BCC $C25D      (if A0h <= random number < F0h, don't increment index anymore)
+C0/C256:	E8      	INX            ; point to next formation
+C0/C257:	C9F0    	CMP #$F0       ; next 31%
+C0/C259:	9002    	BCC $C25D      ; branch if in next 31%
 C0/C25B:	E8      	INX
-C0/C25C:	E8      	INX           (point to fourth formation in 4-pack)
-C0/C25D:	C220    	REP #$20      (16 bit accum./memory)
-C0/C25F:	BF0048CF	LDA $CF4800,X  (load formation 4-pack data)
-C0/C263:	8FE01100	STA $0011E0    (store formation to encounter)
-C0/C267:	7B      	TDC 
-C0/C268:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C26A:	ADD71E  	LDA $1ED7
-C0/C26D:	2910    	AND #$10
-C0/C26F:	4A      	LSR A
-C0/C270:	8FE41100	STA $0011E4
-C0/C274:	A901    	LDA #$01
-C0/C276:	8001    	BRA $C279
-C0/C278:	7B      	TDC 
-C0/C279:	48      	PHA
-C0/C27A:	200505  	JSR $0505      (Copy 256 bytes..  from $0000-$00FF to $1200-12FF)
-C0/C27D:	68      	PLA
+C0/C25C:	E8      	INX            ; point to next formation
+
+C0/C25D:	C220    	REP #$20       ; 16-bit A
+C0/C25F:	BF0048CF	LDA $CF4800,X  ; load formation ID
+C0/C263:	8FE01100	STA $0011E0    ; save formation ID
+C0/C267:	7B      	TDC            ; zero A/B
+C0/C268:	E220    	SEP #$20       ; 8-bit A
+C0/C26A:	ADD71E  	LDA $1ED7      ; some field effects
+C0/C26D:	2910    	AND #$10       ; "continue current music"
+C0/C26F:	4A      	LSR A          ; shift to new bit
+C0/C270:	8FE41100	STA $0011E4    ; save ^ flag
+C0/C274:	A901    	LDA #$01       ; flag that encounter should happen
+C0/C276:	8001    	BRA $C279      ; finish
+
+C0/C278:	7B      	TDC            ; zero A/B (no encounter)
+
+C0/C279:	48      	PHA            ; store whether encounter happens
+C0/C27A:	200505  	JSR $0505      ; backup field direct page to $1200-$12FF
+C0/C27D:	68      	PLA            ; restore whether encounter happens
 C0/C27E:	6B      	RTL
  
-Data: battle backgrounds
+; Battle Backgrounds for Balance Overworld
+
 C0/C27F:	00      (WoB grass, nice blue sky)
 C2/C280:	01      (WoR forest, brownish cast)   
 C0/C281:	02      (WoB desert, blue sky)
@@ -24501,7 +24651,9 @@ C0/C283:	04      (town background.. tint seems to correspond to FF3usME's "Zozo 
 C0/C284:	05      (WoR dry land.. pinkish sky)
 C0/C285:	06      (WoB Veldt.. dry land, blue sky.. believe I've seen this for WoR Veldt, too)
 C0/C286:	07      (falling sky en route to Floating Continent)
- 
+
+; Battle Backgrounds for Ruin Overworld
+
 C0/C287:	00      (WoB grass, nice blue sky)
 C0/C288:	01      (WoR forest, brownish cast)
 C0/C289:	2F      (WoR desert, pinkish sky)
@@ -24511,91 +24663,87 @@ C0/C28C:	05      (WoR dry land.. pinkish sky)
 C0/C28D:	06      (WoB Veldt.. dry land, blue sky.. believe I've seen this for WoR Veldt, too)
 C0/C28E:	07      (falling sky en route to Floating Continent)
 
-Data:
-C0/C28F:	03
-C0/C290:	02
-C0/C291:	01
-C0/C292:	02
-C0/C293:	03
-C0/C294:	00
-C0/C295:	03
-C0/C296:	03
- 
-Data:
-C0/C297:	00
-C0/C298:	01
-C0/C299:	02
-C0/C29A:	01
-C0/C29B:	00
-C0/C29C:	03
-C0/C29D:	00
-C0/C29E:	00
+; Encounter Rate Offset for Terrain Type
+; Full region encounter rates pack 4 rates into 8 bits
+; ggffddww (eg: grass, forest, desert, wasteland)
 
-Data - overworld incrementors, added every step to a counter that's
- been accumulating since the last encounter)
+C0/C28F:	03    ; grass             
+C0/C290:	02    ; ruin forest
+C0/C291:	01    ; desert
+C0/C292:	02    ; good forest
+C0/C293:	03    ; wasteland/town [?]
+C0/C294:	00    ; wasteland
+C0/C295:	03    ; veldt
+C0/C296:	03    ; sky fall
  
-                 (the FF3usME name ==> then when i think it _really_ means..)
+; Enemy Pack Groups for Terrain Type
+
+C0/C297:	00    ; grass             
+C0/C298:	01    ; ruin forest
+C0/C299:	02    ; desert
+C0/C29A:	01    ; good forest
+C0/C29B:	00    ; wasteland/town [?]
+C0/C29C:	03    ; wasteland
+C0/C29D:	00    ; veldt
+C0/C29E:	00    ; sky fall
+
+; Normal Encounter Rates (Overworld)
  
-(normal.  no Charm Bangle or Moogle Charm)
+C0/C29F:	C000  ; normal encounter frequency
+C0/C2A1:	6000  ; fewer encounters
+C0/C2A3:	8001  ; more encounters
+C0/C2A5:	0000  ; no encounters
  
-C0/C29F:	C000   ("less encounter" frequency ==> looks like "normal encounter")
-C0/C2A1:	6000   ("norm encounter" frequency ==> looks like "less encounter")
-C0/C2A3:	8001   ("more encounter" frequency ==> looks right)
-C0/C2A5:	0000   ("no encounter" frequency ==> looks right)
+; Encounter Rates w/ Charm Bangle (Overworld)
  
-(Charm Bangle, halves of above numbers)
+C0/C2A7:	6000  ; normal encounter frequency
+C0/C2A9:	3000  ; fewer encounters
+C0/C2AB:	C000  ; more encounters
+C0/C2AD:	0000  ; no encounters
  
-C0/C2A7:	6000   ("less encounter" frequency ==> looks like "normal encounter")
-C0/C2A9:	3000   ("norm encounter" frequency ==> looks like "less encounter")
-C0/C2AB:	C000   ("more encounter" frequency ==> looks right)
-C0/C2AD:	0000   ("no encounter" frequency ==> looks right)
- 
-(Moogle Charm, but no Charm Bangle)
+; Encounter Rates w/ Moogle Charm (Overworld)
  
 C0/C2AF:	0000
 C0/C2B1:	0000
 C0/C2B3:	0000
 C0/C2B5:	0000
  
-(Moogle Charm, plus Charm Bangle.  aka 8 wasted bytes ^__~ )
+; Encounter Rates w/ Moogle Charm and Charm Bangle (Overworld)
  
 C0/C2B7:	0000
 C0/C2B9:	0000
 C0/C2BB:	0000
 C0/C2BD:	0000
  
-(Data - dungeon incrementors, added every step to a counter that's
- been accumulating since the last encounter)
+; Normal Encounter Rates (Dungeon)
  
-                 (the FF3usME name ==> then when i think it _really_ means..)
+C0/C2BF:	7000  ; normal encounters
+C0/C2C1:	4000  ; fewer encounters
+C0/C2C3:	6001  ; more encounters
+C0/C2C5:	0002  ; most encounters [?]
  
-(normal.  no Charm Bangle or Moogle Charm)
+; Encounter Rates w/ Charm Bangle (Dungeon)
  
-C0/C2BF:	7000   ("less encounter" frequency ==> looks like "normal encounter")
-C0/C2C1:	4000   ("norm encounter" frequency ==> looks like "less encounter")
-C0/C2C3:	6001   ("more encounter" frequency ==> looks right)
-C0/C2C5:	0002   ("no encounter" frequency ==> looks like ENCOUNTERS UP THE WAZOO)
+C0/C2C7:	3800  ; normal encounters
+C0/C2C9:	2000  ; fewer encounters
+C0/C2CB:	B000  ; more encounters
+C0/C2CD:	0001  ; most encounters [?]
  
-(Charm Bangle, halves of above numbers)
- 
-C0/C2C7:	3800   ("less encounter" frequency ==> looks like "normal encounter")
-C0/C2C9:	2000   ("norm encounter" frequency ==> looks like "less encounter")
-C0/C2CB:	B000   ("more encounter" frequency ==> looks right)
-C0/C2CD:	0001   ("no encounter" frequency ==> looks like ENCOUNTERS UP THE WAZOO)
- 
-(Moogle Charm, but no Charm Bangle)
+; Encounter Rates w/ Moogle Charm (Dungeon)
  
 C0/C2CF:	0000
 C0/C2D1:	0000
 C0/C2D3:	0000
 C0/C2D5:	0000
  
-(Moogle Charm, plus Charm Bangle.  aka 8 wasted bytes ^__~ )
+; Encounter Rates w/ Moogle Charm and Charm Bangle (Dungeon)
  
 C0/C2D7:	0000
 C0/C2D9:	0000
 C0/C2DB:	0000
 C0/C2DD:	0000
+
+; Pick a Veldt Enemy Pack Formation
 
 C0/C2DF:	EEA51F  	INC $1FA5      (increment Veldt pack #)
 C0/C2E2:	ADA51F  	LDA $1FA5      (load Veldt pack #)
@@ -24670,120 +24818,123 @@ C0/C367:	A557    	LDA $57
 C0/C369:	D001    	BNE $C36C
 C0/C36B:	60      	RTS
 
-Called for every step in dungeons
+; Check encounter in dungeon (per step)
+
 C0/C36C:	6457    	STZ $57
-C0/C36E:	AE8C07  	LDX $078C
-C0/C371:	E8      	INX
-C0/C372:	8E8C07  	STX $078C
-C0/C375:	AD8200  	LDA $0082
-C0/C378:	2903    	AND #$03
-C0/C37A:	A8      	TAY
-C0/C37B:	C220    	REP #$20      (16 bit accum./memory)
-C0/C37D:	AD8200  	LDA $0082
-C0/C380:	4A      	LSR A
-C0/C381:	4A      	LSR A
-C0/C382:	AA      	TAX
-C0/C383:	7B      	TDC 
-C0/C384:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C386:	BF8058CF	LDA $CF5880,X
-C0/C38A:	C400    	CPY $00
-C0/C38C:	F005    	BEQ $C393
-C0/C38E:	4A      	LSR A
-C0/C38F:	4A      	LSR A
-C0/C390:	88      	DEY 
-C0/C391:	D0FB    	BNE $C38E
-C0/C393:	2903    	AND #$03
-C0/C395:	851A    	STA $1A
-C0/C397:	ADDF11  	LDA $11DF      (load party-wide effects)
-C0/C39A:	2903    	AND #$03       (keep Moogle Charm and Charm Bangle)
-C0/C39C:	0A      	ASL A
-C0/C39D:	0A      	ASL A
-C0/C39E:	051A    	ORA $1A
-C0/C3A0:	0A      	ASL A
-C0/C3A1:	AA      	TAX
-C0/C3A2:	BFBFC2C0	LDA $C0C2BF,X
-C0/C3A6:	1FC0C2C0	ORA $C0C2C0,X
-C0/C3AA:	D003    	BNE $C3AF
-C0/C3AC:	4C78C4  	JMP $C478      (RTS would work just as easily)
+C0/C36E:	AE8C07  	LDX $078C       ; number of encounter-checked steps
+C0/C371:	E8      	INX             ; +1
+C0/C372:	8E8C07  	STX $078C       ; update number of steps
+C0/C375:	AD8200  	LDA $0082       ; current map index
+C0/C378:	2903    	AND #$03        ; modulo 8
+C0/C37A:	A8      	TAY             ; index it
+C0/C37B:	C220    	REP #$20        ; 16-bit A
+C0/C37D:	AD8200  	LDA $0082       ; current map index
+C0/C380:	4A      	LSR A           ; / 2
+C0/C381:	4A      	LSR A           ; / 4
+C0/C382:	AA      	TAX             ; index to byte for map rate
+C0/C383:	7B      	TDC             ; zero A/B
+C0/C384:	E220    	SEP #$20        ; 8-bit A
+C0/C386:	BF8058CF	LDA $CF5880,X   ; encounter rates for 4 maps
+C0/C38A:	C400    	CPY $00         ; use bits 1+2
+C0/C38C:	F005    	BEQ $C393       ; branch if ^
+C0/C38E:	4A      	LSR A           ; >> 1
+C0/C38F:	4A      	LSR A           ; >> 2
+C0/C390:	88      	DEY             ; get next encounter rate on this byte
+C0/C391:	D0FB    	BNE $C38E       ; loop till correct rate is found
 
-C0/C3AF:	C221    	REP #$21
-C0/C3B1:	AD6E1F  	LDA $1F6E      (load encounter counter)
-C0/C3B4:	7FBFC2C0	ADC $C0C2BF,X
-C0/C3B8:	9003    	BCC $C3BD
-C0/C3BA:	A900FF  	LDA #$FF00     (force an encounter)
-C0/C3BD:	8D6E1F  	STA $1F6E      (store encounter counter)
-C0/C3C0:	7B      	TDC 
-C0/C3C1:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C3C3:	2079C4  	JSR $C479
-C0/C3C6:	CD6F1F  	CMP $1F6F
-C0/C3C9:	B0A0    	BCS $C36B
-C0/C3CB:	9C6E1F  	STZ $1F6E
-C0/C3CE:	9C6F1F  	STZ $1F6F
-C0/C3D1:	AE8200  	LDX $0082
-C0/C3D4:	BF0056CF	LDA $CF5600,X  (load 4-packs used in zones)
-C0/C3D8:	C220    	REP #$20       (16 bit accum./memory)
-C0/C3DA:	0A      	ASL A          (multiply by 2)
-C0/C3DB:	0A      	ASL A          (multiply by 4)
-C0/C3DC:	0A      	ASL A          (multiply by 8)
-C0/C3DD:	AA      	TAX
-C0/C3DE:	7B      	TDC 
-C0/C3DF:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C3E1:	2096C4  	JSR $C496
-C0/C3E4:	C950    	CMP #$50
-C0/C3E6:	900E    	BCC $C3F6
+C0/C393:	2903    	AND #$03        ; isolate encounter rate type
+C0/C395:	851A    	STA $1A         ; save ^
+C0/C397:	ADDF11  	LDA $11DF       ; field effect (from equips, etc)
+C0/C39A:	2903    	AND #$03        ; "Moogle Charm", "Charm Bangle"
+C0/C39C:	0A      	ASL A           ; << 1
+C0/C39D:	0A      	ASL A           ; << 2
+C0/C39E:	051A    	ORA $1A         ; add to rate type
+C0/C3A0:	0A      	ASL A           ; x2
+C0/C3A1:	AA      	TAX             ; index to encounter rate
+C0/C3A2:	BFBFC2C0	LDA $C0C2BF,X   ; lobyte rate
+C0/C3A6:	1FC0C2C0	ORA $C0C2C0,X   ; hibyte rate
+C0/C3AA:	D003    	BNE $C3AF       ; branch if not zero
+C0/C3AC:	4C78C4  	JMP $C478       ; else, exit
+
+C0/C3AF:	C221    	REP #$21        ; 16-bit A, carry clear
+C0/C3B1:	AD6E1F  	LDA $1F6E       ; encounter counter
+C0/C3B4:	7FBFC2C0	ADC $C0C2BF,X   ; add encounter rate
+C0/C3B8:	9003    	BCC $C3BD       ; branch if no overflow
+C0/C3BA:	A900FF  	LDA #$FF00      ; else use max counter
+C0/C3BD:	8D6E1F  	STA $1F6E       ; update counter
+C0/C3C0:	7B      	TDC             ; zero A/B
+C0/C3C1:	E220    	SEP #$20        ; 8-bit A
+C0/C3C3:	2079C4  	JSR $C479       ; special random(255)
+C0/C3C6:	CD6F1F  	CMP $1F6F       ; compare to counter
+C0/C3C9:	B0A0    	BCS $C36B       ; exit if greater (no encounter)
+
+C0/C3CB:	9C6E1F  	STZ $1F6E       ; zero counter
+C0/C3CE:	9C6F1F  	STZ $1F6F       ; zero counter
+C0/C3D1:	AE8200  	LDX $0082       ; current map ID
+C0/C3D4:	BF0056CF	LDA $CF5600,X   ; load formation group index map
+C0/C3D8:	C220    	REP #$20        ; 16-bit A
+C0/C3DA:	0A      	ASL A           ; x2
+C0/C3DB:	0A      	ASL A           ; x4
+C0/C3DC:	0A      	ASL A           ; x8
+C0/C3DD:	AA      	TAX             ; index it
+C0/C3DE:	7B      	TDC             ; zero A/B
+C0/C3DF:	E220    	SEP #$20        ; 8-bit A
+C0/C3E1:	2096C4  	JSR $C496       ; another special random(255)
+C0/C3E4:	C950    	CMP #$50        ; 31%
+C0/C3E6:	900E    	BCC $C3F6       ; branch if using first formation
 C0/C3E8:	E8      	INX
-C0/C3E9:	E8      	INX
-C0/C3EA:	C9A0    	CMP #$A0
-C0/C3EC:	9008    	BCC $C3F6
+C0/C3E9:	E8      	INX             ; next formation
+C0/C3EA:	C9A0    	CMP #$A0        ; 31%
+C0/C3EC:	9008    	BCC $C3F6       ; branch if using second formation
 C0/C3EE:	E8      	INX
-C0/C3EF:	E8      	INX
-
-C0/C3F0:	C9F0    	CMP #$F0
-
-C0/C3F2:	9002    	BCC $C3F6
+C0/C3EF:	E8      	INX             ; next formation
+C0/C3F0:	C9F0    	CMP #$F0        ; 31%
+C0/C3F2:	9002    	BCC $C3F6       ; branch if using third formation
 C0/C3F4:	E8      	INX
-C0/C3F5:	E8      	INX
+C0/C3F5:	E8      	INX             ; next formation
 
-C0/C3F6:	C220    	REP #$20      (16 bit accum./memory)
-C0/C3F8:	BF0048CF	LDA $CF4800,X  (load monster 4-pack data)
-C0/C3FC:	8FE01100	STA $0011E0    (store formation to encounter)
-C0/C400:	7B      	TDC 
-C0/C401:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C403:	AD2205  	LDA $0522	  (Area default background index)
-C0/C406:	297F    	AND #$7F
-C0/C408:	8FE21100	STA $0011E2
-C0/C40C:	7B      	TDC 
-C0/C40D:	8FE31100	STA $0011E3
-C0/C411:	AE4105  	LDX $0541
-C0/C414:	8E661F  	STX $1F66
-C0/C417:	AEAF00  	LDX $00AF
-C0/C41A:	8EC01F  	STX $1FC0
-C0/C41D:	ADD71E  	LDA $1ED7
-C0/C420:	2910    	AND #$10
-C0/C422:	4A      	LSR A
-C0/C423:	8FE41100	STA $0011E4
-C0/C427:	EE8B07  	INC $078B
-C0/C42A:	C220    	REP #$20      (16 bit accum./memory)
-C0/C42C:	7B      	TDC 
-C0/C42D:	997108  	STA $0871,Y
-C0/C430:	997308  	STA $0873,Y
-C0/C433:	8573    	STA $73
-C0/C435:	8575    	STA $75
-C0/C437:	8577    	STA $77
-C0/C439:	8579    	STA $79
-C0/C43B:	857B    	STA $7B
-C0/C43D:	857D    	STA $7D
-C0/C43F:	E220    	SEP #$20      (8 bit accum./memory)
-C0/C441:	A21800  	LDX #$0018
-C0/C444:	86E5    	STX $E5
-C0/C446:	8EF405  	STX $05F4
-C0/C449:	A9CA    	LDA #$CA
-C0/C44B:	85E7    	STA $E7        (set event to CA/0018, random battle!)
-C0/C44D:	8DF605  	STA $05F6
-C0/C450:	A20000  	LDX #$0000     (LDX $00 fool!)
-C0/C453:	8E9405  	STX $0594
-C0/C456:	A9CA    	LDA #$CA
-C0/C458:	8D9605  	STA $0596      (set event to CA/0000)
+C0/C3F6:	C220    	REP #$20        ; 16-bit A
+C0/C3F8:	BF0048CF	LDA $CF4800,X   ; load formation ID
+C0/C3FC:	8FE01100	STA $0011E0     ; save formation ID
+C0/C400:	7B      	TDC             ; zero A/B
+C0/C401:	E220    	SEP #$20        ; 8-bit A
+C0/C403:	AD2205  	LDA $0522	      ; default background index
+C0/C406:	297F    	AND #$7F        ; isolate ^
+C0/C408:	8FE21100	STA $0011E2     ; save background index
+C0/C40C:	7B      	TDC             ; zero A/B
+C0/C40D:	8FE31100	STA $0011E3     ; allow reading index in 16-bit
+
+C0/C411:	AE4105  	LDX $0541       ; field XY scroll position
+C0/C414:	8E661F  	STX $1F66       ; save backup
+C0/C417:	AEAF00  	LDX $00AF       ; party's XY position
+C0/C41A:	8EC01F  	STX $1FC0       ; save backup
+C0/C41D:	ADD71E  	LDA $1ED7       ; some area/event flags
+C0/C420:	2910    	AND #$10        ; continue current music
+C0/C422:	4A      	LSR A           ; shift to new bit
+C0/C423:	8FE41100	STA $0011E4     ; save special battle flags
+C0/C427:	EE8B07  	INC $078B       ; number of battles encountered on map
+
+C0/C42A:	C220    	REP #$20        ; 16-bit A
+C0/C42C:	7B      	TDC             ; zero A/B
+C0/C42D:	997108  	STA $0871,Y     ; zero horizontal movement speed
+C0/C430:	997308  	STA $0873,Y     ; zero vertical movement speed
+C0/C433:	8573    	STA $73         ; zero background scroll speed
+C0/C435:	8575    	STA $75         ; zero background scroll speed
+C0/C437:	8577    	STA $77         ; zero background scroll speed
+C0/C439:	8579    	STA $79         ; zero background scroll speed
+C0/C43B:	857B    	STA $7B         ; zero background scroll speed
+C0/C43D:	857D    	STA $7D         ; zero background scroll speed
+C0/C43F:	E220    	SEP #$20        ; 8-bit A
+C0/C441:	A21800  	LDX #$0018      ; event address (for random battle)
+C0/C444:	86E5    	STX $E5         ; set ^
+C0/C446:	8EF405  	STX $05F4       ; and save to event stack
+C0/C449:	A9CA    	LDA #$CA        ; event bank (for random battle)
+C0/C44B:	85E7    	STA $E7         ; set ^
+C0/C44D:	8DF605  	STA $05F6       ; and save to event stack
+C0/C450:	A20000  	LDX #$0000      ; zero
+C0/C453:	8E9405  	STX $0594       ; zero subroutine address
+C0/C456:	A9CA    	LDA #$CA        ; bank
+C0/C458:	8D9605  	STA $0596       ; set lowest event bank
 C0/C45B:	A901    	LDA #$01
 C0/C45D:	8DC705  	STA $05C7
 C0/C460:	A20300  	LDX #$0003
@@ -27679,24 +27830,25 @@ C0/E09C:	403E
 C0/E09E:	3E67  	
 DTE Table End
 
-Data: presence bits for NPCs
-C0/E0A0:	BB
-C0/E0A1:	AB
-C0/E0A2:	35
-C0/E0A3:	00
-C0/E0A4:	00
-C0/E0A5:	7E
-C0/E0A6:	84
-C0/E0A7:	18
-C0/E0A8:	4E
-C0/E0A9:	FF
-C0/E0AA:	E1
-C0/E0AB:	C3
-C0/E0AC:	82
-C0/E0AD:	21
-C0/E0AE:	0A
-C0/E0AF:	1A
-C0/E0B0:	03
+; Data: presence bits for NPCs
+C0/E0A0:	BB  ; $1EE0 7-543-10
+C0/E0A1:	AB  ; $1EE1 7-5-3-10
+C0/E0A2:	35  ; $1EE2 --54-2-0
+C0/E0A3:	00  ; $1EE3 --------
+C0/E0A4:	00  ; $1EE4 --------
+C0/E0A5:	7E  ; $1EE5 -654321-
+C0/E0A6:	84  ; $1EE6 7----2--
+C0/E0A7:	18  ; $1EE7 ---43---
+C0/E0A8:	4E  ; $1EE8 -6--321-
+C0/E0A9:	FF  ; $1EE9 76543210
+C0/E0AA:	E1  ; $1EEA 765----0
+C0/E0AB:	C3  ; $1EEB 76----10
+              ;  0: Sprint shoes guy in S.Figaro Relic Shop
+C0/E0AC:	82  ; $1EEC 7-----1-
+C0/E0AD:	21  ; $1EED --5----0
+C0/E0AE:	0A  ; $1EEE ----3-1-
+C0/E0AF:	1A  ; $1EEF ---43-1-
+C0/E0B0:	03  ; $1EF0 ------10
 C0/E0B1:	00
 C0/E0B2:	00
 C0/E0B3:	00
@@ -27714,8 +27866,10 @@ C0/E0BE:	FF
 C0/E0BF:	20
 C0/E0C0:	8F
 C0/E0C1:	17
-C0/E0C2:	38
-C0/E0C3:	60
+C0/E0C2:	38  ; $1F02 --543---
+              ;  4: Some NPC(s) in returner hideout before Terra wakes up [?]
+C0/E0C3:	60  ; $1F03 -65-----
+              ;  5: Some NPC(s) in returner hideout before Terra wakes up [?]
 C0/E0C4:	E4
 C0/E0C5:	0E
 C0/E0C6:	D0
