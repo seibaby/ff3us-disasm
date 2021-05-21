@@ -3447,6 +3447,7 @@ C2/A967:	3A         	DEC
 C2/A968:	D0 F7      	BNE $A961      ; -9
 C2/A96A:	60         	RTS
 
+; Part of Kefka Death animation handling
 ; Called from C1/91D7.
 C2/A96B:	E6 9A      	INC $9A
 C2/A96D:	EE 8B 62   	INC $628B
@@ -3715,140 +3716,168 @@ C2/AB88:	FA         	PLX
 C2/AB89:	60         	RTS
 
 ; A few of the instructions used here are used multiple times throughout this section. It would be more efficient to make a separate function out of them.
-C2/AB8A:	8B         	PHB
-C2/AB8B:	7B         	TDC            ; A = 0
-C2/AB8C:	48         	PHA
-C2/AB8D:	AB         	PLB            ; Data bank register now points to bank $00
-C2/AB8E:	A9 7E      	LDA #$7E
-C2/AB90:	8D 74 43   	STA $4374      ; 7th DMA channel source bank
-C2/AB93:	A2 B7 6A   	LDX #$6AB7     ; 27,319
-C2/AB96:	8E 16 21   	STX $2116      ; Video address
-C2/AB99:	A0 0E 00   	LDY #$000E     ; 14
-C2/AB9C:	8C 75 43   	STY $4375      ; 7th DMA channel size
-C2/AB9F:	A2 15 5D   	LDX #$5D15     ; 23,829
-C2/ABA2:	8E 72 43   	STX $4372      ; 7th DMA channel source offset
-C2/ABA5:	A9 80      	LDA #$80       ; -128
-C2/ABA7:	8D 0D 42   	STA $420B      ; Enable DMA channel 7
-C2/ABAA:	A2 F7 6A   	LDX #$6AF7     ; 27,383
-C2/ABAD:	8E 16 21   	STX $2116      ; Video address
-C2/ABB0:	8C 75 43   	STY $4375      ; 7th DMA channel size
-C2/ABB3:	A2 23 5D   	LDX #$5D23     ; 23,843
-C2/ABB6:	8E 72 43   	STX $4372      ; 7th DMA channel source offset
-C2/ABB9:	8D 0B 42   	STA $420B      ; Disable all DMA channels
-C2/ABBC:	AF 81 7B 7E	LDA $7E7B81
-C2/ABC0:	D0 03      	BNE $ABC5      ; +3
-C2/ABC2:	4C 4A AC   	JMP $AC4A
+C2/AB8A:	8B         	PHB            ; store bank
+C2/AB8B:	7B         	TDC            ; zero A/B
+C2/AB8C:	48         	PHA            ; push to stack
+C2/AB8D:	AB         	PLB            ; set bank to $00 (for registers)
+C2/AB8E:	A9 7E      	LDA #$7E       ; source buffer bank
+C2/AB90:	8D 74 43   	STA $4374      ; set DMA-7 source bank
 
-; This function seems to be calling the decompressed graphics data repeatedly. This might be the function that displays the cutscenes in the game.
+; Update "MP/MaxMP" numbers
+C2/AB93:	A2 B7 6A   	LDX #$6AB7     ; 
+C2/AB96:	8E 16 21   	STX $2116      ; set VRAM address
+C2/AB99:	A0 0E 00   	LDY #$000E     ; transfer size
+C2/AB9C:	8C 75 43   	STY $4375      ; set DMA-7 transfer size
+C2/AB9F:	A2 15 5D   	LDX #$5D15     ;
+C2/ABA2:	8E 72 43   	STX $4372      ; set DMA-7 source address
+C2/ABA5:	A9 80      	LDA #$80       ; DMA-7 enabled flag
+C2/ABA7:	8D 0D 42   	STA $420B      ; set ^ to execute transfer
+
+; Update "MP Needed" numbers
+C2/ABAA:	A2 F7 6A   	LDX #$6AF7     ;
+C2/ABAD:	8E 16 21   	STX $2116      ; set VRAM address
+C2/ABB0:	8C 75 43   	STY $4375      ; set DMA-7 transfer size
+C2/ABB3:	A2 23 5D   	LDX #$5D23     ;
+C2/ABB6:	8E 72 43   	STX $4372      ; set DMA-7 source address
+C2/ABB9:	8D 0B 42   	STA $420B      ; execute DMA-7 transfer
+
+C2/ABBC:	AF 81 7B 7E	LDA $7E7B81    ; Bushido gauge needs update
+C2/ABC0:	D0 03      	BNE $ABC5      ; branch if ^
+C2/ABC2:	4C 4A AC   	JMP $AC4A      ; else, just update ATB gauge/maxHP
+
+; Bushido gauge VRAM update
+
 C2/ABC5:	C2 20      	REP #$20       ; 16-bit A
-C2/ABC7:	A9 24 7A   	LDA #$7A24     ; 31,268
-C2/ABCA:	8D 16 21   	STA $2116      ; Video address
-C2/ABCD:	AF D9 5D 7E	LDA $7E5DD9
-C2/ABD1:	8D 18 21   	STA $2118      ; Video data
+C2/ABC7:	A9 24 7A   	LDA #$7A24
+C2/ABCA:	8D 16 21   	STA $2116      ; VRAM address
+C2/ABCD:	AF D9 5D 7E	LDA $7E5DD9    ; Bushido background menu data [?]
+C2/ABD1:	8D 18 21   	STA $2118      ; write word to VRAM
 C2/ABD4:	AF DB 5D 7E	LDA $7E5DDB
-C2/ABD8:	8D 18 21   	STA $2118      ; Repeatedly load a new word and store in video data
+C2/ABD8:	8D 18 21   	STA $2118      ; write word to VRAM
 C2/ABDB:	AF DD 5D 7E	LDA $7E5DDD
-C2/ABDF:	8D 18 21   	STA $2118
+C2/ABDF:	8D 18 21   	STA $2118      ; write word to VRAM
 C2/ABE2:	AF DF 5D 7E	LDA $7E5DDF
-C2/ABE6:	8D 18 21   	STA $2118
+C2/ABE6:	8D 18 21   	STA $2118      ; write word to VRAM
 C2/ABE9:	AF E1 5D 7E	LDA $7E5DE1
-C2/ABED:	8D 18 21   	STA $2118
+C2/ABED:	8D 18 21   	STA $2118      ; write word to VRAM
 C2/ABF0:	AF E3 5D 7E	LDA $7E5DE3
-C2/ABF4:	8D 18 21   	STA $2118
+C2/ABF4:	8D 18 21   	STA $2118      ; write word to VRAM
 C2/ABF7:	AF E5 5D 7E	LDA $7E5DE5
-C2/ABFB:	8D 18 21   	STA $2118
+C2/ABFB:	8D 18 21   	STA $2118      ; write word to VRAM
 C2/ABFE:	AF E7 5D 7E	LDA $7E5DE7
-C2/AC02:	8D 18 21   	STA $2118
-C2/AC05:	A9 24 7A   	LDA #$7A64     ; 31,332
-C2/AC08:	8D 16 21   	STA $2116      ; Video address
-C2/AC0B:	AF 73 7A 7E	LDA $7E7A73
-C2/AC0F:	8D 18 21   	STA $2118
-C2/AC12:	AF 75 7A 7E	LDA $7E7A75
-C2/AC16:	8D 18 21   	STA $2118
-C2/AC19:	AF 77 7A 7E	LDA $7E7A77
-C2/AC1D:	8D 18 21   	STA $2118
-C2/AC20:	AF 79 7A 7E	LDA $7E7A79
-C2/AC24:	8D 18 21   	STA $2118
-C2/AC27:	AF 7B 7A 7E	LDA $7E7A7B
-C2/AC2B:	8D 18 21   	STA $2118
-C2/AC2E:	AF 7D 7A 7E	LDA $7E7A7D
-C2/AC32:	8D 18 21   	STA $2118
-C2/AC35:	AF 7F 7A 7E	LDA $7E7A7F
-C2/AC39:	8D 18 21   	STA $2118
-C2/AC3C:	AF 81 7A 7E	LDA $7E7A81
-C2/AC40:	8D 18 21   	STA $2118
-C2/AC43:	7B         	TDC
-C2/AC44:	E2 20      	SEP #$20
-C2/AC46:	8F 81 7B 7E	STA $7E7B81
-C2/AC4A:	A9 01      	LDA #$01       ; 1
-C2/AC4C:	8D 70 43   	STA $4370      ; 7th DMA channel control
-C2/AC4F:	A9 18      	LDA #$18       ; 24
-C2/AC51:	8D 71 43   	STA $4371      ; 7th DMA channel transfer destination
-C2/AC54:	A9 7E      	LDA #$7E       ; 126
-C2/AC56:	8D 73 43   	STA $4374      ; 7th DMA channel source offset high byte
-C2/AC59:	A0 0C 00   	LDY #$000C     ; 12
-C2/AC5C:	AF 9B 62 7E	LDA $7E629B	
-C2/AC60:	F0 0C      	BEQ $AC6E      ; +12
-C2/AC62:	7B         	TDC
-C2/AC63:	8F 9B 62 7E	STA $7E629B
-C2/AC67:	A5 98      	LDA $98
-C2/AC69:	4A         	LSR
-C2/AC6A:	29 03      	AND #$03
-C2/AC6C:	80 07      	BRA $AC75      ; +7
-C2/AC6E:	AF 9A 7B 7E	LDA $7E7B9A
-C2/AC72:	3A         	DEC
-C2/AC73:	29 03      	AND #$03
-C2/AC75:	0A         	ASL
-C2/AC76:	AA         	TAX
-C2/AC77:	A9 80      	LDA #$80       ; -128
-C2/AC79:	7C 7C AC   	JMP ($AC7C,X)
+C2/AC02:	8D 18 21   	STA $2118      ; write word to VRAM
 
-; Pointers.
+C2/AC05:	A9 24 7A   	LDA #$7A64
+C2/AC08:	8D 16 21   	STA $2116      ; set VRAM address
+C2/AC0B:	AF 73 7A 7E	LDA $7E7A73    ; Bushido bar graphics [?]
+C2/AC0F:	8D 18 21   	STA $2118      ; write word to VRAM
+C2/AC12:	AF 75 7A 7E	LDA $7E7A75    ; Bushido bar graphics
+C2/AC16:	8D 18 21   	STA $2118      ; write word to VRAM
+C2/AC19:	AF 77 7A 7E	LDA $7E7A77    ; Bushido bar graphics
+C2/AC1D:	8D 18 21   	STA $2118      ; write word to VRAM
+C2/AC20:	AF 79 7A 7E	LDA $7E7A79    ; Bushido bar graphics
+C2/AC24:	8D 18 21   	STA $2118      ; write word to VRAM
+C2/AC27:	AF 7B 7A 7E	LDA $7E7A7B    ; Bushido bar graphics
+C2/AC2B:	8D 18 21   	STA $2118      ; write word to VRAM
+C2/AC2E:	AF 7D 7A 7E	LDA $7E7A7D    ; Bushido bar graphics
+C2/AC32:	8D 18 21   	STA $2118      ; write word to VRAM
+C2/AC35:	AF 7F 7A 7E	LDA $7E7A7F    ; Bushido bar graphics
+C2/AC39:	8D 18 21   	STA $2118      ; write word to VRAM
+C2/AC3C:	AF 81 7A 7E	LDA $7E7A81    ; Bushido bar graphics
+C2/AC40:	8D 18 21   	STA $2118      ; write word to VRAM
+
+C2/AC43:	7B         	TDC            ; zero A/B
+C2/AC44:	E2 20      	SEP #$20       ; 8-bit A
+C2/AC46:	8F 81 7B 7E	STA $7E7B81    ; clear "Bushido graphics update needed"
+
+; VRAM transfer for character's ATB gauges (or MaxHP)
+
+C2/AC4A:	A9 01      	LDA #$01       ; "Two registers, write once"
+C2/AC4C:	8D 70 43   	STA $4370      ; set DMA-7 transfer mode ^
+C2/AC4F:	A9 18      	LDA #$18       ; "VRAM register" ($2118)
+C2/AC51:	8D 71 43   	STA $4371      ; set DMA-7 destination
+C2/AC54:	A9 7E      	LDA #$7E       ; RAM bank
+C2/AC56:	8D 73 43   	STA $4374      ; DMA-7 source bank
+
+C2/AC59:	A0 0C 00   	LDY #$000C     ; transfer size (for each of 3 chunks)
+C2/AC5C:	AF 9B 62 7E	LDA $7E629B	   ; menu animation frames since last update
+C2/AC60:	F0 0C      	BEQ $AC6E      ; branch if no battle menu animation since
+
+C2/AC62:	7B         	TDC            ; zero A/B
+C2/AC63:	8F 9B 62 7E	STA $7E629B    ; reset menu animation frames since last
+C2/AC67:	A5 98      	LDA $98        ; frame counter
+C2/AC69:	4A         	LSR            ; / 2
+C2/AC6A:	29 03      	AND #$03       ; reduce to 0-3 (character slot)
+C2/AC6C:	80 07      	BRA $AC75      ; branch
+
+C2/AC6E:	AF 9A 7B 7E	LDA $7E7B9A    ; which character gets next gauge update
+C2/AC72:	3A         	DEC            ; decrement
+C2/AC73:	29 03      	AND #$03       ; reduce to 0-3 (character slot)
+
+C2/AC75:	0A         	ASL            ; x2
+C2/AC76:	AA         	TAX            ; index it
+C2/AC77:	A9 80      	LDA #$80       ; DMA-7 register enable flag
+C2/AC79:	7C 7C AC   	JMP ($AC7C,X)  ; execute DMA-7 transfer for character
+
+; Jump table by character slot
 C2/AC7C:	84AC
 C2/AC7E:	BDAC
 C2/AC80:	F6AC
 C2/AC82:	2FAD
 
-; These four methods are all about setting up the 7th DMA channel for some purpose.
-C2/AC84:	A2 39 78   	LDX #$7839     ; 30,777
-C2/AC87:	8E 16 21   	STX $2116
-C2/AC8A:	A2 51 5C   	LDX #$5C51     ; 23,633
-C2/AC8D:	8E 72 43   	STX $4372
-C2/AC90:	8C 75 43   	STY $4375
-C2/AC93:	8D 0B 42   	STA $420B
-C2/AC96:	A2 39 79   	LDX #$7939     ; 31,033
-C2/AC99:	8E 16 21   	STX $2116
-C2/AC9C:	A2 51 5C   	LDX #$5C51     ; 23,633
-C2/AC9F:	8E 72 43   	STX $4372
-C2/ACA2:	8C 75 43   	STY $4375
-C2/ACA5:	8D 0B 42   	STA $420B
-C2/ACA8:	A2 39 7A   	LDX #$7A39     ; 31,289
-C2/ACAB:	8E 16 21   	STX $2116
-C2/ACAE:	A2 51 5C   	LDX #$5C51     ; 23,633
-C2/ACB1:	8E 72 43   	STX $4372
-C2/ACB4:	8C 75 43   	STY $4375
-C2/ACB7:	8D 0B 42   	STA $420B
+; Character slot 0 Gauge/MaxHP update
+
+; Gauge/MaxHP for basic menu
+C2/AC84:	A2 39 79   	LDX #$7839     ;
+C2/AC87:	8E 16 21   	STX $2116      ; set VRAM address
+C2/AC8A:	A2 51 5C   	LDX #$5C51     ;
+C2/AC8D:	8E 72 43   	STX $4372      ; set DMA-7 source
+C2/AC90:	8C 75 43   	STY $4375      ; set transfer size
+C2/AC93:	8D 0B 42   	STA $420B      ; execute DMA-7 transfer
+
+; Gauge/MaxHP when swapping menus [?]
+C2/AC96:	A2 39 79   	LDX #$7939     ;
+C2/AC99:	8E 16 21   	STX $2116      ; set VRAM address
+C2/AC9C:	A2 51 5C   	LDX #$5C51     ;
+C2/AC9F:	8E 72 43   	STX $4372      ; set DMA-7 source
+C2/ACA2:	8C 75 43   	STY $4375      ; set transfer size
+C2/ACA5:	8D 0B 42   	STA $420B      ; execute DMA-7 transfer
+
+; Gauge/MaxHP for targeting menu
+C2/ACA8:	A2 39 7A   	LDX #$7A39     ;
+C2/ACAB:	8E 16 21   	STX $2116      ; set VRAM address
+C2/ACAE:	A2 51 5C   	LDX #$5C51     ;
+C2/ACB1:	8E 72 43   	STX $4372      ; set DMA-7 source
+C2/ACB4:	8C 75 43   	STY $4375      ; set transfer size
+C2/ACB7:	8D 0B 42   	STA $420B      ; execute DMA-7 transfer
 C2/ACBA:	4C 65 AD   	JMP $AD65
 
-C2/ACBD:	A2 79 78   	LDX #$7879     ; 30,841
-C2/ACC0:	8E 16 21   	STX $2116
-C2/ACC3:	A2 69 5C   	LDX #$5C69     ; 23,657
-C2/ACC6:	8E 72 43   	STX $4372
-C2/ACC9:	8C 75 43   	STY $4375
-C2/ACCC:	8D 0B 42   	STA $420B
+; Character slot 1 Gauge/MaxHP update
+
+C2/ACBD:	A2 79 78   	LDX #$7879     ;
+C2/ACC0:	8E 16 21   	STX $2116      ; set VRAM address
+C2/ACC3:	A2 69 5C   	LDX #$5C69     ;
+C2/ACC6:	8E 72 43   	STX $4372      ; set DMA-7 source
+C2/ACC9:	8C 75 43   	STY $4375      ; set transfer size
+C2/ACCC:	8D 0B 42   	STA $420B      ; execute DMA-7 transfer
+
 C2/ACCF:	A2 79 79   	LDX #$7979     ; 31,097
 C2/ACD2:	8E 16 21   	STX $2116
 C2/ACD5:	A2 69 5C   	LDX #$5C69     ; 23,657
 C2/ACD8:	8E 72 43   	STX $4372
 C2/ACDB:	8C 75 43   	STY $4375
 C2/ACDE:	8D 0B 42   	STA $420B
+
 C2/ACE1:	A2 79 7A   	LDX #$7A79     ; 31,353
 C2/ACE4:	8E 16 21   	STX $2116
 C2/ACE7:	A2 69 5C   	LDX #$5C69     ; 23,657
 C2/ACEA:	8E 72 43   	STX $4372
 C2/ACED:	8C 75 43   	STY $4375
 C2/ACF0:	8D 0B 42   	STA $420B
+
 C2/ACF3:	4C 65 AD   	JMP $AD65      ; BRA would've worked...
+
+; Character slot 2 Gauge/MaxHP update
 
 C2/ACF6:	A2 B9 78   	LDX #$78B9     ; 30,905
 C2/ACF9:	8E 16 21   	STX $2116
@@ -3856,12 +3885,14 @@ C2/ACFC:	A2 81 5C   	LDX #$5C81     ; 23,681
 C2/ACFF:	8E 72 43   	STX $4372
 C2/AD02:	8C 75 43   	STY $4375
 C2/AD05:	8D 0B 42   	STA $420B
+
 C2/AD08:	A2 B9 79   	LDX #$79B9     ; 31,161
 C2/AD0B:	8E 16 21   	STX $2116
 C2/AD0E:	A2 81 5C   	LDX #$5C81     ; 23,681
 C2/AD11:	8E 72 43   	STX $4372
 C2/AD14:	8C 75 43   	STY $4375
 C2/AD17:	8D 0B 42   	STA $420B
+
 C2/AD1A:	A2 B9 7A   	LDX #$7AB9     ; 31,417
 C2/AD1D:	8E 16 21   	STX $2116
 C2/AD20:	A2 81 5C   	LDX #$5C81     ; 23,681
@@ -3870,24 +3901,31 @@ C2/AD26:	8C 75 43   	STY $4375
 C2/AD29:	8D 0B 42   	STA $420B
 C2/AD2C:	4C 65 AD   	JMP $AD65      ; BRA would've worked...
 
+; Character slot 3 Gauge/MaxHP update
+
 C2/AD2F:	A2 F9 78   	LDX #$78F9
 C2/AD32:	8E 16 21   	STX $2116
 C2/AD35:	A2 99 5C   	LDX #$5C99
 C2/AD38:	8E 72 43   	STX $4372
 C2/AD3B:	8C 75 43   	STY $4375
 C2/AD3E:	8D 0B 42   	STA $420B
+
 C2/AD41:	A2 F9 79   	LDX #$79F9
 C2/AD44:	8E 16 21   	STX $2116
 C2/AD47:	A2 99 5C   	LDX #$5C99
 C2/AD4A:	8E 72 43   	STX $4372
 C2/AD4D:	8C 75 43   	STY $4375
 C2/AD50:	8D 0B 42   	STA $420B
+
 C2/AD53:	A2 F9 7A   	LDX #$7AF9
 C2/AD56:	8E 16 21   	STX $2116
 C2/AD59:	A2 99 5C   	LDX #$5C99
 C2/AD5C:	8E 72 43   	STX $4372
 C2/AD5F:	8C 75 43   	STY $4375
 C2/AD62:	8D 0B 42   	STA $420B
+
+; Finish character VRAM update
+
 C2/AD65:	AB         	PLB
 C2/AD66:	E2 10      	SEP #$10       ; 8-bit X & Y
 C2/AD68:	AD 9C 7B   	LDA $7B9C
@@ -4154,6 +4192,7 @@ C2/B059:	7B         	TDC
 C2/B05A:	E2 20      	SEP #$20       ; 8-bit A
 C2/B05C:	6B         	RTL
 
+; Palette data for death animation [???]
 ; Data called from C1/9418.
 C2/B05D:	8C31
 C2/B05F:	0104
@@ -4634,6 +4673,8 @@ C2/B416:	7B         	TDC
 C2/B417:	E2 20      	SEP #$20       ; 8-bit A
 C2/B419:	6B         	RTL
 
+; Update bitmask of facing right characters and enemies
+
 C2/B41A:	7B         	TDC            ; A = 0
 C2/B41B:	AA         	TAX            ; X = 0
 C2/B41C:	8E 50 2F   	STX $2F50
@@ -4656,6 +4697,7 @@ C2/B43E:	CA         	DEX
 C2/B43F:	10 F0      	BPL $B431      ; Loop for all 6 enemies
 C2/B441:	6B         	RTL
 
+; Transform palette (for flashback mode, etc)
 C2/B442:	A6 18      	LDX $18
 C2/B444:	C2 20      	REP #$20       ; 16-bit A
 C2/B446:	BD 00 7E   	LDA $7E00,X    ; Palette 0 data
@@ -6221,6 +6263,8 @@ C2/BF4D:	40C3
 C2/BF4F:	80C3
 C2/BF51:	C0C3
 
+; Condemned Numeral Graphics [?]
+
 C2/BF53:	AD DB E9   	LDA $E9DB
 C2/BF56:	29 03      	AND #$03
 C2/BF58:	D0 30      	BNE $BF8A      ; +48
@@ -6898,39 +6942,43 @@ C2/C3E0:	9D BE 61   	STA $61BE,X
 C2/C3E3:	60         	RTS
 
 ; 16-bit data called from C1/26D8.
-C2/C3E4:	3FCE
-C2/C3E6:	93CE
-C2/C3E8:	E7CE
-C2/C3EA:	3BCF
-C2/C3EC:	8FCF
-C2/C3EE:	E3CF
-C2/C3F0:	37D0
-C2/C3F2:	8BD0
-C2/C3F4:	DFD0
-C2/C3F6:	33D1
-C2/C3F8:	87D1
-C2/C3FA:	DBD1
-C2/C3FC:	2FD2
-C2/C3FE:	83D2
-C2/C400:	D7D2
-C2/C402:	2BD3
-C2/C404:	7FD3
-C2/C406:	D3D3
-C2/C408:	27D4
-C2/C40A:	7BD4
-C2/C40C:	CFD4
-C2/C40E:	23D5
-C2/C410:	77D5
-C2/C412:	CBD5
-C2/C414:	1FD6
-C2/C416:	73D6
-C2/C418:	C7D6
-C2/C41A:	1BD7
-C2/C41C:	6FD7
-C2/C41E:	C3D7
-C2/C420:	17D8
-C2/C422:	6BD8
+; RAM offsets for Sprite Animation Frame Data (by frame)
+; Basically a multiplication table for (X * 84)
 
+C2/C3E4:	3FCE ; 0
+C2/C3E6:	93CE ; 1
+C2/C3E8:	E7CE ; 2
+C2/C3EA:	3BCF ; 3
+C2/C3EC:	8FCF ; 4
+C2/C3EE:	E3CF ; 5
+C2/C3F0:	37D0 ; 6
+C2/C3F2:	8BD0 ; 7
+C2/C3F4:	DFD0 ; 8
+C2/C3F6:	33D1 ; 9
+C2/C3F8:	87D1 ; A
+C2/C3FA:	DBD1 ; B
+C2/C3FC:	2FD2 ; C
+C2/C3FE:	83D2 ; D
+C2/C400:	D7D2 ; E
+C2/C402:	2BD3 ; F
+C2/C404:	7FD3 ; 10
+C2/C406:	D3D3 ; 11
+C2/C408:	27D4 ; 12
+C2/C40A:	7BD4 ; 13
+C2/C40C:	CFD4 ; 14
+C2/C40E:	23D5 ; 15
+C2/C410:	77D5 ; 16
+C2/C412:	CBD5 ; 17
+C2/C414:	1FD6 ; 18
+C2/C416:	73D6 ; 19
+C2/C418:	C7D6 ; 1A
+C2/C41A:	1BD7 ; 1B
+C2/C41C:	6FD7 ; 1C
+C2/C41E:	C3D7 ; 1D
+C2/C420:	17D8 ; 1E
+C2/C422:	6BD8 ; 1F
+
+; Sprite Animation Frame Data RAM Offsets (Horizontally Flipped)
 C2/C424:	BFD8
 C2/C426:	13D9
 C2/C428:	67D9
@@ -8144,19 +8192,21 @@ C2/CE82:	E0D4D6  	; Kefka
 C2/CE85:	40EAD6  	; Gestahl
 C2/CE88:	C03CD6  	; Imperial Soldier
 
-; Some kind of 16-bit data.
-C2/CE8B:	0000
-C2/CE8D:	8000
-C2/CE8F:	0001
-C2/CE91:	8001
-C2/CE93:	0002
-C2/CE95:	8002
-C2/CE97:	0003
-C2/CE99:	8003
-C2/CE9B:	0004
-C2/CE9D:	8004
-C2/CE9F:	0005
-C2/CEA1:	8005
+; Multiplication lookup (x128)
+; Used for battlefield entity data offsets
+
+C2/CE8B:	00 00     ; 0 x 128 = 0
+C2/CE8D:	80 00     ; 1 x 128 = 128
+C2/CE8F:	00 01     ; 2 x 128 = 256
+C2/CE91:	80 01     ; 3 x 128 = 384
+C2/CE93:	00 02     ; 4 x 128 = 512
+C2/CE95:	80 02
+C2/CE97:	00 03
+C2/CE99:	80 03
+C2/CE9B:	00 04
+C2/CE9D:	80 04
+C2/CE9F:	00 05
+C2/CEA1:	80 05
 
 ; 32-bit data, used in the animation of character sprites.
 C2/CEA3:	00F80000
@@ -10314,66 +10364,71 @@ C2/DE1A:	F54FD14D05000000
 C2/DE22:	754F514D06000000
 C2/DE2A:	9550714D08000000
 
-; Back to 32-bit data... This is called from a few places in a function located at C1/50FB.
-C2/DE32:	5C020800
-C2/DE36:	5C020800
-C2/DE3A:	6C020800
-C2/DE3E:	6C020800
-C2/DE42:	6C020800
-C2/DE46:	7C020500
-C2/DE4A:	6C020800
-C2/DE4E:	7C020500
-C2/DE52:	7C020400
-C2/DE56:	7C020400
-C2/DE5A:	5C020400
-C2/DE5E:	8C020400
-C2/DE62:	BC020400
-C2/DE66:	EC020400
-C2/DE6A:	5C020400
-C2/DE6E:	8C020400
-C2/DE72:	BC020400
-C2/DE76:	EC020400
-C2/DE7A:	6C020500
-C2/DE7E:	6C020500
-C2/DE82:	6C020800
-C2/DE86:	6C020800
-C2/DE8A:	5C020700
-C2/DE8E:	5C020400
-C2/DE92:	5C020400
-C2/DE96:	7C020800
-C2/DE9A:	7C020800
-C2/DE9E:	7C020800
+; Menu window top position (pixels), height (tiles)
+; called from $C1/50FB
+C2/DE32:	5C020800 ; 00
+C2/DE36:	5C020800 ; 01
+C2/DE3A:	6C020800 ; 02
+C2/DE3E:	6C020800 ; 03
+C2/DE42:	6C020800 ; 04
+C2/DE46:	7C020500 ; 05
+C2/DE4A:	6C020800 ; 06
+C2/DE4E:	7C020500 ; 07
+C2/DE52:	7C020400 ; 08
+C2/DE56:	7C020400 ; 09
+C2/DE5A:	5C020400 ; 0A
+C2/DE5E:	8C020400 ; 0B
+C2/DE62:	BC020400 ; 0C
+C2/DE66:	EC020400 ; 0D
+C2/DE6A:	5C020400 ; 0E
+C2/DE6E:	8C020400 ; 0F
+C2/DE72:	BC020400 ; 10
+C2/DE76:	EC020400 ; 11
+C2/DE7A:	6C020500 ; 12
+C2/DE7E:	6C020500 ; 13
+C2/DE82:	6C020800 ; 14
+C2/DE86:	6C020800 ; 15
+C2/DE8A:	5C020700 ; 16
+C2/DE8E:	5C020400 ; 17
+C2/DE92:	5C020400 ; 18
+C2/DE96:	7C020800 ; 19
+C2/DE9A:	7C020800 ; 1A - Return to item menu after healing targeting menu
+C2/DE9E:	7C020800 ; 1B - Return to magic menu after healing targeting menu
 
-C2/DEA2:	00006800
-C2/DEA6:	0000B800
-C2/DEAA:	0001E400
-C2/DEAE:	00002401
-C2/DEB2:	00016400
-C2/DEB6:	0001A000
-C2/DEBA:	0000B800
-C2/DEBE:	00002401
-C2/DEC2:	00012001
-C2/DEC6:	00016400
-C2/DECA:	F8FF68FF
-C2/DECE:	F8FF5CFF
-C2/DED2:	F8FF50FF
-C2/DED6:	F8FF44FF
-C2/DEDA:	00000000
-C2/DEDE:	00000000
-C2/DEE2:	00000000
-C2/DEE6:	00000000
-C2/DEEA:	F0FFA4FF
-C2/DEEE:	00000000
-C2/DEF2:	00002401
-C2/DEF6:	00006800
-C2/DEFA:	0000B800
-C2/DEFE:	F0FF68FF
-C2/DF02:	00000000
-C2/DF06:	00006000
-C2/DF0A:	00002401
-C2/DF0E:	00016400
+; Menu window horizontal scroll, vertical scroll (pixels)
+C2/DEA2:	00006800 ; 00
+C2/DEA6:	0000B800 ; 01
+C2/DEAA:	0001E400 ; 02
+C2/DEAE:	00002401 ; 03 - Opening item, rage, tools menus
+C2/DEB2:	00016400 ; 04 - Open lore menu
+C2/DEB6:	0001A000 ; 05
+C2/DEBA:	0000B800 ; 06
+C2/DEBE:	00002401 ; 07 - Same as item menu [?]
+C2/DEC2:	00012001 ; 08
+C2/DEC6:	00016400 ; 09
+C2/DECA:	F8FF68FF ; 0A
+C2/DECE:	F8FF5CFF ; 0B
+C2/DED2:	F8FF50FF ; 0C
+C2/DED6:	F8FF44FF ; 0D
+C2/DEDA:	00000000 ; 0E
+C2/DEDE:	00000000 ; 0F
+C2/DEE2:	00000000 ; 10
+C2/DEE6:	00000000 ; 11
+C2/DEEA:	F0FFA4FF ; 12
+C2/DEEE:	00000000 ; 13
+C2/DEF2:	00002401 ; 14 - Same as item menu [?]
+C2/DEF6:	00006800 ; 15
+C2/DEFA:	0000B800 ; 16
+C2/DEFE:	F0FF68FF ; 17
+C2/DF02:	00000000 ; 18
+C2/DF06:	00006000 ; 19
+C2/DF0A:	00002401 ; 1A - Return to item menu after healing targeting menu
+C2/DF0E:	00016400 ; 1B - Return to magic menu after healing targeting menu
 
 ; This 32-bit data is used at C1/4E7E. The rightmost byte in each line is unused. Appears to be location data for drawing battle menus.
+
+; First word is a pointer to where the menu buffer should be [?]
+; Third byte is the length of the buffer [?]
 C2/DF12:	D55A0C00
 C2/DF16:	955B0700
 C2/DF1A:	055C0400
@@ -10416,25 +10471,25 @@ C2/DF9A:	578D2000
 ; Bytes 2-3: Destination RAM address
 ; Bytes 4-5: Block length
 ; Bytes 6-7: How many blocks to move
-C2/DF9E:	D55A595818000800
-C2/DFA6:	955B71580E000800
-C2/DFAE:	055C7F5808000800
-C2/DFB6:	455C87580C000800
-C2/DFBE:	315D158D0E000500
-C2/DFC6:	315D958D0E000500
-C2/DFCE:	315D158E0E000500
-C2/DFD6:	315D958E0E000500
-C2/DFDE:	775D218D0E000500
-C2/DFE6:	775DA18D0E000500
-C2/DFEE:	775D218E0E000500
-C2/DFF6:	775DA18E0E000500
-C2/DFFE:	055C7D8D08000800
-C2/E006:	455C858D0C000800
-C2/E00E:	BD5D578D18000600
-C2/E016:	315D178D0E000500
-C2/E01E:	775D2F8D0E000500
-C2/E026:	CD5E578D14000800
-C2/E02E:	955B6F8D0E000800
+C2/DF9E:	D55A595818000800 ; $00 - enemy names
+C2/DFA6:	955B71580E000800 ; $01 - character names
+C2/DFAE:	055C7F5808000800 ; $02 - current HP
+C2/DFB6:	455C87580C000800 ; $03 - ATB or max HP (backup, unused) [?]
+C2/DFBE:	315D158D0E000500 ; $04 -
+C2/DFC6:	315D958D0E000500 ; $05 -
+C2/DFCE:	315D158E0E000500 ; $06 -
+C2/DFD6:	315D958E0E000500 ; $07 -
+C2/DFDE:	775D218D0E000500 ; $08 -
+C2/DFE6:	775DA18D0E000500 ; $09 -
+C2/DFEE:	775D218E0E000500 ; $0A -
+C2/DFF6:	775DA18E0E000500 ; $0B -
+C2/DFFE:	055C7D8D08000800 ; $0C -
+C2/E006:	455C858D0C000800 ; $0D -
+C2/E00E:	BD5D578D18000600 ; $0E -
+C2/E016:	315D178D0E000500 ; $0F -
+C2/E01E:	775D2F8D0E000500 ; $10 -
+C2/E026:	CD5E578D14000800 ; $11 -
+C2/E02E:	955B6F8D0E000800 ; $12 -
 
 ; Magic menu drawing script.
 C2/E036:	0503    	; Draw 3 spaces
@@ -10944,25 +10999,28 @@ C2/E342:	6308
 C2/E344:	4408
 C2/E346:	620C
 
-C2/E348:	01050000
-C2/E34C:	01323908
-C2/E350:	010A0000
-C2/E354:	010C0000
-C2/E358:	010E0000
-C2/E35C:	01100000
-C2/E360:	01160000
-C2/E364:	011B0000
-C2/E368:	010A0000
-C2/E36C:	011E0000
-C2/E370:	01210000
-C2/E374:	01240000
-C2/E378:	01270000
-C2/E37C:	012A0000
-C2/E380:	012D0000
-C2/E384:	01300000
-C2/E388:	01370000
-C2/E38C:	01000000
-C2/E390:	01410000
+; Battle cursor state sequences
+; All start with (01), to wait for menu load,
+; then process cursor queue
+C2/E348:	01050000 ; 00
+C2/E34C:	01323908 ; 01
+C2/E350:	010A0000 ; 02 - Item menu
+C2/E354:	010C0000 ; 03
+C2/E358:	010E0000 ; 04 - Magic menu
+C2/E35C:	01100000 ; 05
+C2/E360:	01160000 ; 06 - Esper menu
+C2/E364:	011B0000 ; 07 - Lore menu
+C2/E368:	010A0000 ; 08
+C2/E36C:	011E0000 ; 09
+C2/E370:	01210000 ; 0A
+C2/E374:	01240000 ; 0B
+C2/E378:	01270000 ; 0C
+C2/E37C:	012A0000 ; 0D
+C2/E380:	012D0000 ; 0E
+C2/E384:	01300000 ; 0F
+C2/E388:	01370000 ; 10
+C2/E38C:	01000000 ; 11
+C2/E390:	01410000 ; 12
 
 ; Other data sets called from various places.
 C2/E394:	C0
@@ -11247,45 +11305,45 @@ C2/E4E8:	7F
 C2/E4E9:	7F
 C2/E4EA:	7F
 
-; Pointers.
-C2/E4EB:	3FE5
-C2/E4ED:	46E5
-C2/E4EF:	52E5
-C2/E4F1:	5EE5
-C2/E4F3:	6AE5
-C2/E4F5:	76E5
-C2/E4F7:	82E5
-C2/E4F9:	C7E5
-C2/E4FB:	8EE5
-C2/E4FD:	9AE5
-C2/E4FF:	A6E5
-C2/E501:	B2E5
-C2/E503:	B8E5
-C2/E505:	3FE5
-C2/E507:	39E5
-C2/E509:	3FE5
-C2/E50B:	3FE5
-C2/E50D:	3FE5
+; Pointers for Hide/Kill Enemy animations
+C2/E4EB:	3FE5 ; $00 ($E53F) RTS
+C2/E4ED:	46E5 ; $01 ($E546) Smoke
+C2/E4EF:	52E5 ; $02 ($E552) Up
+C2/E4F1:	5EE5 ; $03 Left
+C2/E4F3:	6AE5 ; $04 Little Splash
+C2/E4F5:	76E5 ; $05 ($E576) Up [dup]
+C2/E4F7:	82E5 ; $06 Big Splash
+C2/E4F9:	C7E5 ; $07 Left [dup]
+C2/E4FB:	8EE5 ; $08
+C2/E4FD:	9AE5 ; $09
+C2/E4FF:	A6E5 ; $0A ($E5A6) Melt
+C2/E501:	B2E5 ; $0B
+C2/E503:	B8E5 ; $0C ($E5B8) Regular Boss Death
+C2/E505:	3FE5 ; $0D ($E53F) RTS [Flutter]
+C2/E507:	39E5 ; $0E ($E539) Chadarnook
+C2/E509:	3FE5 ; $0F ($E53F) RTS
+C2/E50B:	3FE5 ; $10 ($E53F) RTS
+C2/E50D:	3FE5 ; $11 ($E53F) RTS [Kefka]
 
-; Pointers to below data?
-C2/E50F:	3FE5
-C2/E511:	40E5
-C2/E513:	4CE5
-C2/E515:	58E5
-C2/E517:	64E5
-C2/E519:	70E5
-C2/E51B:	7CE5
-C2/E51D:	C1E5
-C2/E51F:	88E5
-C2/E521:	94E5
-C2/E523:	A0E5
-C2/E525:	ACE5
-C2/E527:	3FE5
-C2/E529:	3FE5
-C2/E52B:	33E5
-C2/E52D:	CDE5
-C2/E52F:	3FE5
-C2/E531:	3FE5
+; Pointers for Unhide/Revive Enemy animations
+C2/E50F:	3FE5 ; $00 ($E53F) RTS
+C2/E511:	40E5 ; $01 ($E540) Smoke
+C2/E513:	4CE5 ; $02 Down
+C2/E515:	58E5 ; $03 Right
+C2/E517:	64E5 ; $04 Little Splash
+C2/E519:	70E5 ; $05 Down [dup]
+C2/E51B:	7CE5 ; $06 Big Splash
+C2/E51D:	C1E5 ; $07 Right [dup]
+C2/E51F:	88E5 ; $08
+C2/E521:	94E5 ; $09
+C2/E523:	A0E5 ; $0A ($E5A0) Melt
+C2/E525:	ACE5 ; $0B
+C2/E527:	3FE5 ; $0C ($E53F) RTS [Regular Boss Death]
+C2/E529:	3FE5 ; $0D ($E53F) RTS [Flutter]
+C2/E52B:	33E5 ; $0E ($E533) Chadarnook
+C2/E52D:	CDE5 ; $0F ($E5CD) [Unused?]
+C2/E52F:	3FE5 ; $10 ($E53F) RTS
+C2/E531:	3FE5 ; $11 ($E53F) RTS [Kefka]
 
 C2/E533:	00049A1501FF
 C2/E539:	00038C1501FF
@@ -11316,172 +11374,186 @@ C2/E5C1:	0004B61501FF
 C2/E5C7:	0003A81501FF
 C2/E5CD:	0004C41501FF
 
-; Pointers to below data?
-C2/E5D3:	13E6
-C2/E5D5:	19E6
-C2/E5D7:	1FE6
-C2/E5D9:	25E6
-C2/E5DB:	2BE6
-C2/E5DD:	07E6
-C2/E5DF:	0DE6
-C2/E5E1:	31E6
-C2/E5E3:	37E6
-C2/E5E5:	13E6
-C2/E5E7:	01E6
-C2/E5E9:	FBE5
-C2/E5EB:	F5E5
-C2/E5ED:	EFE5
+; Pointers for Animation Script subcommands (enemy script op $FA)
+C2/E5D3:	13E6 ; $00 - Enemy flashes red
+C2/E5D5:	19E6 ; $01 - Enemy steps back
+C2/E5D7:	1FE6 ; $02 - Enemy steps forward
+C2/E5D9:	25E6 ; $03 - Enemy steps back faster
+C2/E5DB:	2BE6 ; $04 - Enemy steps forward faster
+C2/E5DD:	07E6 ; $05 - Characters run to right
+C2/E5DF:	0DE6 ; $06 - Characters run to left
+C2/E5E1:	31E6 ; $07 - Enemy steps back 3
+C2/E5E3:	37E6 ; $08 - Enemy steps forward 3
+C2/E5E5:	13E6 ; $09 - Play sound (handled separately)
+C2/E5E7:	01E6 ; $0A - Kefka head
+C2/E5E9:	FBE5 ; $0B - Enemy flashes yellow
+C2/E5EB:	F5E5 ; $0C - Enemy flashes yellow briefly
+C2/E5ED:	EFE5 ; $0D - Boss death animation
 
-C2/E5EF:	00040A1601FF
-C2/E5F5:	0004EE1501FF
-C2/E5FB:	0004E01501FF
-C2/E601:	0004D21501FF
-C2/E607:	0005461501FE
-C2/E60D:	0005381501FE
-C2/E613:	0004FC0E01FF
-C2/E619:	0004EE0E01FF
-C2/E61F:	0004E00E01FF
-C2/E625:	0004F21401FF
-C2/E62B:	0004E41401FF
-C2/E631:	00047E1501FF
-C2/E637:	0004701501FF
+C2/E5EF:	00040A1601FF - Boss death animation
+C2/E5F5:	0004EE1501FF - Enemy flashes yellow briefly
+C2/E5FB:	0004E01501FF - Enemy flashes yellow
+C2/E601:	0004D21501FF - Kefka head
+C2/E607:	0005461501FE - Characters run to the right
+C2/E60D:	0005381501FE - Characters run to the left
+C2/E613:	0004FC0E01FF - Enemy flashes red
+C2/E619:	0004EE0E01FF - Enemy steps back
+C2/E61F:	0004E00E01FF - Enemy steps forward
+C2/E625:	0004F21401FF - Enemy steps back faster
+C2/E62B:	0004E41401FF - Enemy steps forward faster
+C2/E631:	00047E1501FF - Enemy steps back 3
+C2/E637:	0004701501FF - Enemy steps forward 3
+
+; Run enemy AI "Animation" op
 
 C2/E63D:	A0 02 00   	LDY #$0002     ; 2
-C2/E640:	B1 76      	LDA ($76),Y
-C2/E642:	8D FC E9   	STA $E9FC
-C2/E645:	88         	DEY
-C2/E646:	B1 76      	LDA ($76),Y
-C2/E648:	C9 09      	CMP #$09       ; 9
-C2/E64A:	D0 0D      	BNE $E659      ; +13
-C2/E64C:	C8         	INY
-C2/E64D:	B1 76      	LDA ($76),Y
-C2/E64F:	85 10      	STA $10
-C2/E651:	C8         	INY
-C2/E652:	B1 76      	LDA ($76),Y
+C2/E640:	B1 76      	LDA ($76),Y    ; 2nd command arg [?]
+C2/E642:	8D FC E9   	STA $E9FC      ; save it
+C2/E645:	88         	DEY            ; y=1
+C2/E646:	B1 76      	LDA ($76),Y    ; 1st command arg (sub command)
+C2/E648:	C9 09      	CMP #$09       ; is it "Play Sound"
+C2/E64A:	D0 0D      	BNE $E659      ; branch if not ^
+C2/E64C:	C8         	INY            ; y=2
+C2/E64D:	B1 76      	LDA ($76),Y    ; 2nd command arg (pan value)
+C2/E64F:	85 10      	STA $10        ; save it
+C2/E651:	C8         	INY            ; y=3
+C2/E652:	B1 76      	LDA ($76),Y    ; 3rd command arg (sound effect ID)
 C2/E654:	22 EB 17 C1	JSL $C117EB    ; Why not JML?
 C2/E658:	6B         	RTL
 
 C2/E659:	C2 20      	REP #$20       ; 16-bit A
-C2/E65B:	0A         	ASL
-C2/E65C:	AA         	TAX
-C2/E65D:	BF D3 E5 C2	LDA $C2E5D3,X
-C2/E661:	85 8F      	STA $8F
-C2/E663:	7B         	TDC
+C2/E65B:	0A         	ASL            ; subcommand x2
+C2/E65C:	AA         	TAX            ; index it
+C2/E65D:	BF D3 E5 C2	LDA $C2E5D3,X  ; point to subcommand animation script
+C2/E661:	85 8F      	STA $8F        ; save pointer
+C2/E663:	7B         	TDC            ; zero A/B
 C2/E664:	E2 20      	SEP #$20       ; 8-bit A
-C2/E666:	80 49      	BRA $E6B1      ; +73
-C2/E668:	20 54 EA   	JSR $EA54
-C2/E66B:	A0 01 00   	LDY #$0001     ; 1
-C2/E66E:	B1 76      	LDA ($76),Y
-C2/E670:	C9 0D      	CMP #$0D       ; 13
-C2/E672:	D0 06      	BNE $E67A      ; +6
-C2/E674:	20 06 E8   	JSR $E806
-C2/E677:	4C 8E E8   	JMP $E88E
+C2/E666:	80 49      	BRA $E6B1      ; branch
 
-C2/E67A:	C9 11      	CMP #$11       ; 17
-C2/E67C:	D0 13      	BNE $E691      ; +19
-C2/E67E:	20 06 E8   	JSR $E806
-C2/E681:	22 D1 91 C1	JSL $C191D1
-C2/E685:	A9 FF      	LDA #$FF       ; -1
-C2/E687:	8D 91 61   	STA $6191
-C2/E68A:	AD 2F 2F   	LDA $2F2F
-C2/E68D:	8D 1E 20   	STA $201E
+C2/E668:	20 54 EA   	JSR $EA54      ; wait until PPU is ready for animations?
+C2/E66B:	A0 01 00   	LDY #$0001     ; second argument
+C2/E66E:	B1 76      	LDA ($76),Y    ; animation ID
+C2/E670:	C9 0D      	CMP #$0D       ; "Flutter" death
+C2/E672:	D0 06      	BNE $E67A      ; branch if not ^
+C2/E674:	20 06 E8   	JSR $E806      ; initialize/update hidden/visible enemies
+C2/E677:	4C 8E E8   	JMP $E88E      ; process flutter death animation
+
+C2/E67A:	C9 11      	CMP #$11       ; "Kefka" death
+C2/E67C:	D0 13      	BNE $E691      ; branch if not ^
+C2/E67E:	20 06 E8   	JSR $E806      ; initialize/update hidden/visible enemies
+C2/E681:	22 D1 91 C1	JSL $C191D1    ;
+C2/E685:	A9 FF      	LDA #$FF       ; all monsters
+C2/E687:	8D 91 61   	STA $6191      ; set "staying visible" monsters
+C2/E68A:	AD 2F 2F   	LDA $2F2F      ; visible monsters
+C2/E68D:	8D 1E 20   	STA $201E      ; set ^
 C2/E690:	6B         	RTL
 
-C2/E691:	48         	PHA
-C2/E692:	20 06 E8   	JSR $E806
-C2/E695:	68         	PLA
+; Most Hide/Unhide animations handling
+
+C2/E691:	48         	PHA            ; save animation ID
+C2/E692:	20 06 E8   	JSR $E806      ; initialize/update hidden/visible enemies
+C2/E695:	68         	PLA            ; animation ID
 C2/E696:	C2 20      	REP #$20       ; 16-bit A
-C2/E698:	0A         	ASL
-C2/E699:	AA         	TAX
-C2/E69A:	AD FB E9   	LDA $E9FB
-C2/E69D:	29 FF 00   	AND #$00FF
-C2/E6A0:	F0 06      	BEQ $E6A8      ; +6
-C2/E6A2:	BF EB E4 C2	LDA $C2E4EB,X
-C2/E6A6:	80 04      	BRA $E6AC      ; +4
-C2/E6A8:	BF 0F E5 C2	LDA $C2E50F,X
-C2/E6AC:	85 8F      	STA $8F
-C2/E6AE:	7B         	TDC
+C2/E698:	0A         	ASL            ; x2
+C2/E699:	AA         	TAX            ; index it
+C2/E69A:	AD FB E9   	LDA $E9FB      ; enemies to hide/kill
+C2/E69D:	29 FF 00   	AND #$00FF     ; clear unwanted data
+C2/E6A0:	F0 06      	BEQ $E6A8      ; branch if none to hide
+C2/E6A2:	BF EB E4 C2	LDA $C2E4EB,X  ; hide/kill animation script pointers
+C2/E6A6:	80 04      	BRA $E6AC      ; branch 
+C2/E6A8:	BF 0F E5 C2	LDA $C2E50F,X  ; unhide/revive animation script pointers
+
+C2/E6AC:	85 8F      	STA $8F        ; save animation script pointer
+C2/E6AE:	7B         	TDC            ; zero A/B
 C2/E6AF:	E2 20      	SEP #$20       ; 8-bit A
-C2/E6B1:	A9 C2      	LDA #$C2       ; -62
-C2/E6B3:	85 91      	STA $91
-C2/E6B5:	A7 8F      	LDA [$8F]
-C2/E6B7:	C9 FF      	CMP #$FF       ; -1
-C2/E6B9:	F0 10      	BEQ $E6CB      ; +16
-C2/E6BB:	C9 FE      	CMP #$FE       ; -2
-C2/E6BD:	F0 11      	BEQ $E6D0      ; +17
-C2/E6BF:	0A         	ASL
-C2/E6C0:	AA         	TAX
-C2/E6C1:	FC D7 E6   	JSR ($E6D7,X)
-C2/E6C4:	A4 8F      	LDY $8F
-C2/E6C6:	C8         	INY
-C2/E6C7:	84 8F      	STY $8F
-C2/E6C9:	80 EA      	BRA $E6B5      ; -22
-C2/E6CB:	A9 FF      	LDA #$FF       ; -1
-C2/E6CD:	8D 91 61   	STA $6191
-C2/E6D0:	AD 2F 2F   	LDA $2F2F
-C2/E6D3:	8D 1E 20   	STA $201E
+
+; Other script animations enter here
+C2/E6B1:	A9 C2      	LDA #$C2       ; bank
+C2/E6B3:	85 91      	STA $91        ; save animation script bank
+
+C2/E6B5:	A7 8F      	LDA [$8F]      ; script command
+C2/E6B7:	C9 FF      	CMP #$FF       ; "end-of-script" [?]
+C2/E6B9:	F0 10      	BEQ $E6CB      ; branch if ^
+C2/E6BB:	C9 FE      	CMP #$FE       ; "alt-end-of-script" [?]
+C2/E6BD:	F0 11      	BEQ $E6D0      ; branch if ^
+C2/E6BF:	0A         	ASL            ; x2
+C2/E6C0:	AA         	TAX            ; index it
+C2/E6C1:	FC D7 E6   	JSR ($E6D7,X)  ; execute script command
+C2/E6C4:	A4 8F      	LDY $8F        ; script pointer
+C2/E6C6:	C8         	INY            ; increment pointer
+C2/E6C7:	84 8F      	STY $8F        ; update script pointer
+C2/E6C9:	80 EA      	BRA $E6B5      ; loop
+
+C2/E6CB:	A9 FF      	LDA #$FF       ; all enemies
+C2/E6CD:	8D 91 61   	STA $6191      ; set visible enemies
+
+C2/E6D0:	AD 2F 2F   	LDA $2F2F      ; visible (alive) enemies
+C2/E6D3:	8D 1E 20   	STA $201E      ; set ^ BUG HERE
 C2/E6D6:	6B         	RTL
 
-; Pointers.
-C2/E6D7:	FCE7
-C2/E6D9:	01E8
-C2/E6DB:	A7E7
-C2/E6DD:	F4E6
-C2/E6DF:	33E7
-C2/E6E1:	72E7
+; Pointers to Enemy animation script commands
+C2/E6D7:	FCE7  ; $00 $E7FC - Clear previous animation data [?]
+C2/E6D9:	01E8  ; $01 $E801 - Execute the animation we just set up
+C2/E6DB:	A7E7  ; $02 $E7A7
+C2/E6DD:	F4E6  ; $03 $E6F4
+C2/E6DF:	33E7  ; $04 $E733 - Enemy animation
+C2/E6E1:	72E7  ; $05 $E772 - Character animation
 
-C2/E6E3:	A6 00      	LDX $00
-C2/E6E5:	4A         	LSR
-C2/E6E6:	B0 08      	BCS $E6F0      ; +8
-C2/E6E8:	E8         	INX
-C2/E6E9:	E0 08 00   	CPX #$0008     ; 8
-C2/E6EC:	D0 F7      	BNE $E6E5      ; -9
-C2/E6EE:	7B         	TDC
+; Get index of first bit set in A (or zero)
+C2/E6E3:	A6 00      	LDX $00        ; zero X
+C2/E6E5:	4A         	LSR            ; bit in A
+C2/E6E6:	B0 08      	BCS $E6F0      ; branch if set
+C2/E6E8:	E8         	INX            ; next bit
+C2/E6E9:	E0 08 00   	CPX #$0008     ; check all 8 bits
+C2/E6EC:	D0 F7      	BNE $E6E5      ; loop till done
+C2/E6EE:	7B         	TDC            ; zero A
 C2/E6EF:	60         	RTS
 
-C2/E6F0:	8A         	TXA
-C2/E6F1:	29 07      	AND #$07
+C2/E6F0:	8A         	TXA            ; get which bit number
+C2/E6F1:	29 07      	AND #$07       ; modulo 8
 C2/E6F3:	60         	RTS
 
-C2/E6F4:	22 21 FE C1	JSL $C1FE21
-C2/E6F8:	A0 01 00   	LDY #$0001     ; 1
+C2/E6F4:	22 21 FE C1	JSL $C1FE21    ; clear current battle script data
+C2/E6F8:	A0 01 00   	LDY #$0001     ; first argument
 C2/E6FB:	C2 20      	REP #$20       ; 16-bit A
-C2/E6FD:	B7 8F      	LDA [$8F],Y
-C2/E6FF:	85 1E      	STA $1E
-C2/E701:	E6 8F      	INC $8F
-C2/E703:	E6 8F      	INC $8F
-C2/E705:	7B         	TDC
-C2/E706:	E2 20      	SEP #$20
-C2/E708:	AD FB E9   	LDA $E9FB
-C2/E70B:	20 E3 E6   	JSR $E6E3
-C2/E70E:	18         	CLC
-C2/E70F:	69 04      	ADC #$04       ; 4
-C2/E711:	8D 6F 2C   	STA $2C6F
-C2/E714:	AD FB E9   	LDA $E9FB
-C2/E717:	8D 71 2C   	STA $2C71
-C2/E71A:	8D 73 2C   	STA $2C73
-C2/E71D:	8D 3E 61   	STA $613E
-C2/E720:	9C 3D 61   	STZ $613D
-C2/E723:	9C 70 2C   	STZ $2C70
-C2/E726:	9C 72 2C   	STZ $2C72
-C2/E729:	A9 C0      	LDA #$C0       ; -64
-C2/E72B:	8D 6E 2C   	STA $2C6E
-C2/E72E:	22 80 B8 C1	JSL $C1B880
+C2/E6FD:	B7 8F      	LDA [$8F],Y    ; word [?]
+C2/E6FF:	85 1E      	STA $1E        ; save pointer to animation
+C2/E701:	E6 8F      	INC $8F        ; increment pointer
+C2/E703:	E6 8F      	INC $8F        ; increment pointer
+C2/E705:	7B         	TDC            ; zero A/B
+C2/E706:	E2 20      	SEP #$20       ; 8-bit A
+C2/E708:	AD FB E9   	LDA $E9FB      ; enemies to hide/kill
+C2/E70B:	20 E3 E6   	JSR $E6E3      ; index of first/only enemy bit
+C2/E70E:	18         	CLC            ; clear carry
+C2/E70F:	69 04      	ADC #$04       ; move into "enemy" slot id range
+C2/E711:	8D 6F 2C   	STA $2C6F      ; save ^
+C2/E714:	AD FB E9   	LDA $E9FB      ; enemies to hide/kill
+C2/E717:	8D 71 2C   	STA $2C71      ; save ^
+C2/E71A:	8D 73 2C   	STA $2C73      ; save ^
+C2/E71D:	8D 3E 61   	STA $613E      ; save ^
+C2/E720:	9C 3D 61   	STZ $613D      ; clear character byte
+C2/E723:	9C 70 2C   	STZ $2C70      ; clear character byte
+C2/E726:	9C 72 2C   	STZ $2C72      ; clear character byte
+C2/E729:	A9 C0      	LDA #$C0       ; "Monster Attacker"/"No Character Targets"
+C2/E72B:	8D 6E 2C   	STA $2C6E      ; set animation flags ^
+C2/E72E:	22 80 B8 C1	JSL $C1B880    ; setup animation at pointer $1E
 C2/E732:	60         	RTS
 
-C2/E733:	22 21 FE C1	JSL $C1FE21
+; Prep enemy animation
+
+C2/E733:	22 21 FE C1	JSL $C1FE21    ; clear current battle script data
 C2/E737:	A0 01 00   	LDY #$0001     ; 1
 C2/E73A:	C2 20      	REP #$20       ; 16-bit A
-C2/E73C:	B7 8F      	LDA [$8F],Y
-C2/E73E:	85 1E      	STA $1E
-C2/E740:	E6 8F      	INC $8F
-C2/E742:	E6 8F      	INC $8F
-C2/E744:	7B         	TDC
+C2/E73C:	B7 8F      	LDA [$8F],Y    ; animation script arg (some pointer)
+C2/E73E:	85 1E      	STA $1E        ; save it
+C2/E740:	E6 8F      	INC $8F        ; next script index
+C2/E742:	E6 8F      	INC $8F        ; next script index
+C2/E744:	7B         	TDC            ; zero A/B
 C2/E745:	E2 20      	SEP #$20       ; 8-bit A
-C2/E747:	AD FC E9   	LDA $E9FC
-C2/E74A:	20 E3 E6   	JSR $E6E3
-C2/E74D:	18         	CLC
-C2/E74E:	69 04      	ADC #$04       ; 4
+C2/E747:	AD FC E9   	LDA $E9FC      ; original ai script arg 2 (op $FA)
+C2/E74A:	20 E3 E6   	JSR $E6E3      ; get slot for enemy bit
+C2/E74D:	18         	CLC            ; clear carry
+C2/E74E:	69 04      	ADC #$04       ; 4 (enemy entity slot)
 C2/E750:	8D 6F 2C   	STA $2C6F
 C2/E753:	AD FC E9   	LDA $E9FC
 C2/E756:	8D 71 2C   	STA $2C71
@@ -11494,6 +11566,8 @@ C2/E768:	A9 C0      	LDA #$C0       ; -64
 C2/E76A:	8D 6E 2C   	STA $2C6E
 C2/E76D:	22 80 B8 C1	JSL $C1B880
 C2/E771:	60         	RTS
+
+; Prep character animation (run left or run right)
 
 C2/E772:	22 21 FE C1	JSL $C1FE21
 C2/E776:	A0 01 00   	LDY #$0001     ; 1
@@ -11560,39 +11634,42 @@ C2/E7F5:	85 26      	STA $26
 C2/E7F7:	22 C0 B1 C1	JSL $C1B1C0
 C2/E7FB:	60         	RTS
 
-C2/E7FC:	22 43 FF C1	JSL $C1FF43
+C2/E7FC:	22 43 FF C1	JSL $C1FF43    ; wipe/clean previous animation data [?]
 C2/E800:	60         	RTS
 
-C2/E801:	22 51 FF C1	JSL $C1FF51
+C2/E801:	22 51 FF C1	JSL $C1FF51    ; execute previously setup animation
 C2/E805:	60         	RTS
 
-C2/E806:	AD 1E 20   	LDA $201E
-C2/E809:	8D FA E9   	STA $E9FA
-C2/E80C:	A0 02 00   	LDY #$0002     ; 2
-C2/E80F:	B1 76      	LDA ($76),Y
-C2/E811:	8D FB E9   	STA $E9FB
-C2/E814:	49 FF      	EOR #$FF
-C2/E816:	85 10      	STA $10
-C2/E818:	C8         	INY
-C2/E819:	B1 76      	LDA ($76),Y
-C2/E81B:	8D FC E9   	STA $E9FC
-C2/E81E:	AD 1E 20   	LDA $201E
-C2/E821:	25 10      	AND $10
-C2/E823:	0D FC E9   	ORA $E9FC
-C2/E826:	8D FD E9   	STA $E9FD
-C2/E829:	AD FB E9   	LDA $E9FB
-C2/E82C:	D0 1D      	BNE $E84B      ; +29
-C2/E82E:	AD FA E9   	LDA $E9FA
-C2/E831:	49 FF      	EOR #$FF
-C2/E833:	85 10      	STA $10
-C2/E835:	AD FC E9   	LDA $E9FC
-C2/E838:	25 10      	AND $10
-C2/E83A:	8D FC E9   	STA $E9FC
-C2/E83D:	49 FF      	EOR #$FF
-C2/E83F:	8D 91 61   	STA $6191
-C2/E842:	AD FD E9   	LDA $E9FD
-C2/E845:	8D 1E 20   	STA $201E
-C2/E848:	8D AB 61   	STA $61AB
+; TODO: Should 201E be set for "hide/kill" animations
+
+C2/E806:	AD 1E 20   	LDA $201E      ; visible enemies
+C2/E809:	8D FA E9   	STA $E9FA      ; save ^
+C2/E80C:	A0 02 00   	LDY #$0002     ; third argument
+C2/E80F:	B1 76      	LDA ($76),Y    ; enemies to hide/kill
+C2/E811:	8D FB E9   	STA $E9FB      ; save ^
+C2/E814:	49 FF      	EOR #$FF       ; enemies *not* to hide/kill
+C2/E816:	85 10      	STA $10        ; save ^
+C2/E818:	C8         	INY            ; fourth argument
+C2/E819:	B1 76      	LDA ($76),Y    ; enemies to unhide/revive
+C2/E81B:	8D FC E9   	STA $E9FC      ; save ^
+C2/E81E:	AD 1E 20   	LDA $201E      ; visible enemies
+C2/E821:	25 10      	AND $10        ; visible enemies staying visible
+C2/E823:	0D FC E9   	ORA $E9FC      ; combine with enemies to unhide
+C2/E826:	8D FD E9   	STA $E9FD      ; save ^
+C2/E829:	AD FB E9   	LDA $E9FB      ; enemies to hide/kill
+C2/E82C:	D0 1D      	BNE $E84B      ; exit if hiding/killing
+
+C2/E82E:	AD FA E9   	LDA $E9FA      ; visible enemies
+C2/E831:	49 FF      	EOR #$FF       ; hidden enemies
+C2/E833:	85 10      	STA $10        ; save ^
+C2/E835:	AD FC E9   	LDA $E9FC      ; enemies to unhide/revive
+C2/E838:	25 10      	AND $10        ; remove any already visible
+C2/E83A:	8D FC E9   	STA $E9FC      ; save valid unhide/revive targets
+C2/E83D:	49 FF      	EOR #$FF       ; monsters not being unhidden
+C2/E83F:	8D 91 61   	STA $6191      ; save ^
+C2/E842:	AD FD E9   	LDA $E9FD      ; monsters visible after this animation
+C2/E845:	8D 1E 20   	STA $201E      ; set visible enemies
+C2/E848:	8D AB 61   	STA $61AB      ; save to buffer [?]
 C2/E84B:	60         	RTS
 
 ; Data of some sort.
@@ -11631,29 +11708,32 @@ C2/E888:	0708
 C2/E88A:	090A
 C2/E88C:	0B0C
 
-C2/E88E:	9C B3 EC   	STZ $ECB3
-C2/E891:	A9 FF      	LDA #$FF       ; -1
-C2/E893:	8D 91 61   	STA $6191
-C2/E896:	AD FA E9   	LDA $E9FA
-C2/E899:	8D 1E 20   	STA $201E
-C2/E89C:	AD B3 EC   	LDA $ECB3
-C2/E89F:	AA         	TAX
-C2/E8A0:	BF 4C E8 C2	LDA $C2E84C,X
-C2/E8A4:	22 B2 9B C1	JSL $C19BB2
-C2/E8A8:	AD FC E9   	LDA $E9FC
-C2/E8AB:	8D 1E 20   	STA $201E
-C2/E8AE:	AD B3 EC   	LDA $ECB3
-C2/E8B1:	AA         	TAX
-C2/E8B2:	BF 6C E8 C2	LDA $C2E86C,X
-C2/E8B6:	22 B2 9B C1	JSL $C19BB2
-C2/E8BA:	EE B3 EC   	INC $ECB3
-C2/E8BD:	AD B3 EC   	LDA $ECB3
-C2/E8C0:	C9 20      	CMP #$20       ; 32
-C2/E8C2:	D0 D2      	BNE $E896      ; -46
-C2/E8C4:	A9 FF      	LDA #$FF       ; -1
-C2/E8C6:	8D 91 61   	STA $6191
-C2/E8C9:	AD 2F 2F   	LDA $2F2F
-C2/E8CC:	8D 1E 20   	STA $201E
+; Flutter Death Handling
+
+C2/E88E:	9C B3 EC   	STZ $ECB3      ; start at animation segment zero
+C2/E891:	A9 FF      	LDA #$FF       ; all monsters
+C2/E893:	8D 91 61   	STA $6191      ; set "staying visible" enemies
+C2/E896:	AD FA E9   	LDA $E9FA      ; reappearing enemies
+C2/E899:	8D 1E 20   	STA $201E      ; save ^
+C2/E89C:	AD B3 EC   	LDA $ECB3      ; animation segment
+C2/E89F:	AA         	TAX            ; index it
+C2/E8A0:	BF 4C E8 C2	LDA $C2E84C,X  ; length of time to wait
+C2/E8A4:	22 B2 9B C1	JSL $C19BB2    ; wait for {X} frames
+C2/E8A8:	AD FC E9   	LDA $E9FC      ; enemies to start unhiding
+C2/E8AB:	8D 1E 20   	STA $201E      ; set only new unhiding to reappear [?]
+C2/E8AE:	AD B3 EC   	LDA $ECB3      ; animation segment
+C2/E8B1:	AA         	TAX            ; index it
+C2/E8B2:	BF 6C E8 C2	LDA $C2E86C,X  ; length of time to wait
+C2/E8B6:	22 B2 9B C1	JSL $C19BB2    ; wait for {X} frames
+C2/E8BA:	EE B3 EC   	INC $ECB3      ; next segment
+C2/E8BD:	AD B3 EC   	LDA $ECB3      ; animation segment
+C2/E8C0:	C9 20      	CMP #$20       ; 32nd segment
+C2/E8C2:	D0 D2      	BNE $E896      ; loop if not
+
+C2/E8C4:	A9 FF      	LDA #$FF       ; all monsters
+C2/E8C6:	8D 91 61   	STA $6191      ; set "staying visible" enemies
+C2/E8C9:	AD 2F 2F   	LDA $2F2F      ; visible monsters
+C2/E8CC:	8D 1E 20   	STA $201E      ; set ^
 C2/E8CF:	6B         	RTL
 
 C2/E8D0:	29 7F      	AND #$7F
@@ -13868,10 +13948,12 @@ C2/FC68:	FFFFFFFF
 C2/FC6C:	FF
 
 
-; (Below are tables for gradually increasing or decreasing various parameters. During the
-; ending, the data distribution affects Mode 7 rotation and governs the back-and-forth or
-; up-and-down motion of various birds and airships. In battle, it influences the path of
-; most sprites, such as the circular motion of boomerangs.)
+; Below are tables for gradually increasing or decreasing
+; various parameters. During the ending, the data distribution
+; affects Mode 7 rotation and governs the back-and-forth or
+; up-and-down motion of various birds and airships. In battle,
+; it influences the path of most sprites, such as the circular
+; motion of boomerangs.
 
 ; Sine/Cosine Table (16-bit, signed)(C2/FC6D - C2/FE6C)
 ; Data retrieved from C1/6C0A and C1/6C6E
